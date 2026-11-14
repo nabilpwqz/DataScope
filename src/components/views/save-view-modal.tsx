@@ -56,7 +56,7 @@ export const SaveViewModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 motion-safe:animate-in motion-safe:fade-in-50">
-      <div className="flex flex-col w-full max-w-lg rounded-xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden">
+      <div className="flex flex-col w-full max-w-lg rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
           <div className="flex items-center gap-2.5">

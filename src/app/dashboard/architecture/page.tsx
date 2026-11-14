@@ -295,7 +295,7 @@ export default function ArchitectureHubPage() {
           }`}
         >
           <Code2 className="h-4 w-4" />
-          Technical Decision Records ({adrList.length})
+          <span className="whitespace-nowrap">Technical Decision Records ({adrList.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('dataFetching')}
@@ -306,7 +306,7 @@ export default function ArchitectureHubPage() {
           }`}
         >
           <Zap className="h-4 w-4" />
-          Mandatory Data Fetching Answers
+          <span className="whitespace-nowrap">Mandatory Data Fetching Answers</span>
         </button>
         <button
           onClick={() => setActiveTab('searchComparison')}
@@ -317,7 +317,7 @@ export default function ArchitectureHubPage() {
           }`}
         >
           <Search className="h-4 w-4" />
-          Search Architecture Comparison
+          <span className="whitespace-nowrap">Search Architecture Comparison</span>
         </button>
         <button
           onClick={() => setActiveTab('scaling')}
@@ -328,7 +328,7 @@ export default function ArchitectureHubPage() {
           }`}
         >
           <Layers className="h-4 w-4" />
-          Million-Record Scaling Strategy
+          <span className="whitespace-nowrap">Million-Record Scaling Strategy</span>
         </button>
       </div>
 

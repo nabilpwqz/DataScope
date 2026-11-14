@@ -59,7 +59,7 @@ export const ColumnVisibilityDropdown: React.FC = () => {
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-lg border border-slate-800 bg-slate-950 p-3 shadow-xl z-50">
+        <div className="absolute right-0 mt-2 w-64 rounded-lg border border-slate-800 bg-slate-950 p-3 z-50">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <span className="text-xs font-semibold text-slate-300">
               Visible columns

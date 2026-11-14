@@ -201,7 +201,7 @@ export const RecordDetailDrawer: React.FC = () => {
                             required
                             className="rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                           >
-                            <option value="">Select new status...</option>
+                            <option value="">Select new status…</option>
                             <option value="Active">Active</option>
                             <option value="Pending">Pending</option>
                             <option value="Suspended">Suspended</option>

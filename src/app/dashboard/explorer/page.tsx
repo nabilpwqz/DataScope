@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
   setSearch,
@@ -90,10 +90,11 @@ export default function DataExplorerPage() {
   );
 
   // Debounce search input by 300ms to prevent excessive API calls
-  const debouncedDispatchSearch = useCallback(
-    debounce((value: string) => {
-      dispatch(setDebouncedSearch(value));
-    }, 300),
+  const debouncedDispatchSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        dispatch(setDebouncedSearch(value));
+      }, 300),
     [dispatch]
   );
 

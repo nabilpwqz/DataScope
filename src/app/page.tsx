@@ -22,7 +22,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-600 selection:text-white">
       {/* Top Enterprise Navigation */}
-      <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 md:px-12">
+      <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950 px-4 md:px-12">
         <Link href="/" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1">
           <DataScopeLogo size="md" subtitle="Enterprise Data Intelligence" />
         </Link>
@@ -70,7 +70,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="text-xs sm:text-sm md:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          Search, filter, and inspect complex business records with sub-10ms query execution, DOM virtualization, and strict role-based access controls.
+          Search, filter, and inspect complex enterprise business records with sub-10ms query execution.
         </p>
 
         {/* Hero Actions */}
@@ -112,7 +112,7 @@ export default function LandingPage() {
         {/* 2-Column Split Workbench */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Left Column: Visual Telemetry Art */}
-          <div className="relative rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden shadow-2xl">
+          <div className="relative rounded-2xl border border-slate-800 bg-slate-900/80 overflow-hidden">
             <div className="relative h-64 sm:h-80 w-full">
               <Image
                 src="/images/architecture-3d.png"
