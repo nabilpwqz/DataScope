@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  datascope-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: datascope-platform
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=datascope-super-secure-production-ready-jwt-token-key-32-chars-min
+      - DATABASE_URL=
+      - PG_DATA_DIR=/app/.pgdata
+      - SEARCH_STRATEGY=hybrid
+    volumes:
+      - datascope_data:/app/.pgdata
+    restart: unless-stopped
+
+volumes:
+  datascope_data:
