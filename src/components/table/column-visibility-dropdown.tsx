@@ -104,11 +104,10 @@ export const ColumnVisibilityDropdown: React.FC = () => {
                     key={d}
                     type="button"
                     onClick={() => dispatch(setTableDensity(d))}
-                    className={`px-1.5 py-0.5 text-xs rounded capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                      tableDensity === d
+                    className={`px-1.5 py-0.5 text-xs rounded capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${tableDensity === d
                         ? 'bg-emerald-600 text-white font-semibold'
                         : 'text-slate-400 hover:bg-slate-900'
-                    }`}
+                      }`}
                   >
                     {d[0]}
                   </button>
@@ -121,9 +120,8 @@ export const ColumnVisibilityDropdown: React.FC = () => {
               <button
                 type="button"
                 onClick={() => dispatch(toggleVirtualization())}
-                className={`px-2 py-0.5 text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  useVirtualization ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold' : 'bg-slate-800 text-slate-400'
-                }`}
+                className={`px-2 py-0.5 text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${useVirtualization ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold' : 'bg-slate-800 text-slate-400'
+                  }`}
               >
                 {useVirtualization ? 'Enabled' : 'Standard'}
               </button>
@@ -134,9 +132,8 @@ export const ColumnVisibilityDropdown: React.FC = () => {
               <button
                 type="button"
                 onClick={() => dispatch(toggleHighlightMatches())}
-                className={`px-2 py-0.5 text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  highlightMatches ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold' : 'bg-slate-800 text-slate-400'
-                }`}
+                className={`px-2 py-0.5 text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${highlightMatches ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold' : 'bg-slate-800 text-slate-400'
+                  }`}
               >
                 {highlightMatches ? 'Active' : 'Off'}
               </button>

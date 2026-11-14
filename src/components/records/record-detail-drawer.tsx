@@ -102,33 +102,30 @@ export const RecordDetailDrawer: React.FC = () => {
           <div className="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-medium">
             <button
               onClick={() => setActiveTab('info')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                activeTab === 'info'
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'info'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <FileText className="h-3.5 w-3.5" />
               Information
             </button>
             <button
               onClick={() => setActiveTab('relations')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                activeTab === 'relations'
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'relations'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <GitFork className="h-3.5 w-3.5" />
               Related Records ({relatedRecords.length})
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                activeTab === 'history'
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'history'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
+                }`}
             >
               <History className="h-3.5 w-3.5" />
               Audit Trail ({history.length})
@@ -161,8 +158,8 @@ export const RecordDetailDrawer: React.FC = () => {
                               record.status === 'Active'
                                 ? 'success'
                                 : record.status === 'Pending'
-                                ? 'warning'
-                                : 'danger'
+                                  ? 'warning'
+                                  : 'danger'
                             }
                           >
                             {record.status}

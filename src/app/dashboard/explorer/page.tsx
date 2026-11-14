@@ -180,44 +180,40 @@ export default function DataExplorerPage() {
               <button
                 onClick={() => dispatch(setSearchType('hybrid'))}
                 title="Hybrid: Full-text search + Substring matching"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  searchType === 'hybrid'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'hybrid'
                     ? 'bg-emerald-600 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Hybrid
               </button>
               <button
                 onClick={() => dispatch(setSearchType('fts'))}
                 title="PostgreSQL Full-Text Search (tsvector @@ tsquery)"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  searchType === 'fts'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'fts'
                     ? 'bg-slate-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 FTS
               </button>
               <button
                 onClick={() => dispatch(setSearchType('trgm'))}
                 title="PostgreSQL Trigram Search (similarity & fuzzy typo matching)"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  searchType === 'trgm'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'trgm'
                     ? 'bg-emerald-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Trigram
               </button>
               <button
                 onClick={() => dispatch(setSearchType('exact'))}
                 title="Exact substring match (ILIKE)"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  searchType === 'exact'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'exact'
                     ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 font-semibold'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Exact
               </button>
