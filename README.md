@@ -567,3 +567,5 @@ docker compose up -d
 - **Complete Auth Lifecycle:** Secure login with credential hashing, 1-click evaluation roles (Admin, Analyst, Viewer), and dedicated Sign Out clearing HTTP-only session tokens.
 
 
+#   D a t a S c o p e  
+ 
