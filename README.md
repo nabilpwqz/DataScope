@@ -507,12 +507,12 @@ DataScope implements an enterprise security matrix addressing core production re
 
 | # | Security Requirement | Implementation Mechanism | Verification File |
 | :-: | :--- | :--- | :--- |
-| **1** | **API Keys & Secrets** | Stored exclusively in environment variables; zero hardcoded secrets. | `.env.example` |
-| **2** | **Env Validation** | Validated at application bootstrap with Zod schema definitions. | `src/lib/validation/env.ts` |
+| **1** | **API Keys & Secrets** | Stored exclusively in environment variables; zero hardcoded secrets. | `.env` (git-ignored) |
+| **2** | **Env Defaults & Isolation** | Strict environment defaults and runtime fallback isolation. | `src/lib/db/index.ts` |
 | **3** | **Authentication** | HS256 JWT signing with `jose` and bcrypt password hashing. | `src/lib/auth/jwt.ts` |
 | **4** | **RBAC Enforcement** | Server-side role validation for Administrator, Analyst, and Viewer. | `src/lib/auth/rbac.ts` |
 | **5** | **Access Verification** | Dataset access permissions (`public`, `restricted`, `admin_only`). | `src/app/api/datasets/route.ts` |
-| **6** | **Input Sanitization** | Zod request validation; parameter trimming; no unsafe raw strings. | `src/lib/validation/` |
+| **6** | **Input Sanitization** | Strict parameter trimming, type validation, and injection guardrails. | `src/app/api/records/route.ts` |
 | **7** | **XSS Protection** | React automatic JSX escaping; CSP configured in `next.config.js`. | `next.config.js` |
 | **8** | **Rate Limiting** | Sliding window rate limiter protecting auth and search endpoints. | `src/app/api/search-history/` |
 | **9** | **CORS Configuration** | Restricted origin policies and controlled HTTP methods. | `next.config.js` |
