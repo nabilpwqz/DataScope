@@ -6,6 +6,7 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 import path from 'path';
 import fs from 'fs';
+import bcrypt from 'bcryptjs';
 
 type DbInstance = ReturnType<typeof drizzlePgLite<typeof schema>>;
 
@@ -14,6 +15,7 @@ interface GlobalDbState {
   rawClient: any | null;
   initialized: boolean;
   initPromise: Promise<void> | null;
+  engineType: 'remote-postgres' | 'embedded-pglite';
 }
 
 const globalForDb = globalThis as unknown as {
@@ -26,52 +28,82 @@ if (!globalForDb.__dataScopeDb) {
     rawClient: null,
     initialized: false,
     initPromise: null,
+    engineType: 'embedded-pglite',
   };
 }
 
 const state = globalForDb.__dataScopeDb;
 
-export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any }> {
+export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; engineType: string }> {
   if (state.db && state.initialized) {
-    return { db: state.db, rawClient: state.rawClient };
+    return { db: state.db, rawClient: state.rawClient, engineType: state.engineType };
   }
 
   if (state.initPromise) {
     await state.initPromise;
-    return { db: state.db!, rawClient: state.rawClient };
+    return { db: state.db!, rawClient: state.rawClient, engineType: state.engineType };
   }
 
   state.initPromise = (async () => {
     const databaseUrl = process.env.DATABASE_URL;
 
     if (databaseUrl && databaseUrl.trim() !== '') {
-      // Connect to remote or local external PostgreSQL instance
-      const pool = new Pool({ connectionString: databaseUrl });
+      // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, Tembo, etc.)
+      const isLocalhost =
+        databaseUrl.includes('localhost') ||
+        databaseUrl.includes('127.0.0.1') ||
+        databaseUrl.includes('postgres:5432');
+
+      const pool = new Pool({
+        connectionString: databaseUrl,
+        ssl: isLocalhost ? false : { rejectUnauthorized: false },
+        max: 10,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000,
+      });
+
       const drizzleInstance = drizzlePg(pool, { schema }) as unknown as DbInstance;
       state.db = drizzleInstance;
       state.rawClient = pool;
+      state.engineType = 'remote-postgres';
     } else {
-      // Default: Embedded WebAssembly PostgreSQL (PGlite) with persistence
-      const dataDir = process.env.PG_DATA_DIR || path.join(process.cwd(), '.pgdata');
-      if (!fs.existsSync(dataDir)) {
+      // Embedded WebAssembly PostgreSQL (PGlite)
+      const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+      const defaultDir = isServerless ? '/tmp/.pgdata' : path.join(process.cwd(), '.pgdata');
+      const dataDir = process.env.PG_DATA_DIR || defaultDir;
+
+      // Handle Vercel / Serverless ephemeral /tmp storage
+      if (isServerless && !fs.existsSync(dataDir)) {
+        const bundledDir = path.join(process.cwd(), '.pgdata');
+        if (fs.existsSync(bundledDir)) {
+          try {
+            copyDirectoryRecursive(bundledDir, dataDir);
+          } catch (copyErr) {
+            console.warn('Could not copy bundled .pgdata to /tmp, starting fresh:', copyErr);
+            fs.mkdirSync(dataDir, { recursive: true });
+          }
+        } else {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+      } else if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
-      } else {
-        // Clean up stale lock and postmaster pid files if left by previous abnormal process exits
-        try {
-          const pidFile = path.join(dataDir, 'postmaster.pid');
-          if (fs.existsSync(pidFile)) {
-            fs.unlinkSync(pidFile);
-          }
-          const files = fs.readdirSync(dataDir);
-          for (const f of files) {
-            if (f.includes('.lock') || f.startsWith('.s.PGSQL')) {
-              try {
-                fs.unlinkSync(path.join(dataDir, f));
-              } catch (_) {}
-            }
-          }
-        } catch (_) {}
       }
+
+      // Clean up stale lock and postmaster pid files if left by previous abnormal process exits
+      try {
+        const pidFile = path.join(dataDir, 'postmaster.pid');
+        if (fs.existsSync(pidFile)) {
+          fs.unlinkSync(pidFile);
+        }
+        const files = fs.readdirSync(dataDir);
+        for (const f of files) {
+          if (f.includes('.lock') || f.startsWith('.s.PGSQL')) {
+            try {
+              fs.unlinkSync(path.join(dataDir, f));
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
 
       const pglite = new PGlite(dataDir, {
         extensions: { pg_trgm },
@@ -80,18 +112,39 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any }
       const drizzleInstance = drizzlePgLite(pglite, { schema });
       state.db = drizzleInstance;
       state.rawClient = pglite;
+      state.engineType = 'embedded-pglite';
     }
 
-    // Run schema creation and index creation
+    // Run schema creation, index creation, and ensure baseline demonstration data
     await ensureSchemaAndIndexes(state.rawClient);
+    await ensureBaselineData(state.rawClient);
     state.initialized = true;
   })();
 
   await state.initPromise;
-  return { db: state.db!, rawClient: state.rawClient };
+  return { db: state.db!, rawClient: state.rawClient, engineType: state.engineType };
 }
 
-async function executeSql(client: any, query: string, params: any[] = []) {
+function copyDirectoryRecursive(src: string, dest: string) {
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.name.includes('.lock') || entry.name.startsWith('.s.PGSQL') || entry.name === 'postmaster.pid') {
+      continue;
+    }
+    if (entry.isDirectory()) {
+      copyDirectoryRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+export async function executeSql(client: any, query: string, params: any[] = []) {
   if (params.length > 0) {
     return client.query(query, params);
   } else if (typeof client.exec === 'function') {
@@ -106,8 +159,8 @@ async function ensureSchemaAndIndexes(client: any) {
     // 1. Extensions
     try {
       await executeSql(client, 'CREATE EXTENSION IF NOT EXISTS pg_trgm;');
-    } catch (e) {
-      // pg_trgm may already be loaded or not supported in specific setups
+    } catch (_) {
+      // pg_trgm may already be loaded or restricted
     }
 
     // 2. Tables
@@ -280,13 +333,73 @@ async function ensureSchemaAndIndexes(client: any) {
     for (const q of indexQueries) {
       try {
         await executeSql(client, q);
-      } catch (err) {
+      } catch (_) {
         // Continue on existing index
       }
     }
   } catch (error) {
     console.error('Error during database schema initialization:', error);
     throw error;
+  }
+}
+
+async function ensureBaselineData(client: any) {
+  try {
+    const existingUsers = await client.query('SELECT count(*)::int AS count FROM users;');
+    const userCount = existingUsers.rows?.[0]?.count || 0;
+
+    if (userCount === 0) {
+      const salt = await bcrypt.genSalt(10);
+      const adminPass = await bcrypt.hash('admin123', salt);
+      const analystPass = await bcrypt.hash('analyst123', salt);
+      const viewerPass = await bcrypt.hash('viewer123', salt);
+
+      await client.query(`
+        INSERT INTO users (id, name, email, password_hash, role, department, avatar_url)
+        VALUES 
+          ('usr-admin-01', 'Elena Rostova', 'admin@datascope.io', '${adminPass}', 'admin', 'Enterprise Architecture', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'),
+          ('usr-analyst-01', 'Marcus Vance', 'analyst@datascope.io', '${analystPass}', 'analyst', 'Strategic Intelligence', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
+          ('usr-viewer-01', 'Sarah Lin', 'viewer@datascope.io', '${viewerPass}', 'viewer', 'Product Operations', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+
+      await client.query(`
+        INSERT INTO user_preferences (id, user_id, table_density, theme, auto_refresh, refresh_interval_sec, default_page_size, notifications_enabled)
+        VALUES 
+          ('pref-01', 'usr-admin-01', 'compact', 'dark', false, 30, 25, true),
+          ('pref-02', 'usr-analyst-01', 'standard', 'dark', true, 15, 50, true),
+          ('pref-03', 'usr-viewer-01', 'standard', 'dark', false, 30, 25, true)
+        ON CONFLICT (user_id) DO NOTHING;
+      `);
+    }
+
+    const existingDatasets = await client.query('SELECT count(*)::int AS count FROM datasets;');
+    const datasetCount = existingDatasets.rows?.[0]?.count || 0;
+
+    if (datasetCount === 0) {
+      await client.query(`
+        INSERT INTO datasets (id, name, slug, description, category, data_source, total_records, access_level, schema_definition)
+        VALUES 
+          ('ds-sales-01', 'Global Enterprise Accounts & Revenue', 'global-sales', 'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.', 'Sales & Revenue', 'PostgreSQL Production Cluster [us-east-1]', 100000, 'public', '[]'),
+          ('ds-telemetry-02', 'Edge Infrastructure & Telemetry Logs', 'cloud-telemetry', 'Multi-region high-frequency latency, CPU utilization, and edge cluster operational metrics.', 'Infrastructure Telemetry', 'Kafka Streaming & S3 Parquet Lake', 10000, 'restricted', '[]'),
+          ('ds-finance-03', 'Institutional Financial Transactions', 'financial-audit', 'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.', 'Financial Intelligence', 'Core Banking Ledger DB', 10000, 'admin_only', '[]')
+        ON CONFLICT (id) DO NOTHING;
+
+        INSERT INTO dataset_fields (id, dataset_id, field_name, display_name, data_type, is_filterable, is_searchable, is_sortable, is_primary, sample_values)
+        VALUES 
+          ('f-01', 'ds-sales-01', 'recordKey', 'Account Key', 'string', true, true, true, true, '["ACC-10023", "ACC-90412", "ACC-44102"]'),
+          ('f-02', 'ds-sales-01', 'title', 'Company Name', 'string', true, true, true, false, '["Stripe Inc", "Siemens AG", "Databricks", "SAP SE"]'),
+          ('f-03', 'ds-sales-01', 'category', 'Market Segment', 'string', true, true, true, false, '["Enterprise", "Mid-Market", "Tier 1 Partner", "SMB"]'),
+          ('f-04', 'ds-sales-01', 'status', 'Account Status', 'string', true, true, true, false, '["Active", "Pending", "Archived", "Suspended", "Completed", "Flagged"]'),
+          ('f-05', 'ds-sales-01', 'numericValue', 'Annual Revenue ($)', 'currency', true, true, true, false, '["12000", "85000", "250000", "1450000"]'),
+          ('f-06', 'ds-sales-01', 'country', 'Country', 'string', true, true, true, false, '["Germany", "United States", "United Kingdom", "France", "Japan", "Canada"]'),
+          ('f-07', 'ds-sales-01', 'region', 'Region', 'string', true, true, true, false, '["EMEA", "Americas", "APAC", "DACH", "Nordics"]'),
+          ('f-08', 'ds-sales-01', 'recordDate', 'Contract Date', 'date', true, false, true, false, '["2024-01-15", "2024-06-20", "2024-11-01"]')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+    }
+  } catch (err) {
+    console.warn('Notice: Baseline data check completed with notice:', err);
   }
 }
 
@@ -298,4 +411,9 @@ export async function getDb(): Promise<DbInstance> {
 export async function getRawClient(): Promise<any> {
   const { rawClient } = await initDatabase();
   return rawClient;
+}
+
+export async function getEngineType(): Promise<string> {
+  const { engineType } = await initDatabase();
+  return engineType;
 }

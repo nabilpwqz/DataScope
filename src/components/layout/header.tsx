@@ -63,6 +63,21 @@ export const Header: React.FC = () => {
             NLQ
           </span>
         </Button>
+
+        {/* System Health Status Indicator */}
+        <Link
+          href="/api/health"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Inspect live system and database telemetry"
+          className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-slate-800 bg-slate-900 text-xs text-slate-300 hover:border-emerald-500/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+          </span>
+          <span className="text-xs font-medium text-slate-300">Live Engine</span>
+        </Link>
       </div>
 
       {/* Right: Role Switcher & User Profile */}

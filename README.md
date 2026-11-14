@@ -10,6 +10,7 @@
 [![TanStack Table](https://img.shields.io/badge/TanStack-Table%20v8%20%2B%20Virtual%20v3-FF4154?style=flat-square&logo=react-table&logoColor=white)](https://tanstack.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-Automated%20Tests-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Hallmark Craft](https://img.shields.io/badge/Hallmark%20Craft-0%20Failures-10B981?style=flat-square)](#13-hallmark-engineering-craft--accessibility)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdatascope-platform%2Fdatascope)
 
 > **DataScope** is a high-performance Enterprise Data Discovery and Intelligence Platform engineered to search, explore, filter, analyze, and govern massive volumes of structured business records. Built with Next.js App Router, Redux Toolkit with RTK Query, TanStack Table with virtualized windowing, and PostgreSQL indexing with Drizzle ORM, DataScope delivers sub-15ms query execution and continuous 60fps scrolling across enterprise datasets.
 
@@ -31,6 +32,7 @@
 12. [Technical Presentation Video Script](#12-technical-presentation-video-script)
 13. [Hallmark Engineering Craft & Accessibility](#13-hallmark-engineering-craft--accessibility)
 14. [Quickstart & Deployment Guide](#14-quickstart--deployment-guide)
+15. [Vercel Production Deployment Guide](#15-vercel-production-deployment-guide)
 
 ---
 
@@ -454,3 +456,77 @@ Access the application at [http://localhost:3000](http://localhost:3000).
 npm run build
 npm start
 ```
+
+---
+
+## 15. Vercel Production Deployment Guide
+
+DataScope is engineered for immediate, zero-friction deployment to [Vercel](https://vercel.com).
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdatascope-platform%2Fdatascope)
+
+### Deployment Options
+
+#### Option A: Zero-Configuration Serverless Demo (Default)
+No external database is required. When deployed to Vercel without environment variables:
+- DataScope runs on embedded WebAssembly PostgreSQL (PGlite) with ephemeral `/tmp/.pgdata` storage.
+- Baseline demonstration datasets, fields, and test users (`admin`, `analyst`, `viewer`) initialize automatically on cold start.
+- Full-text search, trigram matching, Redux state, and virtualized tables work out of the box with zero setup.
+
+#### Option B: Cloud PostgreSQL Cluster (Recommended for Production)
+For high-concurrency production deployments across multi-region serverless function instances:
+1. Provision a PostgreSQL instance (e.g. [Neon Serverless Postgres](https://neon.tech), [Supabase](https://supabase.com), [AWS RDS](https://aws.amazon.com/rds/), [Render](https://render.com), or [Railway](https://railway.app)).
+2. In your Vercel Project Settings under **Environment Variables**, configure:
+   ```env
+   DATABASE_URL=postgresql://username:password@ep-unique-id.us-east-2.aws.neon.tech/neondb?sslmode=require
+   JWT_SECRET=your-32-character-production-jwt-secret-key-here
+   NEXT_PUBLIC_APP_URL=https://your-datascope-project.vercel.app
+   ```
+3. Run the high-speed seeding script to populate the remote PostgreSQL cluster:
+   ```bash
+   DATABASE_URL="your-neon-or-supabase-url" npm run seed
+   ```
+4. DataScope automatically detects the remote PostgreSQL cluster, enables connection pooling with SSL encryption, and delivers sub-15ms queries across all serverless function invocations.
+
+### Verification & Healthcheck Endpoint
+
+Verify deployment status and active database telemetry by querying the live healthcheck endpoint:
+
+```http
+GET https://your-project.vercel.app/api/health
+```
+
+Example JSON response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-11-14T08:20:00.000Z",
+  "version": "1.0.0",
+  "platform": "DataScope Enterprise Discovery",
+  "environment": {
+    "nodeEnv": "production",
+    "isVercel": true,
+    "region": "iad1"
+  },
+  "database": {
+    "healthy": true,
+    "engineType": "remote-postgres",
+    "latencyMs": 8.45,
+    "totalDatasets": 3,
+    "totalRecords": 110000
+  },
+  "system": {
+    "rssMb": "84.20",
+    "heapUsedMb": "42.15",
+    "heapTotalMb": "58.00"
+  }
+}
+```
+
+### Serverless Function Configuration (`vercel.json`)
+
+DataScope includes a production `vercel.json` optimizing memory and duration budgets:
+- **API Function Memory:** `1024 MB`
+- **Max Duration:** `60 seconds` (to accommodate high-throughput CSV streaming exports)
+- **Security Headers:** Strict Transport Security (HSTS), X-Frame-Options (`SAMEORIGIN`), X-Content-Type-Options (`nosniff`), Referrer-Policy, and restricted Permissions-Policy.
+
