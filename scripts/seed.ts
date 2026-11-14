@@ -1,4 +1,4 @@
-import { initDatabase, getRawClient } from '../src/lib/db';
+import { initDatabase, getRawClient, executeSql } from '../src/lib/db';
 import bcrypt from 'bcryptjs';
 
 async function seed() {
@@ -191,7 +191,7 @@ async function seed() {
       );
     }
 
-    await client.exec(`
+    await executeSql(client, `
       INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata)
       VALUES ${valueStrings.join(',\n')}
       ON CONFLICT (id) DO NOTHING;
@@ -219,7 +219,7 @@ async function seed() {
       `('${id}', 'ds-telemetry-02', '${key}', '${title}', 'Telemetry', '${status}', ${cpuUsage}, 'Global Cloud', 'Multi-Region', '${recDate}', '{"cpuUsage": ${cpuUsage}, "node": "${node}"}')`
     );
   }
-  await client.exec(`
+  await executeSql(client, `
     INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata)
     VALUES ${telemetryValues.join(',\n')}
     ON CONFLICT (id) DO NOTHING;
