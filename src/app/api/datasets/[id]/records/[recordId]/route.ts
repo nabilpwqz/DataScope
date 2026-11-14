@@ -6,6 +6,8 @@ import { getRolePermissions } from '@/lib/auth/rbac';
 import { DatasetRecord, RecordHistoryItem, RecordRelationship, UserRole } from '@/types';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string; recordId: string } }

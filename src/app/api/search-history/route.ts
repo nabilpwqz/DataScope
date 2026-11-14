@@ -4,6 +4,8 @@ import { verifyToken } from '@/lib/auth/jwt';
 import { SearchHistoryEntry } from '@/types';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);

@@ -3,6 +3,8 @@ import { getRawClient } from '@/lib/db';
 import { queryCache } from '@/lib/cache/lru-cache';
 import { PerformanceMetric } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const client = await getRawClient();

@@ -6,6 +6,8 @@ import { getRolePermissions } from '@/lib/auth/rbac';
 import { UserRole } from '@/types';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }

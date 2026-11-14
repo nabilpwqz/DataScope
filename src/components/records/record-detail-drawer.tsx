@@ -71,18 +71,18 @@ export const RecordDetailDrawer: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm animate-in fade-in-50">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black/75 motion-safe:animate-in motion-safe:fade-in-50">
       <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
-        <div className="w-screen max-w-xl bg-slate-950 border-l border-slate-800 shadow-2xl flex flex-col">
+        <div className="w-screen max-w-xl bg-slate-950 border-l border-slate-800 flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/20 text-blue-400 font-mono font-bold text-sm border border-blue-500/30">
+              <div className="flex h-10 w-10 items-center justify-center rounded bg-emerald-600/20 text-emerald-400 font-mono font-bold text-sm border border-emerald-500/30">
                 <FileText className="h-5 w-5" />
               </div>
               <div className="flex flex-col">
-                <span className="font-mono text-xs text-blue-400">
-                  {record?.recordKey || 'Loading record...'}
+                <span className="font-mono text-xs text-emerald-400">
+                  {record?.recordKey || 'Loading record…'}
                 </span>
                 <h2 className="text-base font-semibold text-slate-100 truncate max-w-xs">
                   {record?.title || 'Record Inspector'}
@@ -92,19 +92,19 @@ export const RecordDetailDrawer: React.FC = () => {
 
             <button
               onClick={() => dispatch(closeRecordDetail())}
-              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-800 bg-slate-900/30 px-6 text-xs font-medium">
+          <div className="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-medium">
             <button
               onClick={() => setActiveTab('info')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors ${
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                 activeTab === 'info'
-                  ? 'border-blue-500 text-blue-400 font-semibold'
+                  ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -113,9 +113,9 @@ export const RecordDetailDrawer: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('relations')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors ${
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                 activeTab === 'relations'
-                  ? 'border-blue-500 text-blue-400 font-semibold'
+                  ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -124,9 +124,9 @@ export const RecordDetailDrawer: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors ${
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                 activeTab === 'history'
-                  ? 'border-blue-500 text-blue-400 font-semibold'
+                  ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
@@ -139,8 +139,8 @@ export const RecordDetailDrawer: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {isLoading ? (
               <div className="py-20 text-center space-y-3">
-                <div className="h-7 w-7 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mx-auto" />
-                <span className="text-xs text-slate-400 font-mono">Loading full record lineage...</span>
+                <div className="h-7 w-7 motion-safe:animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mx-auto" />
+                <span className="text-xs text-slate-400">Loading full record lineage…</span>
               </div>
             ) : !record ? (
               <div className="py-20 text-center text-xs text-slate-400">Record not found.</div>
@@ -150,10 +150,10 @@ export const RecordDetailDrawer: React.FC = () => {
                 {activeTab === 'info' && (
                   <div className="space-y-6">
                     {/* Status & Quick Action Banner */}
-                    <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
+                    <div className="p-4 rounded-lg border border-slate-800 bg-slate-900/60 flex items-center justify-between">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[11px] font-mono text-slate-400 uppercase">
-                          Current Lifecycle Status
+                        <span className="text-xs text-slate-400">
+                          Current lifecycle status
                         </span>
                         <div className="flex items-center gap-2">
                           <Badge
@@ -265,10 +265,10 @@ export const RecordDetailDrawer: React.FC = () => {
 
                     {/* Extensible JSON Metadata */}
                     <div className="space-y-2">
-                      <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider font-mono">
-                        Extended JSON Attributes (metadata)
+                      <span className="text-xs font-semibold text-slate-300">
+                        Extended JSON attributes (metadata)
                       </span>
-                      <pre className="p-4 rounded-lg border border-slate-800 bg-slate-900/90 text-xs font-mono text-slate-300 overflow-x-auto">
+                      <pre className="p-4 rounded-lg border border-slate-800 bg-slate-900 text-xs font-mono text-slate-300 overflow-x-auto">
                         {JSON.stringify(record.metadata, null, 2)}
                       </pre>
                     </div>
@@ -289,14 +289,14 @@ export const RecordDetailDrawer: React.FC = () => {
                           className="p-3 rounded-lg border border-slate-800 bg-slate-900/50 flex items-center justify-between hover:border-slate-700 transition-colors"
                         >
                           <div className="flex flex-col">
-                            <span className="text-[10px] font-mono uppercase text-indigo-400">
+                            <span className="text-xs capitalize text-emerald-400">
                               {rel.relationshipType.replace(/_/g, ' ')}
                             </span>
                             <span className="text-sm font-semibold text-slate-100">
                               {rel.targetRecord?.title || rel.targetRecordId}
                             </span>
-                            <span className="text-xs text-slate-400 font-mono">
-                              Key: {rel.targetRecord?.recordKey || '-'} &bull; {rel.targetRecord?.country}
+                            <span className="text-xs text-slate-400">
+                              Key: <code className="font-mono text-emerald-400">{rel.targetRecord?.recordKey || '-'}</code> | {rel.targetRecord?.country}
                             </span>
                           </div>
 

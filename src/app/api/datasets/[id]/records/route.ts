@@ -5,6 +5,8 @@ import { canAccessDataset } from '@/lib/auth/rbac';
 import { getRawClient } from '@/lib/db';
 import { SearchQueryRequest, UserRole } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const datasetId = params.id;

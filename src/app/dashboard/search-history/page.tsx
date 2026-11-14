@@ -8,13 +8,13 @@ import { useGetSearchHistoryQuery } from '@/store/services/dataScopeApi';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/utils';
-import { History, Play, Clock, Search, Database, ArrowRight } from 'lucide-react';
+import { History, Play, Search } from 'lucide-react';
 
 export default function SearchHistoryPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { selectedDatasetId } = useAppSelector((state) => state.dataset);
-  const { data: history = [], isLoading } = useGetSearchHistoryQuery(selectedDatasetId);
+  const { data: history = [] } = useGetSearchHistoryQuery(selectedDatasetId);
 
   const handleRerun = (queryText: string, searchType: string) => {
     dispatch(setSearch(queryText));
@@ -29,7 +29,7 @@ export default function SearchHistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <History className="h-5 w-5 text-indigo-400" />
+            <History className="h-5 w-5 text-emerald-400" />
             <span>Search Query History &amp; Audit</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -39,34 +39,34 @@ export default function SearchHistoryPage() {
       </div>
 
       {/* History Table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/40 overflow-hidden">
+      <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden">
         <table className="w-full text-left text-xs border-collapse">
-          <thead className="bg-slate-900/80 border-b border-slate-800 text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+          <thead className="bg-slate-950 border-b border-slate-800 text-xs font-semibold text-slate-300">
             <tr>
               <th className="px-4 py-3">Timestamp</th>
-              <th className="px-4 py-3">Query / Filter Expression</th>
+              <th className="px-4 py-3">Query / filter expression</th>
               <th className="px-4 py-3">Engine</th>
               <th className="px-4 py-3 text-right">Matches</th>
-              <th className="px-4 py-3 text-right">Execution Latency</th>
-              <th className="px-4 py-3 text-right">Rerun</th>
+              <th className="px-4 py-3 text-right">Execution latency</th>
+              <th className="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/60 font-sans">
             {history.map((entry) => (
-              <tr key={entry.id} className="hover:bg-slate-900/60 transition-colors">
-                <td className="px-4 py-3 text-slate-400 font-mono">
+              <tr key={entry.id} className="hover:bg-slate-800/50 transition-colors">
+                <td className="px-4 py-3 text-slate-400 font-mono text-[11px]">
                   {formatDateTime(entry.createdAt)}
                 </td>
                 <td className="px-4 py-3 font-semibold text-slate-100 flex items-center gap-2">
-                  <Search className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                  <Search className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
                   <span>&quot;{entry.queryText}&quot;</span>
                 </td>
                 <td className="px-4 py-3">
-                  <Badge variant="purple" size="sm">
-                    {entry.searchType.toUpperCase()}
+                  <Badge variant="emerald" size="sm">
+                    {entry.searchType}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-right font-mono font-medium text-blue-400">
+                <td className="px-4 py-3 text-right font-mono font-medium text-slate-200">
                   {entry.resultCount.toLocaleString()}
                 </td>
                 <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-400">
@@ -77,7 +77,7 @@ export default function SearchHistoryPage() {
                     variant="outline"
                     size="xs"
                     onClick={() => handleRerun(entry.queryText, entry.searchType)}
-                    className="text-[11px] gap-1"
+                    className="text-xs gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     <span>Rerun</span>
                     <Play className="h-3 w-3 fill-current" />
@@ -91,4 +91,3 @@ export default function SearchHistoryPage() {
     </div>
   );
 }
-

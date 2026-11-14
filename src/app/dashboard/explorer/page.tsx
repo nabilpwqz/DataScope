@@ -148,11 +148,11 @@ export default function DataExplorerPage() {
                 onChange={handleSearchChange}
                 placeholder="Search across 100,000+ indexed records (e.g. Siemens, Germany, Logistics)..."
                 icon={<Search className="h-4 w-4 text-slate-400" />}
-                className="bg-slate-950/80 border-slate-700 text-sm h-9"
+                className="bg-slate-950 border-slate-700 text-sm h-9"
               />
               {isFetching && (
                 <div className="absolute right-3 top-2.5">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                  <div className="h-4 w-4 motion-safe:animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
                 </div>
               )}
             </div>
@@ -161,7 +161,8 @@ export default function DataExplorerPage() {
             <select
               value={searchField}
               onChange={(e) => dispatch(setSearchField(e.target.value))}
-              className="h-9 rounded-md border border-slate-700 bg-slate-900 px-2.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+              aria-label="Filter search by specific field"
+              className="h-9 rounded-md border border-slate-700 bg-slate-900 px-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
             >
               <option value="">All Fields</option>
               <option value="title">Company Name</option>
@@ -171,16 +172,16 @@ export default function DataExplorerPage() {
             </select>
 
             {/* Search Engine Strategy Selector */}
-            <div className="flex items-center rounded-lg border border-slate-800 bg-slate-950 p-1">
-              <span className="text-[10px] uppercase font-mono text-slate-500 px-1.5 hidden sm:inline">
+            <div className="flex items-center rounded-md border border-slate-800 bg-slate-950 p-1">
+              <span className="text-xs text-slate-400 px-1.5 hidden sm:inline">
                 Engine:
               </span>
               <button
                 onClick={() => dispatch(setSearchType('hybrid'))}
                 title="Hybrid: Full-text search + Substring matching"
-                className={`px-2 py-0.5 text-xs font-mono font-medium rounded transition-colors ${
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   searchType === 'hybrid'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-emerald-600 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -189,9 +190,9 @@ export default function DataExplorerPage() {
               <button
                 onClick={() => dispatch(setSearchType('fts'))}
                 title="PostgreSQL Full-Text Search (tsvector @@ tsquery)"
-                className={`px-2 py-0.5 text-xs font-mono font-medium rounded transition-colors ${
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   searchType === 'fts'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-slate-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -200,9 +201,9 @@ export default function DataExplorerPage() {
               <button
                 onClick={() => dispatch(setSearchType('trgm'))}
                 title="PostgreSQL Trigram Search (similarity & fuzzy typo matching)"
-                className={`px-2 py-0.5 text-xs font-mono font-medium rounded transition-colors ${
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   searchType === 'trgm'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-emerald-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -211,9 +212,9 @@ export default function DataExplorerPage() {
               <button
                 onClick={() => dispatch(setSearchType('exact'))}
                 title="Exact substring match (ILIKE)"
-                className={`px-2 py-0.5 text-xs font-mono font-medium rounded transition-colors ${
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                   searchType === 'exact'
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 font-semibold'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >

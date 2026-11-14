@@ -140,7 +140,7 @@ export interface SavedView {
   isShared: boolean;
   authorName?: string;
   searchQuery?: string;
-  searchType?: string;
+  searchType?: 'hybrid' | 'fts' | 'trgm' | 'exact';
   filterConfig: FilterCondition[];
   filterLogicalOperator?: 'AND' | 'OR';
   sortConfig: SortCondition[];

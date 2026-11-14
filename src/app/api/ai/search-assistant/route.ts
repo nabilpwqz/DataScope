@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AISearchAssistant } from '@/lib/search/ai-assistant';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { prompt, datasetId } = await req.json();

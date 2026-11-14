@@ -55,6 +55,22 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any }
       const dataDir = process.env.PG_DATA_DIR || path.join(process.cwd(), '.pgdata');
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
+      } else {
+        // Clean up stale lock and postmaster pid files if left by previous abnormal process exits
+        try {
+          const pidFile = path.join(dataDir, 'postmaster.pid');
+          if (fs.existsSync(pidFile)) {
+            fs.unlinkSync(pidFile);
+          }
+          const files = fs.readdirSync(dataDir);
+          for (const f of files) {
+            if (f.includes('.lock') || f.startsWith('.s.PGSQL')) {
+              try {
+                fs.unlinkSync(path.join(dataDir, f));
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
       }
 
       const pglite = new PGlite(dataDir, {

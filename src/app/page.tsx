@@ -12,54 +12,53 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
-  CheckCircle2,
   Server,
-  Sparkles,
   BarChart3,
   Lock,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-emerald-600 selection:text-white">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950/80 px-6 backdrop-blur md:px-12">
+      <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950 px-6 md:px-12">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md shadow-blue-500/20 text-white font-bold text-lg">
+          <div className="flex h-9 w-9 items-center justify-center rounded bg-emerald-600 text-white font-bold text-lg shadow-sm">
             <Zap className="h-5 w-5" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold tracking-tight text-white text-base">DataScope</span>
-            <span className="text-[10px] text-blue-400 font-mono tracking-wider uppercase">
-              Enterprise Data Intelligence
+          <div className="flex flex-col text-left">
+            <span className="font-bold text-white text-base leading-tight">DataScope</span>
+            <span className="text-xs text-slate-400">
+              Enterprise data discovery platform
             </span>
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-6 text-xs text-slate-400 font-medium">
-          <Link href="#architecture" className="hover:text-white transition-colors">
+        <nav aria-label="Main navigation" className="hidden md:flex items-center gap-6 text-xs text-slate-400 font-medium">
+          <Link href="#architecture" className="hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1">
             Architecture
           </Link>
-          <Link href="#search-engine" className="hover:text-white transition-colors">
-            Search Engine
+          <Link href="#search-engine" className="hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1">
+            Search engine
           </Link>
-          <Link href="#data-table" className="hover:text-white transition-colors">
-            Virtual Table
+          <Link href="#data-table" className="hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1">
+            Virtual table
           </Link>
-          <Link href="#benchmarks" className="hover:text-white transition-colors">
+          <Link href="#benchmarks" className="hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1">
             Benchmarks
           </Link>
-        </div>
+        </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/login">
+          <Link href="/login" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">
             <Button variant="ghost" size="sm" className="text-xs text-slate-300">
-              Sign In
+              Sign in
             </Button>
           </Link>
-          <Link href="/dashboard">
+          <Link href="/dashboard" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">
             <Button variant="primary" size="sm" className="text-xs font-semibold gap-1.5">
-              <span>Launch Platform</span>
+              <span>Launch platform</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>
@@ -67,60 +66,124 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative px-6 py-20 md:py-28 max-w-6xl mx-auto w-full text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-950/40 text-blue-300 text-xs font-medium animate-in fade-in-50">
-          <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-          <span>High-Throughput Discovery Across 100,000+ Business Records</span>
-          <Badge variant="purple" size="sm">
-            PostgreSQL GIN Indexed
-          </Badge>
-        </div>
-
-        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
-          Explore, Search, and Analyze <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            Millions of Structured Records
-          </span>{' '}
-          at 60fps
+      <section className="relative px-6 py-16 md:py-24 max-w-6xl mx-auto w-full text-center space-y-6">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white max-w-2xl mx-auto leading-tight">
+          Explore enterprise data at scale
         </h1>
 
-        <p className="text-sm md:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          Engineered for data-intensive enterprise workloads. Pushdown SQL filtering, multi-engine full-text discovery, Redux Toolkit state architecture, and sub-10ms query execution.
+        <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
+          Search, filter, and analyze indexed business records with sub-10ms query execution.
         </p>
 
-        {/* Hero CTAs */}
+        {/* Hero Actions */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <Link href="/dashboard/explorer">
-            <Button variant="primary" size="lg" className="text-sm font-semibold gap-2 shadow-lg shadow-blue-600/30">
+          <Link href="/dashboard/explorer" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">
+            <Button variant="primary" size="lg" className="text-sm font-semibold gap-2">
               <Table className="h-4 w-4" />
-              <span>Explore 100,000+ Live Records</span>
+              <span>Explore live records</span>
             </Button>
           </Link>
-          <Link href="/dashboard/architecture">
-            <Button variant="outline" size="lg" className="text-sm font-medium gap-2 text-slate-200 border-slate-700 bg-slate-900/60">
-              <Server className="h-4 w-4 text-purple-400" />
-              <span>Review 8+ ADRs &amp; Architecture</span>
+          <Link href="/dashboard/architecture" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">
+            <Button variant="outline" size="lg" className="text-sm font-medium gap-2 text-slate-200 border-slate-700 bg-slate-900">
+              <Server className="h-4 w-4 text-emerald-400" />
+              <span>Review architecture and ADRs</span>
             </Button>
           </Link>
         </div>
 
-        {/* Live Metrics Ribbon */}
-        <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-center">
+        {/* Live Metrics Grid */}
+        <div className="pt-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-left">
+          <div className="p-4 rounded-lg border border-slate-800 bg-slate-900/60">
             <span className="text-2xl font-bold font-mono text-white">110,000+</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">Seeded Enterprise Rows</p>
+            <p className="text-xs text-slate-400 mt-1">Seeded enterprise rows</p>
           </div>
-          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-center">
+          <div className="p-4 rounded-lg border border-slate-800 bg-slate-900/60">
             <span className="text-2xl font-bold font-mono text-emerald-400">&lt; 8 ms</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">Indexed Search Latency</p>
+            <p className="text-xs text-slate-400 mt-1">Indexed search latency</p>
           </div>
-          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-center">
-            <span className="text-2xl font-bold font-mono text-blue-400">60 FPS</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">TanStack Virtual Scrolling</p>
+          <div className="p-4 rounded-lg border border-slate-800 bg-slate-900/60">
+            <span className="text-2xl font-bold font-mono text-slate-100">60 FPS</span>
+            <p className="text-xs text-slate-400 mt-1">TanStack virtual scrolling</p>
           </div>
-          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 text-center">
-            <span className="text-2xl font-bold font-mono text-purple-400">3 Roles</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">RBAC &amp; Dataset Security</p>
+          <div className="p-4 rounded-lg border border-slate-800 bg-slate-900/60">
+            <span className="text-2xl font-bold font-mono text-emerald-400">3 Roles</span>
+            <p className="text-xs text-slate-400 mt-1">Granular RBAC security</p>
+          </div>
+        </div>
+
+        {/* Live Interactive Table Preview Frame */}
+        <div className="pt-8 max-w-4xl mx-auto w-full text-left">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/90 overflow-hidden">
+            {/* Header of mock window */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-950 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-700 inline-block" />
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-700 inline-block" />
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-700 inline-block" />
+                <span className="ml-2 text-slate-400">dataset: <code className="font-mono text-slate-300">global-sales</code> (100,000 rows)</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-400">
+                <span>Query: <strong className="font-mono text-emerald-400">4.2ms</strong></span>
+                <span>Cache: <strong className="font-semibold text-slate-200">HIT</strong></span>
+              </div>
+            </div>
+
+            {/* Simulated Live Table Header & Rows */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-900/80 text-slate-400">
+                    <th className="py-2.5 px-4 font-medium">Account key</th>
+                    <th className="py-2.5 px-4 font-medium">Company name</th>
+                    <th className="py-2.5 px-4 font-medium">Segment</th>
+                    <th className="py-2.5 px-4 font-medium">Status</th>
+                    <th className="py-2.5 px-4 font-medium">Annual revenue</th>
+                    <th className="py-2.5 px-4 font-medium">Country</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800 text-slate-300">
+                  <tr className="hover:bg-slate-800/40">
+                    <td className="py-2.5 px-4 font-mono text-emerald-400">ACC-0000001</td>
+                    <td className="py-2.5 px-4 font-medium text-slate-100">Global Acrobat Logistics Holdings</td>
+                    <td className="py-2.5 px-4">Enterprise</td>
+                    <td className="py-2.5 px-4"><Badge variant="success" size="sm">Active</Badge></td>
+                    <td className="py-2.5 px-4 font-mono">$1,850,000</td>
+                    <td className="py-2.5 px-4">Germany</td>
+                  </tr>
+                  <tr className="hover:bg-slate-800/40">
+                    <td className="py-2.5 px-4 font-mono text-emerald-400">ACC-0000002</td>
+                    <td className="py-2.5 px-4 font-medium text-slate-100">Apex Data Systems Solutions</td>
+                    <td className="py-2.5 px-4">Mid-Market</td>
+                    <td className="py-2.5 px-4"><Badge variant="success" size="sm">Active</Badge></td>
+                    <td className="py-2.5 px-4 font-mono">$285,000</td>
+                    <td className="py-2.5 px-4">United States</td>
+                  </tr>
+                  <tr className="hover:bg-slate-800/40">
+                    <td className="py-2.5 px-4 font-mono text-emerald-400">ACC-0000003</td>
+                    <td className="py-2.5 px-4 font-medium text-slate-100">Integrated Aura Healthtech Ventures</td>
+                    <td className="py-2.5 px-4">Tier 1 Partner</td>
+                    <td className="py-2.5 px-4"><Badge variant="warning" size="sm">Pending</Badge></td>
+                    <td className="py-2.5 px-4 font-mono">$450,000</td>
+                    <td className="py-2.5 px-4">United Kingdom</td>
+                  </tr>
+                  <tr className="hover:bg-slate-800/40">
+                    <td className="py-2.5 px-4 font-mono text-emerald-400">ACC-0000004</td>
+                    <td className="py-2.5 px-4 font-medium text-slate-100">NextGen Bavaria Robotics Technologies</td>
+                    <td className="py-2.5 px-4">Enterprise</td>
+                    <td className="py-2.5 px-4"><Badge variant="success" size="sm">Active</Badge></td>
+                    <td className="py-2.5 px-4 font-mono">$3,200,000</td>
+                    <td className="py-2.5 px-4">Germany</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="px-4 py-2.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <span>Showing 4 of 100,000 records</span>
+              <Link href="/dashboard/explorer" className="text-emerald-400 hover:text-emerald-300 font-medium">
+                Open full virtualized explorer
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -129,7 +192,7 @@ export default function LandingPage() {
       <section id="architecture" className="py-16 px-6 max-w-6xl mx-auto w-full space-y-12">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            Engineered for Industrial Data Discovery
+            Engineered for industrial data discovery
           </h2>
           <p className="text-xs text-slate-400 max-w-xl mx-auto">
             Architectural solutions designed to eliminate frontend bottlenecks, avoid memory leaks, and optimize PostgreSQL queries.
@@ -137,85 +200,88 @@ export default function LandingPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-            <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400 w-fit">
+          <div className="p-6 rounded-lg border border-slate-800 bg-slate-900 space-y-3">
+            <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-400 w-fit">
               <Database className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-semibold text-white">Pushdown Server Filtering</h3>
+            <h3 className="text-base font-semibold text-white">Pushdown server filtering</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Never ship millions of rows to the browser. Multi-condition AND/OR rules, date ranges, and numeric thresholds are compiled into parameterized SQL using composite B-Tree indexes.
+              Never ship millions of rows to the browser. Multi-condition AND/OR rules, date ranges, and numeric thresholds compile into parameterized SQL using composite indexes.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-            <div className="p-2.5 rounded-lg bg-indigo-500/10 text-indigo-400 w-fit">
+          <div className="p-6 rounded-lg border border-slate-800 bg-slate-900 space-y-3">
+            <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-400 w-fit">
               <Search className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-semibold text-white">Hybrid PostgreSQL Search</h3>
+            <h3 className="text-base font-semibold text-white">Hybrid PostgreSQL search</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Combines PostgreSQL native Full-Text Search (<code className="font-mono text-blue-300">tsvector</code> with GIN indexing) and Trigram similarity (<code className="font-mono text-purple-300">pg_trgm</code>) for typo-tolerant queries.
+              Combines native full-text search with tsvector and GIN indexing plus trigram similarity for typo-tolerant fuzzy discovery.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-            <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 w-fit">
+          <div className="p-6 rounded-lg border border-slate-800 bg-slate-900 space-y-3">
+            <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-400 w-fit">
               <Table className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-semibold text-white">Virtualized 60fps Data Table</h3>
+            <h3 className="text-base font-semibold text-white">Virtualized 60fps data table</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              DOM virtualization via TanStack Virtual ensures only visible rows are rendered. Features column sorting, visibility toggles, cell search highlighting, and multi-row selection.
+              DOM virtualization via TanStack Virtual ensures only visible rows render. Features multi-column sorting, column resizing, visibility toggles, and row selection.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-            <div className="p-2.5 rounded-lg bg-purple-500/10 text-purple-400 w-fit">
+          <div className="p-6 rounded-lg border border-slate-800 bg-slate-900 space-y-3">
+            <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-400 w-fit">
               <Zap className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-semibold text-white">Two-Tier Caching Architecture</h3>
+            <h3 className="text-base font-semibold text-white">Two-tier caching architecture</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Client-side RTK Query request deduplication prevents duplicate network flights. Server-side LRU cache serves identical repeated queries in sub-1ms response times.
+              Client-side RTK Query request deduplication prevents redundant network flights. Server-side LRU cache serves identical repeat queries in sub-1ms response times.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-            <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-400 w-fit">
-              <Sparkles className="h-5 w-5" />
+          <div className="p-6 rounded-lg border border-slate-800 bg-slate-900 space-y-3">
+            <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-400 w-fit">
+              <SlidersHorizontal className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-semibold text-white">AI Search Assistant (NLQ)</h3>
+            <h3 className="text-base font-semibold text-white">Visual query builder and NLQ</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Allows analysts to query data using natural language (&quot;Find active customers from Germany with revenue greater than $10,000&quot;), validating conditions before SQL execution.
+              Allows analysts to construct complex boolean rule trees or query data using natural language, validating all conditions against field permissions before execution.
             </p>
           </div>
 
-          <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/40 space-y-3">
-            <div className="p-2.5 rounded-lg bg-cyan-500/10 text-cyan-400 w-fit">
+          <div className="p-6 rounded-lg border border-slate-800 bg-slate-900 space-y-3">
+            <div className="p-2.5 rounded bg-emerald-500/10 text-emerald-400 w-fit">
               <ShieldCheck className="h-5 w-5" />
             </div>
-            <h3 className="text-base font-semibold text-white">Granular Role-Based Access</h3>
+            <h3 className="text-base font-semibold text-white">Granular role-based access</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Three distinct personas: Administrator, Data Analyst, and Viewer. Dataset-level permission checks prevent unauthorized access even if request parameters are manipulated.
+              Three personas: Administrator, Data Analyst, and Viewer. Server-enforced dataset permissions prevent unauthorized record access and unauthorized exports.
             </p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-800 bg-slate-950 py-8 px-6 text-center text-xs text-slate-500">
+      <footer className="mt-auto border-t border-slate-800 bg-slate-950 py-8 px-6 text-xs text-slate-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-blue-400" />
-            <span className="font-bold text-slate-300">DataScope</span> &bull; Enterprise Data Discovery Platform
+            <div className="h-4 w-4 rounded bg-emerald-600 flex items-center justify-center text-white">
+              <Zap className="h-2.5 w-2.5" />
+            </div>
+            <span className="font-semibold text-slate-300">DataScope</span>
+            <span className="text-slate-600">|</span>
+            <span>Enterprise data discovery platform</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] font-mono">
+          <div className="flex items-center gap-4 text-xs text-slate-400">
             <span>Next.js 14 App Router</span>
-            <span>&bull;</span>
-            <span>Redux Toolkit + RTK Query</span>
-            <span>&bull;</span>
-            <span>PostgreSQL + Drizzle ORM</span>
+            <span className="text-slate-600">|</span>
+            <span>Redux Toolkit and RTK Query</span>
+            <span className="text-slate-600">|</span>
+            <span>PostgreSQL and Drizzle ORM</span>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-

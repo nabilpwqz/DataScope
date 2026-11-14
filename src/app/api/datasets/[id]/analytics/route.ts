@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
 import { AnalyticsSummary } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }

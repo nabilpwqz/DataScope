@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SearchEngine } from '@/lib/search/search-engine';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const datasetId = 'ds-sales-01';

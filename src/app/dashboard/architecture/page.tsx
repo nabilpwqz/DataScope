@@ -271,7 +271,7 @@ export default function ArchitectureHubPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Server className="h-5 w-5 text-purple-400" />
+            <Server className="h-5 w-5 text-emerald-400" />
             <span>Architecture &amp; Technical Decision Records (ADRs)</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -279,18 +279,18 @@ export default function ArchitectureHubPage() {
           </p>
         </div>
 
-        <Badge variant="purple" size="md">
+        <Badge variant="success" size="md">
           8+ Major Technical ADRs Documented
         </Badge>
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex border-b border-slate-800 text-xs font-medium">
+      <div className="flex border-b border-slate-800 text-xs font-medium overflow-x-auto">
         <button
           onClick={() => setActiveTab('adrs')}
-          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             activeTab === 'adrs'
-              ? 'border-purple-500 text-purple-400 font-semibold'
+              ? 'border-emerald-500 text-emerald-400 font-semibold'
               : 'border-transparent text-slate-400 hover:text-white'
           }`}
         >
@@ -299,9 +299,9 @@ export default function ArchitectureHubPage() {
         </button>
         <button
           onClick={() => setActiveTab('dataFetching')}
-          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             activeTab === 'dataFetching'
-              ? 'border-purple-500 text-purple-400 font-semibold'
+              ? 'border-emerald-500 text-emerald-400 font-semibold'
               : 'border-transparent text-slate-400 hover:text-white'
           }`}
         >
@@ -310,9 +310,9 @@ export default function ArchitectureHubPage() {
         </button>
         <button
           onClick={() => setActiveTab('searchComparison')}
-          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             activeTab === 'searchComparison'
-              ? 'border-purple-500 text-purple-400 font-semibold'
+              ? 'border-emerald-500 text-emerald-400 font-semibold'
               : 'border-transparent text-slate-400 hover:text-white'
           }`}
         >
@@ -321,9 +321,9 @@ export default function ArchitectureHubPage() {
         </button>
         <button
           onClick={() => setActiveTab('scaling')}
-          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 ${
+          className={`py-3 px-4 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             activeTab === 'scaling'
-              ? 'border-purple-500 text-purple-400 font-semibold'
+              ? 'border-emerald-500 text-emerald-400 font-semibold'
               : 'border-transparent text-slate-400 hover:text-white'
           }`}
         >
@@ -337,8 +337,8 @@ export default function ArchitectureHubPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: ADR List */}
           <div className="space-y-2">
-            <span className="text-[11px] font-mono uppercase text-slate-400 font-bold">
-              Architectural Decisions:
+            <span className="text-xs font-semibold text-slate-300">
+              Architectural decisions:
             </span>
             <div className="space-y-1.5">
               {adrList.map((adr) => {
@@ -347,14 +347,14 @@ export default function ArchitectureHubPage() {
                   <button
                     key={adr.id}
                     onClick={() => setSelectedAdr(adr)}
-                    className={`w-full text-left p-3 rounded-lg border transition-all text-xs flex flex-col gap-1 ${
+                    className={`w-full text-left p-3 rounded-lg border transition-colors text-xs flex flex-col gap-1 focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                       isSelected
-                        ? 'bg-purple-950/40 border-purple-500/60 ring-1 ring-purple-500/30'
+                        ? 'bg-slate-900 border-emerald-500/60 ring-1 ring-emerald-500/30'
                         : 'bg-slate-900/40 border-slate-800 hover:border-slate-700 hover:bg-slate-900/80'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-purple-400 font-bold">{adr.id}</span>
+                      <span className="font-mono text-emerald-400 font-bold">{adr.id}</span>
                       <Badge variant="success" size="sm">
                         {adr.status}
                       </Badge>
@@ -370,7 +370,7 @@ export default function ArchitectureHubPage() {
           <div className="lg:col-span-2 p-6 rounded-xl border border-slate-800 bg-slate-900/50 space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div>
-                <span className="font-mono text-xs text-purple-400 font-bold">{selectedAdr.id}</span>
+                <span className="font-mono text-xs text-emerald-400 font-bold">{selectedAdr.id}</span>
                 <h2 className="text-lg font-bold text-white mt-0.5">{selectedAdr.title}</h2>
               </div>
               <Badge variant="success" size="md">
@@ -380,8 +380,8 @@ export default function ArchitectureHubPage() {
 
             {/* Problem Statement */}
             <div className="space-y-1.5">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                1. Context &amp; Problem Statement
+              <h3 className="text-xs font-semibold text-slate-300">
+                1. Context and problem statement
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3 rounded-lg border border-slate-800">
                 {selectedAdr.problem}
@@ -390,8 +390,8 @@ export default function ArchitectureHubPage() {
 
             {/* Considered Alternatives */}
             <div className="space-y-1.5">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
-                2. Evaluated Alternatives
+              <h3 className="text-xs font-semibold text-slate-300">
+                2. Evaluated alternatives
               </h3>
               <ul className="space-y-1 text-xs text-slate-400 list-disc list-inside">
                 {selectedAdr.alternatives.map((alt, i) => (
@@ -402,14 +402,14 @@ export default function ArchitectureHubPage() {
 
             {/* Selected Approach */}
             <div className="space-y-1.5">
-              <h3 className="text-xs font-mono uppercase tracking-wider text-purple-400 font-semibold">
-                3. Selected Approach &amp; Justification
+              <h3 className="text-xs font-semibold text-emerald-400">
+                3. Selected approach and architectural justification
               </h3>
-              <p className="text-xs text-purple-200 leading-relaxed bg-purple-950/30 p-3 rounded-lg border border-purple-800/40">
-                <strong>Approach:</strong> {selectedAdr.selectedApproach}
+              <p className="text-xs text-slate-200 leading-relaxed bg-slate-950 p-3 rounded-lg border border-emerald-500/30">
+                <strong className="text-emerald-300">Approach:</strong> {selectedAdr.selectedApproach}
                 <br />
                 <br />
-                <strong>Reason:</strong> {selectedAdr.reason}
+                <strong className="text-emerald-300">Reason:</strong> {selectedAdr.reason}
               </p>
             </div>
 
@@ -420,7 +420,7 @@ export default function ArchitectureHubPage() {
                   <CheckCircle2 className="h-4 w-4" />
                   Key Advantages
                 </span>
-                <ul className="text-[11px] text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
                   {selectedAdr.advantages.map((adv, i) => (
                     <li key={i}>{adv}</li>
                   ))}
@@ -432,7 +432,7 @@ export default function ArchitectureHubPage() {
                   <AlertTriangle className="h-4 w-4" />
                   Trade-offs / Disadvantages
                 </span>
-                <ul className="text-[11px] text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
                   {selectedAdr.disadvantages.map((dis, i) => (
                     <li key={i}>{dis}</li>
                   ))}
@@ -443,8 +443,8 @@ export default function ArchitectureHubPage() {
             {/* Performance Implications & Future Limitations */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
               <div>
-                <span className="text-[11px] font-mono text-slate-400 uppercase font-semibold">
-                  Performance Impact:
+                <span className="text-xs text-slate-400 font-medium">
+                  Performance impact:
                 </span>
                 <p className="mt-1 text-xs text-slate-300 font-mono">
                   {selectedAdr.performanceImplications}
@@ -452,8 +452,8 @@ export default function ArchitectureHubPage() {
               </div>
 
               <div>
-                <span className="text-[11px] font-mono text-slate-400 uppercase font-semibold">
-                  Future Scale Boundary:
+                <span className="text-xs text-slate-400 font-medium">
+                  Future scale boundary:
                 </span>
                 <p className="mt-1 text-xs text-slate-300 font-mono">
                   {selectedAdr.futureLimitations}
@@ -473,7 +473,7 @@ export default function ArchitectureHubPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 1. Why did you select your data-fetching approach?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -482,7 +482,7 @@ export default function ArchitectureHubPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 2. Why RTK Query over Redux Async Thunks?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -491,7 +491,7 @@ export default function ArchitectureHubPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 3. What alternatives did you consider?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -500,7 +500,7 @@ export default function ArchitectureHubPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 4. How do you prevent unnecessary API calls?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -509,7 +509,7 @@ export default function ArchitectureHubPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 5. How do you handle multiple simultaneous requests?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -518,16 +518,16 @@ export default function ArchitectureHubPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 6. How do you manage stale data?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                We use RTK Query tag invalidation (<code className="text-blue-300">providesTags</code> / <code className="text-blue-300">invalidatesTags</code>) paired with a 60-second unused data retention period (<code className="text-blue-300">keepUnusedDataFor: 60</code>). Mutating a record automatically invalidates the dataset cache and triggers background revalidation.
+                We use RTK Query tag invalidation (<code className="text-emerald-300">providesTags</code> / <code className="text-emerald-300">invalidatesTags</code>) paired with a 60-second unused data retention period (<code className="text-emerald-300">keepUnusedDataFor: 60</code>). Mutating a record automatically invalidates the dataset cache and triggers background revalidation.
               </p>
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 7. How do you handle API failures?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -536,7 +536,7 @@ export default function ArchitectureHubPage() {
             </div>
 
             <div className="p-5 rounded-xl border border-slate-800 bg-slate-900/40 space-y-2">
-              <h3 className="text-xs font-bold text-white font-mono">
+              <h3 className="text-xs font-bold text-white">
                 8. How would your solution behave with millions of records?
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -560,12 +560,12 @@ export default function ArchitectureHubPage() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-950 border-b border-slate-800 text-[11px] font-mono text-slate-400 uppercase">
+                <thead className="bg-slate-950 border-b border-slate-800 text-xs font-semibold text-slate-400">
                   <tr>
                     <th className="p-3">Evaluation Dimension</th>
-                    <th className="p-3 text-indigo-400">PostgreSQL Full-Text Search (Selected)</th>
-                    <th className="p-3 text-purple-400">PostgreSQL Trigram (pg_trgm)</th>
-                    <th className="p-3 text-cyan-400">Elasticsearch / OpenSearch</th>
+                    <th className="p-3 text-emerald-400">PostgreSQL Full-Text Search (Selected)</th>
+                    <th className="p-3 text-slate-300">PostgreSQL Trigram (pg_trgm)</th>
+                    <th className="p-3 text-slate-400">Elasticsearch / OpenSearch</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-sans text-slate-300">
@@ -630,23 +630,23 @@ export default function ArchitectureHubPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 rounded-lg border border-slate-800 bg-slate-950 space-y-2">
-              <span className="font-mono text-xs text-blue-400 font-bold">Phase 1: Table Partitioning</span>
+              <span className="text-xs text-emerald-400 font-semibold">Phase 1: Table Partitioning</span>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Partition <code className="text-blue-300 font-mono">dataset_records</code> by range on <code className="text-blue-300 font-mono">record_date</code> (e.g. monthly or quarterly partitions) or by hash on <code className="text-blue-300 font-mono">dataset_id</code>. PostgreSQL partition pruning ensures only relevant partition trees are traversed.
+                Partition <code className="text-emerald-300 font-mono">dataset_records</code> by range on <code className="text-emerald-300 font-mono">record_date</code> (e.g. monthly or quarterly partitions) or by hash on <code className="text-emerald-300 font-mono">dataset_id</code>. PostgreSQL partition pruning ensures only relevant partition trees are traversed.
               </p>
             </div>
 
             <div className="p-4 rounded-lg border border-slate-800 bg-slate-950 space-y-2">
-              <span className="font-mono text-xs text-indigo-400 font-bold">Phase 2: Read Replicas &amp; Connection Pooling</span>
+              <span className="text-xs text-slate-200 font-semibold">Phase 2: Read Replicas &amp; Connection Pooling</span>
               <p className="text-xs text-slate-300 leading-relaxed">
                 Deploy PgBouncer for transaction connection pooling alongside read replicas. Analytical queries and full-text searches are routed to read-only replica pools, preventing discovery queries from starving transactional write throughput.
               </p>
             </div>
 
             <div className="p-4 rounded-lg border border-slate-800 bg-slate-950 space-y-2">
-              <span className="font-mono text-xs text-purple-400 font-bold">Phase 3: Keyset Cursor Ingestion</span>
+              <span className="text-xs text-emerald-400 font-semibold">Phase 3: Keyset Cursor Ingestion</span>
               <p className="text-xs text-slate-300 leading-relaxed">
-                For infinite scroll exports and streaming ETL, keyset cursors <code className="text-blue-300 font-mono">(record_date, id) &lt; ($1, $2)</code> achieve deterministic O(1) index seeks, completely eliminating OFFSET performance decay.
+                For infinite scroll exports and streaming ETL, keyset cursors <code className="text-emerald-300 font-mono">(record_date, id) &lt; ($1, $2)</code> achieve deterministic O(1) index seeks, completely eliminating OFFSET performance decay.
               </p>
             </div>
           </div>

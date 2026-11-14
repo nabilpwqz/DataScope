@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
 import { verifyToken } from '@/lib/auth/jwt';
 
+export const dynamic = 'force-dynamic';
+
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const viewId = params.id;

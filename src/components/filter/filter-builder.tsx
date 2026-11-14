@@ -96,12 +96,12 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="flex flex-col w-full max-w-3xl rounded-xl border border-slate-800 bg-slate-950 shadow-2xl overflow-hidden animate-in fade-in-50 zoom-in-95">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div className="flex flex-col w-full max-w-3xl rounded-xl border border-slate-800 bg-slate-950 overflow-hidden motion-safe:animate-in motion-safe:fade-in-50 motion-safe:zoom-in-95">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+            <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <SlidersHorizontal className="h-5 w-5" />
             </div>
             <div>
@@ -234,7 +234,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
                             })
                           }
                           placeholder="Value..."
-                          className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                          className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
                         />
                       )}
 
@@ -248,7 +248,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
                             })
                           }
                           placeholder="And value..."
-                          className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 font-mono"
+                          className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
                         />
                       )}
                     </div>
@@ -257,7 +257,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
                   {/* Delete Condition Button */}
                   <button
                     onClick={() => handleRemoveCondition(cond.id)}
-                    className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                    className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
                     title="Remove rule"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -273,7 +273,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
               variant="outline"
               size="sm"
               onClick={handleAddCondition}
-              className="text-xs text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
+              className="text-xs text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
             >
               <Plus className="h-3.5 w-3.5 mr-1" />
               Add Condition

@@ -10,7 +10,7 @@ import {
   resetColumnPreferences,
 } from '@/store/slices/uiPreferenceSlice';
 import { Button } from '../ui/button';
-import { Columns3, Check, Sliders, Sparkles, RefreshCcw } from 'lucide-react';
+import { Columns3, RefreshCcw } from 'lucide-react';
 
 interface ColumnDef {
   key: string;
@@ -52,21 +52,22 @@ export const ColumnVisibilityDropdown: React.FC = () => {
         variant="outline"
         size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 text-xs text-slate-300 border-slate-700 bg-slate-900/80 hover:bg-slate-800"
+        className="flex items-center gap-1.5 text-xs text-slate-300 border-slate-700 bg-slate-900 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
       >
-        <Columns3 className="h-3.5 w-3.5 text-blue-400" />
-        <span>Columns & View</span>
+        <Columns3 className="h-3.5 w-3.5 text-emerald-400" />
+        <span>Columns &amp; View</span>
       </Button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-lg border border-slate-800 bg-slate-950 p-3 shadow-xl ring-1 ring-black ring-opacity-5 z-50">
+        <div className="absolute right-0 mt-2 w-64 rounded-lg border border-slate-800 bg-slate-950 p-3 shadow-xl z-50">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Visible Columns
+            <span className="text-xs font-semibold text-slate-300">
+              Visible columns
             </span>
             <button
+              type="button"
               onClick={() => dispatch(resetColumnPreferences())}
-              className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+              className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
             >
               <RefreshCcw className="h-3 w-3" />
               Reset
@@ -86,7 +87,7 @@ export const ColumnVisibilityDropdown: React.FC = () => {
                     type="checkbox"
                     checked={isChecked}
                     onChange={() => dispatch(toggleColumnVisibility(col.key))}
-                    className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
+                    className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-800 text-emerald-600 focus:ring-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                   />
                 </label>
               );
@@ -96,15 +97,16 @@ export const ColumnVisibilityDropdown: React.FC = () => {
           {/* Density & Rendering Preferences */}
           <div className="pt-2 border-t border-slate-800 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-slate-400">Table Density</span>
+              <span className="text-xs text-slate-400">Table density</span>
               <div className="flex gap-1">
                 {(['compact', 'standard', 'spacious'] as const).map((d) => (
                   <button
                     key={d}
+                    type="button"
                     onClick={() => dispatch(setTableDensity(d))}
-                    className={`px-1.5 py-0.5 text-[10px] rounded capitalize ${
+                    className={`px-1.5 py-0.5 text-xs rounded capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                       tableDensity === d
-                        ? 'bg-blue-600 text-white font-semibold'
+                        ? 'bg-emerald-600 text-white font-semibold'
                         : 'text-slate-400 hover:bg-slate-900'
                     }`}
                   >
@@ -115,23 +117,25 @@ export const ColumnVisibilityDropdown: React.FC = () => {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-slate-400">DOM Virtualization</span>
+              <span className="text-xs text-slate-400">DOM virtualization</span>
               <button
+                type="button"
                 onClick={() => dispatch(toggleVirtualization())}
-                className={`px-2 py-0.5 text-[10px] rounded font-mono ${
-                  useVirtualization ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+                className={`px-2 py-0.5 text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  useVirtualization ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold' : 'bg-slate-800 text-slate-400'
                 }`}
               >
-                {useVirtualization ? '60fps Enabled' : 'Standard'}
+                {useVirtualization ? 'Enabled' : 'Standard'}
               </button>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-medium text-slate-400">Search Highlight</span>
+              <span className="text-xs text-slate-400">Search highlight</span>
               <button
+                type="button"
                 onClick={() => dispatch(toggleHighlightMatches())}
-                className={`px-2 py-0.5 text-[10px] rounded font-mono ${
-                  highlightMatches ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-slate-800 text-slate-400'
+                className={`px-2 py-0.5 text-xs rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  highlightMatches ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-semibold' : 'bg-slate-800 text-slate-400'
                 }`}
               >
                 {highlightMatches ? 'Active' : 'Off'}
@@ -143,4 +147,3 @@ export const ColumnVisibilityDropdown: React.FC = () => {
     </div>
   );
 };
-

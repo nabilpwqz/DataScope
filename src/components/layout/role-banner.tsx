@@ -40,7 +40,7 @@ export const RoleBanner: React.FC = () => {
         variant="ghost"
         size="xs"
         onClick={() => dispatch(switchRole('admin'))}
-        className="text-[11px] font-semibold underline hover:bg-transparent hover:text-white"
+        className="text-[11px] font-semibold underline hover:bg-transparent hover:text-white focus-visible:ring-2 focus-visible:ring-emerald-500"
       >
         Restore Admin Permissions
       </Button>

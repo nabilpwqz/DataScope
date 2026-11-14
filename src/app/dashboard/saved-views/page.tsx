@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { applySavedViewConfig } from '@/store/slices/searchConfigSlice';
@@ -14,13 +14,10 @@ import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import {
   BookmarkCheck,
-  Share2,
-  Trash2,
   Play,
+  Trash2,
+  Share2,
   User,
-  Filter,
-  Sliders,
-  Layers,
   ArrowRight,
 } from 'lucide-react';
 
@@ -28,16 +25,16 @@ export default function SavedViewsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { selectedDatasetId } = useAppSelector((state) => state.dataset);
-  const { activeRole, user } = useAppSelector((state) => state.auth);
+  const { user, activeRole } = useAppSelector((state) => state.auth);
 
-  const { data: views = [], isLoading } = useGetSavedViewsQuery(selectedDatasetId);
-  const [deleteView] = useDeleteSavedViewMutation();
+  const { data: views = [], isLoading, refetch } = useGetSavedViewsQuery(selectedDatasetId);
+  const [deleteSavedView] = useDeleteSavedViewMutation();
 
   const handleApplyView = (view: SavedView) => {
     dispatch(
       applySavedViewConfig({
         search: view.searchQuery,
-        searchType: view.searchType as any,
+        searchType: (view.searchType as 'hybrid' | 'fts' | 'trgm' | 'exact') || 'hybrid',
         filters: view.filterConfig,
         filterLogicalOperator: view.filterLogicalOperator,
         sort: view.sortConfig,
@@ -47,9 +44,11 @@ export default function SavedViewsPage() {
     router.push('/dashboard/explorer');
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (confirm('Are you sure you want to delete this saved view?')) {
-      await deleteView({ id, datasetId: selectedDatasetId });
+      await deleteSavedView({ id, datasetId: selectedDatasetId });
+      refetch();
     }
   };
 
@@ -59,11 +58,11 @@ export default function SavedViewsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-            <BookmarkCheck className="h-5 w-5 text-blue-400" />
-            <span>Saved Views &amp; Shared Filters</span>
+            <BookmarkCheck className="h-5 w-5 text-emerald-400" />
+            <span>Saved Views &amp; Filter Presets</span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Access, execute, and share custom filter presets across authorized team members.
+            Access frequently used search configurations, multi-column sorts, and shared team views.
           </p>
         </div>
 
@@ -71,9 +70,9 @@ export default function SavedViewsPage() {
           variant="outline"
           size="sm"
           onClick={() => router.push('/dashboard/explorer')}
-          className="text-xs gap-1.5"
+          className="text-xs gap-1.5 focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
-          <span>Create New View in Explorer</span>
+          <span>Create new view in explorer</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -81,11 +80,11 @@ export default function SavedViewsPage() {
       {/* Views Grid */}
       {isLoading ? (
         <div className="py-20 text-center space-y-3">
-          <div className="h-7 w-7 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mx-auto" />
-          <span className="text-xs text-slate-400 font-mono">Loading saved views...</span>
+          <div className="h-7 w-7 motion-safe:animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mx-auto" />
+          <span className="text-xs text-slate-400">Loading saved views…</span>
         </div>
       ) : views.length === 0 ? (
-        <div className="py-20 text-center p-8 rounded-xl border border-slate-800 bg-slate-900/30">
+        <div className="py-20 text-center p-8 rounded-lg border border-slate-800 bg-slate-900/30">
           <BookmarkCheck className="h-10 w-10 text-slate-600 mx-auto mb-2" />
           <h3 className="text-sm font-semibold text-slate-200">No saved views yet</h3>
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
@@ -97,14 +96,14 @@ export default function SavedViewsPage() {
           {views.map((v) => (
             <div
               key={v.id}
-              className="p-5 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-slate-700 transition-all flex flex-col justify-between"
+              className="p-5 rounded-lg border border-slate-800 bg-slate-900/50 hover:border-slate-700 transition-colors flex flex-col justify-between"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Badge variant={v.isShared ? 'purple' : 'default'} size="sm">
-                    {v.isShared ? 'Team Shared' : 'Private'}
+                  <Badge variant={v.isShared ? 'success' : 'default'} size="sm">
+                    {v.isShared ? 'Team shared' : 'Private'}
                   </Badge>
-                  <span className="text-[11px] font-mono text-slate-500">
+                  <span className="text-xs text-slate-500">
                     {formatDate(v.createdAt)}
                   </span>
                 </div>
@@ -117,29 +116,29 @@ export default function SavedViewsPage() {
                 </div>
 
                 {/* Filter preview chips */}
-                <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
-                  <span className="text-[10px] font-mono uppercase text-slate-500">
-                    Configured Conditions ({v.filterConfig?.length || 0}):
+                <div className="pt-2 border-t border-slate-800 space-y-1.5">
+                  <span className="text-xs text-slate-400">
+                    Configured conditions ({v.filterConfig?.length || 0}):
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {v.filterConfig?.map((fc, i) => (
                       <span
                         key={i}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/60 border border-blue-900/40 text-blue-300"
+                        className="text-xs px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-mono"
                       >
                         {fc.field} {fc.operator} {String(fc.value)}
                       </span>
                     ))}
                     {v.searchQuery && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950/60 border border-amber-900/40 text-amber-300">
+                      <span className="text-xs px-2 py-0.5 rounded bg-amber-950/60 border border-amber-900/40 text-amber-300 font-mono">
                         Query: &quot;{v.searchQuery}&quot;
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                  <User className="h-3 w-3" />
+                <div className="text-xs text-slate-500 flex items-center gap-1">
+                  <User className="h-3.5 w-3.5" />
                   <span>Author: {v.authorName || 'Marcus Vance'}</span>
                 </div>
               </div>
@@ -150,19 +149,19 @@ export default function SavedViewsPage() {
                   variant="primary"
                   size="xs"
                   onClick={() => handleApplyView(v)}
-                  className="text-xs gap-1.5 flex-1 font-semibold"
+                  className="text-xs gap-1.5 flex-1 font-semibold focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <Play className="h-3 w-3 fill-current" />
-                  Apply &amp; Explore
+                  <span>Apply and explore</span>
                 </Button>
 
                 {(activeRole === 'admin' || v.userId === user?.id) && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(v.id)}
-                    className="h-7 w-7 text-slate-400 hover:text-rose-400 hover:bg-slate-800"
-                    title="Delete view"
+                    onClick={(e) => handleDelete(v.id, e)}
+                    className="h-7 w-7 text-slate-400 hover:text-rose-400 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    title="Delete saved view"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -175,4 +174,3 @@ export default function SavedViewsPage() {
     </div>
   );
 }
-

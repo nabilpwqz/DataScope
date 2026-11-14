@@ -4,6 +4,8 @@ import { verifyToken } from '@/lib/auth/jwt';
 import { canAccessDataset } from '@/lib/auth/rbac';
 import { Dataset, UserRole } from '@/types';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const datasetId = params.id;

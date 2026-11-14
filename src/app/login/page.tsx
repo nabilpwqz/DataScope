@@ -2,21 +2,17 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useAppDispatch } from '@/store';
 import { setUser, switchRole } from '@/store/slices/authSlice';
 import { ReduxProvider } from '@/store/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
   Zap,
   Lock,
   Mail,
   Shield,
   User,
-  ArrowRight,
-  CheckCircle2,
   Sparkles,
 } from 'lucide-react';
 
@@ -61,10 +57,10 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-8 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-2xl backdrop-blur space-y-6">
+    <div className="w-full max-w-md p-8 rounded-2xl border border-slate-800 bg-slate-900 space-y-6">
       {/* Brand Icon */}
       <div className="flex flex-col items-center text-center space-y-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-md shadow-blue-500/20 text-white font-bold text-xl">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-xl">
           <Zap className="h-6 w-6" />
         </div>
         <h1 className="text-xl font-bold tracking-tight text-white">
@@ -84,7 +80,7 @@ function LoginForm() {
       {/* Form */}
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-slate-300">Email Address</label>
+          <label className="text-xs font-medium text-slate-300">Email address</label>
           <Input
             type="email"
             required
@@ -92,6 +88,7 @@ function LoginForm() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@datascope.io"
             icon={<Mail className="h-4 w-4" />}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           />
         </div>
 
@@ -104,6 +101,7 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             icon={<Lock className="h-4 w-4" />}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           />
         </div>
 
@@ -112,38 +110,41 @@ function LoginForm() {
           variant="primary"
           size="md"
           isLoading={isLoading}
-          className="w-full text-xs font-semibold shadow-md shadow-blue-600/20"
+          className="w-full text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
-          Sign In with Credentials
+          Sign in with credentials
         </Button>
       </form>
 
       {/* One-Click Persona Test Switcher */}
       <div className="pt-4 border-t border-slate-800 space-y-2.5">
-        <span className="text-[11px] font-mono uppercase text-slate-400 block text-center font-semibold">
-          Evaluator Quick Demo Logins
+        <span className="text-xs text-slate-400 block text-center font-medium">
+          Evaluator demo accounts
         </span>
 
         <div className="grid grid-cols-3 gap-2">
           <button
+            type="button"
             onClick={() => handleQuickLogin('admin')}
-            className="p-2 rounded-lg border border-purple-500/30 bg-purple-950/30 text-purple-200 hover:bg-purple-900/40 text-xs font-medium transition-colors flex flex-col items-center gap-1"
+            className="p-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500 hover:text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 flex flex-col items-center gap-1"
           >
-            <Shield className="h-4 w-4 text-purple-400" />
+            <Shield className="h-4 w-4 text-emerald-400" />
             <span>Admin</span>
           </button>
 
           <button
+            type="button"
             onClick={() => handleQuickLogin('analyst')}
-            className="p-2 rounded-lg border border-blue-500/30 bg-blue-950/30 text-blue-200 hover:bg-blue-900/40 text-xs font-medium transition-colors flex flex-col items-center gap-1"
+            className="p-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500 hover:text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 flex flex-col items-center gap-1"
           >
-            <Sparkles className="h-4 w-4 text-blue-400" />
+            <Sparkles className="h-4 w-4 text-emerald-400" />
             <span>Analyst</span>
           </button>
 
           <button
+            type="button"
             onClick={() => handleQuickLogin('viewer')}
-            className="p-2 rounded-lg border border-emerald-500/30 bg-emerald-950/30 text-emerald-200 hover:bg-emerald-900/40 text-xs font-medium transition-colors flex flex-col items-center gap-1"
+            className="p-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500 hover:text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 flex flex-col items-center gap-1"
           >
             <User className="h-4 w-4 text-emerald-400" />
             <span>Viewer</span>
@@ -163,4 +164,3 @@ export default function LoginPage() {
     </ReduxProvider>
   );
 }
-
