@@ -104,33 +104,30 @@ export const Header: React.FC = () => {
           <button
             onClick={() => handleRoleChange('admin')}
             aria-label="Switch to administrator role"
-            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-              activeRole === 'admin'
+            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeRole === 'admin'
                 ? 'bg-slate-700 text-white font-semibold'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
+              }`}
           >
             Admin
           </button>
           <button
             onClick={() => handleRoleChange('analyst')}
             aria-label="Switch to analyst role"
-            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-              activeRole === 'analyst'
+            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeRole === 'analyst'
                 ? 'bg-emerald-700 text-white font-semibold'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
+              }`}
           >
             Analyst
           </button>
           <button
             onClick={() => handleRoleChange('viewer')}
             aria-label="Switch to viewer role"
-            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-              activeRole === 'viewer'
+            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeRole === 'viewer'
                 ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 font-semibold'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-            }`}
+              }`}
           >
             Viewer
           </button>

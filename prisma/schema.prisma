@@ -228,3 +228,4 @@ model QueryPerformanceLog {
   @@index([createdAt], map: "perf_created_idx")
   @@map("query_performance_logs")
 }
+
