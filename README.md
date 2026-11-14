@@ -382,3 +382,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 docker-compose up --build
 ```
 Open [http://localhost:3000](http://localhost:3000).
+
+#   D a t a S c o p e  
+ 
