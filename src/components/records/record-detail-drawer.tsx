@@ -380,3 +380,4 @@ export const RecordDetailDrawer: React.FC = () => {
     </div>
   );
 };
+

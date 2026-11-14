@@ -156,3 +156,4 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
     </div>
   );
 };
+

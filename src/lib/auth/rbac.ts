@@ -60,3 +60,4 @@ export function canAccessDataset(userRole: UserRole, accessLevel: 'public' | 're
   // viewer
   return accessLevel === 'public';
 }
+

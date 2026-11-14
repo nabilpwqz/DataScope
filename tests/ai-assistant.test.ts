@@ -43,3 +43,4 @@ describe('AI Search Assistant NLQ Parser & Guardrails', () => {
     expect(result.confidence).toBeLessThan(0.5);
   });
 });
+

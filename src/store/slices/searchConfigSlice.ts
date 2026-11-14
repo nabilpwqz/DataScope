@@ -174,3 +174,4 @@ export const {
 } = searchConfigSlice.actions;
 
 export default searchConfigSlice.reducer;
+

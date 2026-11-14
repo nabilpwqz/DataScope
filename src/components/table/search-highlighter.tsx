@@ -36,3 +36,4 @@ export const SearchHighlighter: React.FC<SearchHighlighterProps> = ({
     </span>
   );
 };
+

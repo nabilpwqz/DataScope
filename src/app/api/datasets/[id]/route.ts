@@ -62,3 +62,4 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Failed to retrieve dataset' }, { status: 500 });
   }
 }
+

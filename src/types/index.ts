@@ -192,3 +192,4 @@ export interface PerformanceMetric {
   cacheHit: boolean;
   recordsCount: number;
 }
+

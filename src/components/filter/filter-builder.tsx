@@ -45,13 +45,13 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
     currentFilters.length > 0
       ? currentFilters
       : [
-          {
-            id: `cond-1`,
-            field: 'status',
-            operator: 'equals',
-            value: 'Active',
-          },
-        ]
+        {
+          id: `cond-1`,
+          field: 'status',
+          operator: 'equals',
+          value: 'Active',
+        },
+      ]
   );
   const [localOp, setLocalOp] = useState<'AND' | 'OR'>(currentOp || 'AND');
 
@@ -130,21 +130,19 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
             <div className="flex items-center rounded border border-slate-700 bg-slate-950 p-0.5">
               <button
                 onClick={() => setLocalOp('AND')}
-                className={`px-3 py-1 text-xs rounded font-bold transition-colors ${
-                  localOp === 'AND'
+                className={`px-3 py-1 text-xs rounded font-bold transition-colors ${localOp === 'AND'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 AND (All Must Match)
               </button>
               <button
                 onClick={() => setLocalOp('OR')}
-                className={`px-3 py-1 text-xs rounded font-bold transition-colors ${
-                  localOp === 'OR'
+                className={`px-3 py-1 text-xs rounded font-bold transition-colors ${localOp === 'OR'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
-                }`}
+                  }`}
               >
                 OR (Any May Match)
               </button>
@@ -313,3 +311,4 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
     </div>
   );
 };
+

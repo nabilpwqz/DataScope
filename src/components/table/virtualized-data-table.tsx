@@ -533,3 +533,4 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
     </div>
   );
 };
+

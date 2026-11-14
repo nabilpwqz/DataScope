@@ -100,3 +100,4 @@ export const queryCache = globalForCache.searchCache || new LRUCache(1000, 60000
 if (process.env.NODE_ENV !== 'production') {
   globalForCache.searchCache = queryCache;
 }
+

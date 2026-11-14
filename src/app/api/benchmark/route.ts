@@ -99,3 +99,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Benchmark failed', details: err.message }, { status: 500 });
   }
 }
+

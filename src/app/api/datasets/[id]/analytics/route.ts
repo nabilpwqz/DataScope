@@ -150,3 +150,4 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to compute analytics' }, { status: 500 });
   }
 }
+

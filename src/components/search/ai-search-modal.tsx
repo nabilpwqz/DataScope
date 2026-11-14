@@ -199,3 +199,4 @@ export const AISearchModal: React.FC = () => {
     </div>
   );
 };
+

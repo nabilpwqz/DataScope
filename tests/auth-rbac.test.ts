@@ -61,3 +61,4 @@ describe('Authentication & Role-Based Access Control (RBAC)', () => {
     expect(payload?.role).toBe('analyst');
   });
 });
+

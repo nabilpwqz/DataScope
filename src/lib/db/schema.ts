@@ -207,3 +207,4 @@ export const queryPerformanceLogs = pgTable(
     createdIdx: index('perf_created_idx').on(table.createdAt),
   })
 );
+

@@ -42,3 +42,4 @@ describe('Search Engine & Query Hash Generation', () => {
     expect(hashA).not.toBe(hashB);
   });
 });
+
