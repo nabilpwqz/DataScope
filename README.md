@@ -1,6 +1,5 @@
 # DataScope — Enterprise Data Discovery & Intelligence Platform
 
-[![CI Pipeline](https://img.shields.io/badge/CI-Passing-059669?style=flat-square&logo=githubactions&logoColor=white)](https://github.com/datascope-platform/datascope)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2%20App%20Router-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6%20Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
