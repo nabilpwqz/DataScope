@@ -9,9 +9,12 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment
+.env
 .env*.local
+!.env.example
 
 # Database
+.pgdata/
 .test_pgdata/
 
 # OS
@@ -20,4 +23,3 @@ yarn-error.log*
 
 # Build Cache
 *.tsbuildinfo
-
