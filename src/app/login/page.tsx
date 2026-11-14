@@ -7,14 +7,14 @@ import { setUser, switchRole } from '@/store/slices/authSlice';
 import { ReduxProvider } from '@/store/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { DataScopeLogo } from '@/components/brand/logo';
 import {
-  Zap,
-  Lock,
-  Mail,
-  Shield,
-  User,
-  Sparkles,
-} from 'lucide-react';
+  IconLock,
+  IconMail,
+  IconShield,
+  IconUser,
+  IconSparkles,
+} from '@/components/ui/icons';
 
 function LoginForm() {
   const router = useRouter();
@@ -58,17 +58,17 @@ function LoginForm() {
 
   return (
     <div className="w-full max-w-md p-8 rounded-2xl border border-slate-800 bg-slate-900 space-y-6">
-      {/* Brand Icon */}
-      <div className="flex flex-col items-center text-center space-y-2">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold text-xl">
-          <Zap className="h-6 w-6" />
+      {/* Brand Icon & Heading */}
+      <div className="flex flex-col items-center text-center space-y-3">
+        <DataScopeLogo size="lg" showText={false} />
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            Sign In to DataScope
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Enter your credentials to access enterprise datasets and analytics.
+          </p>
         </div>
-        <h1 className="text-xl font-bold tracking-tight text-white">
-          Sign In to DataScope
-        </h1>
-        <p className="text-xs text-slate-400">
-          Enter your credentials to access enterprise datasets &amp; analytics.
-        </p>
       </div>
 
       {errorMsg && (
@@ -87,7 +87,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="admin@datascope.io"
-            icon={<Mail className="h-4 w-4" />}
+            icon={<IconMail className="h-4 w-4" />}
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           />
         </div>
@@ -100,7 +100,7 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            icon={<Lock className="h-4 w-4" />}
+            icon={<IconLock className="h-4 w-4" />}
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           />
         </div>
@@ -118,37 +118,45 @@ function LoginForm() {
 
       {/* One-Click Persona Test Switcher */}
       <div className="pt-4 border-t border-slate-800 space-y-2.5">
-        <span className="text-xs text-slate-400 block text-center font-medium">
-          Evaluator demo accounts
+        <span className="text-xs font-semibold text-slate-400 block text-center">
+          Instant Role Evaluation
         </span>
-
         <div className="grid grid-cols-3 gap-2">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => handleQuickLogin('admin')}
-            className="p-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500 hover:text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 flex flex-col items-center gap-1"
+            className="flex-col py-2.5 h-auto border-slate-800 bg-slate-950 hover:border-emerald-500/50 hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-            <Shield className="h-4 w-4 text-emerald-400" />
-            <span>Admin</span>
-          </button>
+            <IconShield className="h-4 w-4 text-emerald-400 mb-1" />
+            <span className="text-xs font-semibold text-slate-200">Admin</span>
+            <span className="text-[10px] text-slate-400">Full control</span>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => handleQuickLogin('analyst')}
-            className="p-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500 hover:text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 flex flex-col items-center gap-1"
+            className="flex-col py-2.5 h-auto border-slate-800 bg-slate-950 hover:border-emerald-500/50 hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-            <Sparkles className="h-4 w-4 text-emerald-400" />
-            <span>Analyst</span>
-          </button>
+            <IconSparkles className="h-4 w-4 text-emerald-400 mb-1" />
+            <span className="text-xs font-semibold text-slate-200">Analyst</span>
+            <span className="text-[10px] text-slate-400">Explore &amp; save</span>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => handleQuickLogin('viewer')}
-            className="p-2.5 rounded-lg border border-slate-800 bg-slate-950 text-slate-200 hover:border-emerald-500 hover:text-white text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 flex flex-col items-center gap-1"
+            className="flex-col py-2.5 h-auto border-slate-800 bg-slate-950 hover:border-emerald-500/50 hover:bg-slate-900 focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-            <User className="h-4 w-4 text-emerald-400" />
-            <span>Viewer</span>
-          </button>
+            <IconUser className="h-4 w-4 text-slate-400 mb-1" />
+            <span className="text-xs font-semibold text-slate-200">Viewer</span>
+            <span className="text-[10px] text-slate-400">Read only</span>
+          </Button>
         </div>
       </div>
     </div>
@@ -158,9 +166,9 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <ReduxProvider>
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 relative">
+      <main className="min-h-screen flex items-center justify-center p-4 bg-slate-950 selection:bg-emerald-600 selection:text-white">
         <LoginForm />
-      </div>
+      </main>
     </ReduxProvider>
   );
 }

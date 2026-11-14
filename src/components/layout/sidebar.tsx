@@ -2,89 +2,102 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { toggleSidebar } from '@/store/slices/uiPreferenceSlice';
+import { logout } from '@/store/slices/authSlice';
 import {
-  Database,
-  Table,
-  SlidersHorizontal,
-  BookmarkCheck,
-  History,
-  BarChart3,
-  Activity,
-  Layers,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  Server,
-  Zap,
-} from 'lucide-react';
+  IconDatabase,
+  IconTable,
+  IconSliders,
+  IconBookmark,
+  IconHistory,
+  IconChart,
+  IconActivity,
+  IconLayers,
+  IconSettings,
+  IconServer,
+  IconChevronLeft,
+  IconChevronRight,
+  IconLogout,
+} from '@/components/ui/icons';
+import { DataScopeLogo } from '@/components/brand/logo';
 import { cn } from '@/lib/utils';
 import { Badge } from '../ui/badge';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { sidebarCollapsed } = useAppSelector((state) => state.uiPreference);
   const { activeRole } = useAppSelector((state) => state.auth);
+
+  const handleSignOut = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Continue client cleanup
+    }
+    dispatch(logout());
+    router.push('/login');
+  };
 
   const navItems = [
     {
       label: 'Overview',
       href: '/dashboard',
-      icon: Layers,
+      icon: IconLayers,
     },
     {
       label: 'Dataset Library',
       href: '/dashboard/datasets',
-      icon: Database,
+      icon: IconDatabase,
     },
     {
       label: 'Data Explorer',
       href: '/dashboard/explorer',
-      icon: Table,
+      icon: IconTable,
       badge: 'Core',
       badgeColor: 'success' as const,
     },
     {
       label: 'Advanced Search',
       href: '/dashboard/advanced-search',
-      icon: SlidersHorizontal,
+      icon: IconSliders,
     },
     {
       label: 'Saved Views',
       href: '/dashboard/saved-views',
-      icon: BookmarkCheck,
+      icon: IconBookmark,
     },
     {
       label: 'Search History',
       href: '/dashboard/search-history',
-      icon: History,
+      icon: IconHistory,
     },
     {
       label: 'Data Analytics',
       href: '/dashboard/analytics',
-      icon: BarChart3,
+      icon: IconChart,
     },
     {
       label: 'Performance Monitor',
       href: '/dashboard/performance',
-      icon: Activity,
+      icon: IconActivity,
       badge: 'Live',
       badgeColor: 'success' as const,
     },
     {
       label: 'Architecture & ADRs',
       href: '/dashboard/architecture',
-      icon: Server,
+      icon: IconServer,
       badge: 'Docs',
       badgeColor: 'default' as const,
     },
     {
       label: 'Settings & Access',
       href: '/dashboard/settings',
-      icon: Settings,
+      icon: IconSettings,
     },
   ];
 
@@ -95,29 +108,29 @@ export const Sidebar: React.FC = () => {
         sidebarCollapsed ? 'w-16' : 'w-64'
       )}
     >
-      {/* Brand Header */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-slate-800">
-        <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-emerald-600 text-white font-bold text-lg shadow-sm">
-            <Zap className="h-5 w-5" />
-          </div>
-          {!sidebarCollapsed && (
-            <div className="flex flex-col text-left">
-              <span className="font-bold text-slate-100 text-base leading-none">
-                DataScope
-              </span>
-              <span className="text-xs text-slate-400 mt-1">
-                Enterprise v1.0
-              </span>
-            </div>
-          )}
+      {/* Brand Header with Bespoke Logo */}
+      <div className="flex h-16 items-center justify-between px-3 border-b border-slate-800">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 overflow-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
+        >
+          <DataScopeLogo
+            size="md"
+            showText={!sidebarCollapsed}
+            subtitle="Enterprise v1.0"
+          />
         </Link>
         <button
           onClick={() => dispatch(toggleSidebar())}
           className="flex h-7 w-7 items-center justify-center rounded border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
           title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {sidebarCollapsed ? (
+            <IconChevronRight className="h-4 w-4" />
+          ) : (
+            <IconChevronLeft className="h-4 w-4" />
+          )}
         </button>
       </div>
 
@@ -139,10 +152,7 @@ export const Sidebar: React.FC = () => {
               Role: <strong className="text-white">{activeRole}</strong>
             </span>
           </div>
-          <Badge
-            variant="success"
-            size="sm"
-          >
+          <Badge variant="success" size="sm">
             RBAC active
           </Badge>
         </div>
@@ -162,7 +172,7 @@ export const Sidebar: React.FC = () => {
       )}
 
       {/* Navigation List */}
-      <nav className="flex-1 space-y-1 px-2.5 py-4 overflow-y-auto">
+      <nav className="flex-1 space-y-1 px-2.5 py-4 overflow-y-auto" aria-label="Dashboard navigation">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -200,22 +210,39 @@ export const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      {/* Footer System Status */}
-      <div className="p-3 border-t border-slate-800 bg-slate-950">
+      {/* Footer System Status & Sign Out */}
+      <div className="p-3 border-t border-slate-800 bg-slate-950 space-y-2">
         {!sidebarCollapsed ? (
-          <div className="flex flex-col gap-1 text-xs text-slate-400">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">PostgreSQL engine:</span>
-              <span className="text-emerald-400 font-semibold font-mono text-[11px]">Ready (pg_trgm)</span>
+          <>
+            <div className="flex flex-col gap-1 text-xs text-slate-400">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">PostgreSQL engine:</span>
+                <span className="text-emerald-400 font-semibold font-mono text-[11px]">Ready (pg_trgm)</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Indexed records:</span>
+                <span className="font-mono text-slate-200 text-[11px]">110,000+</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-500">Indexed records:</span>
-              <span className="font-mono text-slate-200 text-[11px]">110,000+</span>
-            </div>
-          </div>
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center justify-center gap-2 mt-2 px-3 py-1.5 rounded border border-slate-800 bg-slate-900/80 text-xs text-slate-400 hover:text-rose-300 hover:border-rose-500/40 hover:bg-rose-950/20 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <IconLogout className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </>
         ) : (
-          <div className="flex justify-center" title="PostgreSQL 110,000+ Records Ready">
+          <div className="flex flex-col items-center gap-2" title="PostgreSQL 110,000+ Records Ready">
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <button
+              onClick={handleSignOut}
+              className="p-1.5 rounded text-slate-400 hover:text-rose-400 hover:bg-slate-900 transition-colors"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <IconLogout className="h-4 w-4" />
+            </button>
           </div>
         )}
       </div>

@@ -1,11 +1,13 @@
-# DataScope — Enterprise Data Discovery & Intelligence Platform
+# DataScope: Enterprise Data Discovery & Intelligence Platform
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2%20App%20Router-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6%20Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.22%20ORM-2D3748?style=flat-square&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Redux Toolkit](https://img.shields.io/badge/Redux%20Toolkit-RTK%20Query-764ABC?style=flat-square&logo=redux&logoColor=white)](https://redux-toolkit.js.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%20Persistent-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Drizzle ORM](https://img.shields.io/badge/Drizzle-0.36%20TypeSafe-C5F74F?style=flat-square&logo=drizzle&logoColor=black)](https://orm.drizzle.team/)
+[![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
 [![TanStack Table](https://img.shields.io/badge/TanStack-Table%20v8%20%2B%20Virtual%20v3-FF4154?style=flat-square&logo=react-table&logoColor=white)](https://tanstack.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-Automated%20Tests-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Hallmark Craft](https://img.shields.io/badge/Hallmark%20Craft-0%20Failures-10B981?style=flat-square)](#13-hallmark-engineering-craft--accessibility)
@@ -157,7 +159,7 @@ When users rapidly change filters or type search terms, prior in-flight requests
 - Telemetry and performance monitoring views feature background polling (`pollingInterval: 10000`).
 
 #### 6. How does the architecture scale to millions of records?
-- **Fixed Memory Footprint:** Page payloads remain constant (~12KB for 25–50 rows) regardless of whether the table contains 100,000 or 10,000,000 rows.
+- **Fixed Memory Footprint:** Page payloads remain constant (~12KB for 25-50 rows) regardless of whether the table contains 100,000 or 10,000,000 rows.
 - **Index Seek Efficiency:** B-Tree and GIN indexes provide $O(\log N)$ lookups, bypassing sequential scans.
 - **Keyset Cursor Traversal:** Keyset cursor pagination (`WHERE (record_date, id) < ($last_date, $last_id)`) eliminates the $O(N)$ scanning penalty inherent in deep `OFFSET` pagination.
 
@@ -170,12 +172,12 @@ When users rapidly change filters or type search terms, prior in-flight requests
 | Architectural Attribute | PostgreSQL Full-Text Search (Selected) | PostgreSQL Trigram (`pg_trgm`) | External Search Cluster (Elasticsearch / OpenSearch) |
 | :--- | :--- | :--- | :--- |
 | **Index Mechanism** | GIN Inverted Index on `tsvector` | GIN / GiST on character 3-grams | Distributed Inverted Index (Lucene) |
-| **Query Latency (110,000 records)** | **8 – 14 ms** | **12 – 24 ms** | 10 – 25 ms (+ network hop & RPC serialization) |
+| **Query Latency (110,000 records)** | **8 - 14 ms** | **12 - 24 ms** | 10 - 25 ms (+ network hop & RPC serialization) |
 | **Typo / Fuzzy Matching** | Stemming & dictionary lexemes | **Superior `%` substring & fuzzy matching** | Edit distance (Levenshtein) |
 | **Data Synchronization** | **Instant (Strict ACID, In-Database)** | **Instant (Strict ACID, In-Database)** | Eventual consistency; requires CDC pipelines (Debezium/Kafka) |
 | **Infrastructure Overhead** | **Zero additional servers** | **Zero additional servers** | High (JVM cluster, memory sizing, shard management) |
 | **Cost & Complexity** | Minimal operational cost | Minimal operational cost | Significant hosting and DevOps overhead |
-| **Applicable Scale** | Up to ~20–30 Million records | Up to ~5–10 Million records | 50+ Million records & unstructured document corpora |
+| **Applicable Scale** | Up to ~20-30 Million records | Up to ~5-10 Million records | 50+ Million records & unstructured document corpora |
 
 ### Hybrid Search Implementation
 
@@ -316,10 +318,10 @@ npm test
 ```
 
 ```
- ✓ tests/cache.test.ts (3 tests)
- ✓ tests/ai-assistant.test.ts (3 tests)
- ✓ tests/auth-rbac.test.ts (5 tests)
- ✓ tests/search-engine.test.ts (2 tests)
+  tests/cache.test.ts (3 tests)
+  tests/ai-assistant.test.ts (3 tests)
+  tests/auth-rbac.test.ts (5 tests)
+  tests/search-engine.test.ts (2 tests)
 
  Test Files  4 passed (4)
       Tests  13 passed (13)
@@ -348,14 +350,14 @@ npm run benchmark
 
 DataScope provides 8 documented Architectural Decision Records (accessible interactively under `/dashboard/architecture`):
 
-- **ADR-001: RTK Query over Redux Async Thunks** — Adopted declarative API services with tag invalidation, eliminating manual action/reducer maintenance.
-- **ADR-002: Server-Side Pushdown Filtering vs. Client-Side Slicing** — Enforced database-level filtering to maintain a constant ~12KB payload regardless of dataset volume.
-- **ADR-003: PostgreSQL Relational Schema with Drizzle ORM vs. Document Store** — Selected PostgreSQL for strict ACID guarantees, strong relational joins, and native inverted indexes.
-- **ADR-004: Keyset Cursor Pagination vs. Offset Pagination** — Implemented keyset cursors for deep scrolling to eliminate the $O(N)$ penalty of large offsets.
-- **ADR-005: Native PostgreSQL Full-Text & Trigram Search vs. Elasticsearch** — Deployed PostgreSQL GIN indexes to achieve sub-15ms search without external cluster complexity.
-- **ADR-006: 300ms Client-Side Search Debouncing** — Decoupled immediate local typing response from Redux store dispatches, mitigating request storms.
-- **ADR-007: TanStack Virtual DOM Windowing for 60fps Scrolling** — Implemented virtualized windowing to constrain DOM elements to ~120 nodes.
-- **ADR-008: Multi-Tier Caching Strategy** — Combined client RTK Query deduplication with server-side LRU query caching (0.1ms hits).
+- **ADR-001: RTK Query over Redux Async Thunks**  -  Adopted declarative API services with tag invalidation, eliminating manual action/reducer maintenance.
+- **ADR-002: Server-Side Pushdown Filtering vs. Client-Side Slicing**  -  Enforced database-level filtering to maintain a constant ~12KB payload regardless of dataset volume.
+- **ADR-003: PostgreSQL Relational Schema with Drizzle ORM vs. Document Store**  -  Selected PostgreSQL for strict ACID guarantees, strong relational joins, and native inverted indexes.
+- **ADR-004: Keyset Cursor Pagination vs. Offset Pagination**  -  Implemented keyset cursors for deep scrolling to eliminate the $O(N)$ penalty of large offsets.
+- **ADR-005: Native PostgreSQL Full-Text & Trigram Search vs. Elasticsearch**  -  Deployed PostgreSQL GIN indexes to achieve sub-15ms search without external cluster complexity.
+- **ADR-006: 300ms Client-Side Search Debouncing**  -  Decoupled immediate local typing response from Redux store dispatches, mitigating request storms.
+- **ADR-007: TanStack Virtual DOM Windowing for 60fps Scrolling**  -  Implemented virtualized windowing to constrain DOM elements to ~120 nodes.
+- **ADR-008: Multi-Tier Caching Strategy**  -  Combined client RTK Query deduplication with server-side LRU query caching (0.1ms hits).
 
 ---
 
@@ -373,21 +375,21 @@ DataScope provides 8 documented Architectural Decision Records (accessible inter
 
 A structured 5-part guide for the technical presentation video:
 
-- **Part 1: Architectural Foundation (0:00 – 2:00)**
+- **Part 1: Architectural Foundation (0:00 - 2:00)**
   - Problem overview: Why naive client-side data fetching fails at enterprise scale.
   - Architecture breakdown: Next.js App Router, Redux Toolkit, and PostgreSQL pushdown queries.
-- **Part 2: Live Data Explorer & 60fps Virtualization (2:00 – 5:00)**
+- **Part 2: Live Data Explorer & 60fps Virtualization (2:00 - 5:00)**
   - Searching across 110,000+ indexed business accounts.
   - Multi-column sorting, column show/hide, density adjustments.
   - Chrome DevTools inspection of virtualized DOM nodes keeping memory flat.
-- **Part 3: Advanced Search & Query Builder (5:00 – 8:00)**
+- **Part 3: Advanced Search & Query Builder (5:00 - 8:00)**
   - Executing spec test case: `Status = Active, Country = Germany, Revenue > $10,000`.
   - Inspection of generated parameterized SQL and index execution plans.
   - Demonstration of AI Natural Language Search Assistant parsing English prompts.
-- **Part 4: Data Fetching, Caching & Performance Telemetry (8:00 – 11:00)**
+- **Part 4: Data Fetching, Caching & Performance Telemetry (8:00 - 11:00)**
   - RTK Query request deduplication and `AbortController` cancellation.
   - Live benchmark comparison: cold query (36ms) vs warm LRU cache hit (0.1ms).
-- **Part 5: Security, RBAC & 10M+ Record Scaling (11:00 – 13:00)**
+- **Part 5: Security, RBAC & 10M+ Record Scaling (11:00 - 13:00)**
   - Role Switcher demo: Administrator vs Analyst vs Viewer restrictions.
   - Production scaling blueprint: table partitioning, read replicas, and keyset cursors.
 
@@ -401,7 +403,7 @@ DataScope follows the **Hallmark Engineering Standard**, guaranteeing profession
 - **Typography & Layout:** Clean sentence-case headings and labels in the body face. Monospace is reserved exclusively for code, keys, and numerical figures.
 - **Strict Accessibility (WCAG 2.1 AA):** High-contrast `:focus-visible:ring-2 focus-visible:ring-emerald-500` outlines on every interactive element.
 - **Motion & Reduced Motion:** All animations are gated with `motion-safe:` variants or fall back gracefully under `@media (prefers-reduced-motion: reduce)`.
-- **Zero-Slop Verification:** Fully compliant with the Hallmark linting engine (`npm run lint:hallmark` — **0 failures across all 31 TSX files**).
+- **Zero-Slop Verification:** Fully compliant with the Hallmark linting engine (`npm run lint:hallmark`  -  **0 failures across all 31 TSX files**).
 
 ---
 
@@ -528,4 +530,40 @@ DataScope includes a production `vercel.json` optimizing memory and duration bud
 - **API Function Memory:** `1024 MB`
 - **Max Duration:** `60 seconds` (to accommodate high-throughput CSV streaming exports)
 - **Security Headers:** Strict Transport Security (HSTS), X-Frame-Options (`SAMEORIGIN`), X-Content-Type-Options (`nosniff`), Referrer-Policy, and restricted Permissions-Policy.
+
+---
+
+## 16. Modern UI, 3D Spatial Engine & Enterprise Infrastructure
+
+### 3D Spatial Telemetry Engine
+DataScope features an interactive 3D spatial perspective engine (`src/components/landing/spatial-data-lens.tsx`) built using CSS 3D coordinate matrices (`perspective: 1400px`, `transform-style: preserve-3d`). It allows operators to dynamically rotate and inspect:
+- **Layer 0:** PostgreSQL GIN & Trigram Vector Coordinate Matrix
+- **Layer 1:** Pushdown Parallel Query Beam & Execution Pipeline
+- **Layer 2:** TanStack Virtual Window with 60 FPS viewport synchronization
+- **Spatial Telemetry Nodes:** Real-time floating nodes tracking index lookup, filter pushdown, and RBAC validation.
+
+### Google Gemini & Nano Banana Visual Assets
+The platform incorporates photorealistic 3D visual assets (`/images/hero-3d-mesh.png`, `/images/architecture-3d.png`) generated with Google Gemini media models, visualizing multi-tiered holographic data prisms, sub-millisecond query beams, and obsidian infrastructure grids.
+
+### Dual ORM Architecture: Drizzle & Prisma
+DataScope supports both Drizzle ORM and Prisma ORM (`prisma/schema.prisma` with Prisma Client v5.22):
+- **Drizzle ORM:** Ultra-lightweight, zero-overhead SQL pushdown query builder with strict TypeScript typing.
+- **Prisma ORM:** Declarative data modeling, migrations, and schema introspection across 11 relational models with cascade deletes and composite indexes.
+
+### Multi-Container Docker Stack
+DataScope includes a production multi-stage `Dockerfile` and `docker-compose.yml` deploying:
+1. **PostgreSQL 15:** Persistent container initialized with `pg_trgm`, `btree_gin`, and `uuid-ossp` extensions.
+2. **Redis 7:** High-speed in-memory cache for sub-millisecond query caching.
+3. **DataScope App:** Production Next.js standalone container with non-root security execution.
+
+```bash
+# Launch entire enterprise stack with Docker Compose
+docker compose up -d
+```
+
+### Modern Theme Engine & Brand Identity
+- **Modern Theme:** Seamless toggle between Obsidian Night (`#020617`, `#0b0f19`) and Platinum Slate Light Mode (`#f8fafc`, `#f1f5f9`, avoiding harsh pure white backgrounds) via `ThemeToggle`.
+- **Bespoke Logo & Favicon:** Custom isometric data-facet prism logo (`DataScopeLogo`) with zero Lucide icons, custom SVG iconography, and SVG favicon (`/icon.svg`).
+- **Complete Auth Lifecycle:** Secure login with credential hashing, 1-click evaluation roles (Admin, Analyst, Viewer), and dedicated Sign Out clearing HTTP-only session tokens.
+
 

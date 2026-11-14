@@ -1,6 +1,37 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: datascope-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: datascope
+      POSTGRES_USER: datascope_admin
+      POSTGRES_PASSWORD: datascope_secure_password_2026
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U datascope_admin -d datascope']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: datascope-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   datascope-app:
     build:
       context: .
@@ -11,14 +42,16 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - DATABASE_URL=postgresql://datascope_admin:datascope_secure_password_2026@postgres:5432/datascope
+      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=datascope-super-secure-production-ready-jwt-token-key-32-chars-min
-      - DATABASE_URL=
-      - PG_DATA_DIR=/app/.pgdata
       - SEARCH_STRATEGY=hybrid
-    volumes:
-      - datascope_data:/app/.pgdata
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
-  datascope_data:
-
+  postgres_data:
