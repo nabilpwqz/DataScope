@@ -8,6 +8,7 @@ import { RoleBanner } from '@/components/layout/role-banner';
 import { RecordDetailDrawer } from '@/components/records/record-detail-drawer';
 import { AISearchModal } from '@/components/search/ai-search-modal';
 import { SaveViewModal } from '@/components/views/save-view-modal';
+import { CommandPalette } from '@/components/layout/command-palette';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -25,7 +26,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </main>
         </div>
 
-        {/* Global Modals & Drawers */}
+        {/* Global Modals, Command Palette & Drawers */}
+        <CommandPalette />
         <RecordDetailDrawer />
         <AISearchModal />
         <SaveViewModal />

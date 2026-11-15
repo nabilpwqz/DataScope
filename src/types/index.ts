@@ -193,3 +193,97 @@ export interface PerformanceMetric {
   recordsCount: number;
 }
 
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: string;
+  action: string;
+  resource: string;
+  resourceId?: string;
+  details: Record<string, any>;
+  ipAddress?: string;
+  status: 'SUCCESS' | 'FAILURE' | 'WARNING';
+  createdAt: string;
+}
+
+export interface DataQualityIssue {
+  id: string;
+  datasetId: string;
+  datasetName?: string;
+  recordId?: string;
+  fieldName: string;
+  issueType: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  status: 'open' | 'reviewed' | 'resolved';
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+export interface DataQualityOverview {
+  overallScore: number;
+  dimensions: {
+    completeness: number;
+    uniqueness: number;
+    validity: number;
+    consistency: number;
+  };
+  totalIssues: number;
+  issuesBySeverity: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  issues: DataQualityIssue[];
+}
+
+export interface DataLineageNode {
+  id: string;
+  name: string;
+  type: 'source' | 'pipeline' | 'dataset' | 'consumer';
+  status: 'active' | 'syncing' | 'warning' | 'idle';
+  description: string;
+  metadata: {
+    owner?: string;
+    records?: number;
+    lastSync?: string;
+    destination?: string;
+  };
+}
+
+export interface DataLineageEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  protocol?: string;
+}
+
+export interface DataLineageGraph {
+  nodes: DataLineageNode[];
+  edges: DataLineageEdge[];
+}
+
+export interface RecordComment {
+  id: string;
+  recordId: string;
+  userId: string;
+  userName: string;
+  userRole: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface UserSummary {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  department: string;
+  status: 'Active' | 'Inactive';
+  lastActive: string;
+  permissionsCount: number;
+}

@@ -1,0 +1,142 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getRawClient } from '@/lib/db';
+import { verifyToken } from '@/lib/auth/jwt';
+import { AuditLog } from '@/types';
+import crypto from 'crypto';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: NextRequest) {
+  try {
+    const client = await getRawClient();
+
+    let userRole = 'admin';
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const payload = await verifyToken(token);
+      if (payload) {
+        userRole = payload.role;
+      }
+    }
+
+    const { searchParams } = new URL(req.url);
+    const limitParam = searchParams.get('limit');
+    const actionParam = searchParams.get('action');
+    const statusParam = searchParams.get('status');
+    const searchParam = searchParams.get('search');
+
+    const limit = Math.min(Math.max(parseInt(limitParam || '100', 10), 10), 500);
+
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (actionParam && actionParam !== 'ALL') {
+      conditions.push(`action = $${idx++}`);
+      values.push(actionParam);
+    }
+
+    if (statusParam && statusParam !== 'ALL') {
+      conditions.push(`status = $${idx++}`);
+      values.push(statusParam);
+    }
+
+    if (searchParam && searchParam.trim()) {
+      conditions.push(`(user_name ILIKE $${idx} OR resource ILIKE $${idx} OR action ILIKE $${idx})`);
+      values.push(`%${searchParam.trim()}%`);
+      idx++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const query = `
+      SELECT id, user_id, user_name, user_role, action, resource, resource_id, details, ip_address, status, created_at
+      FROM audit_logs
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT $${idx};
+    `;
+    values.push(limit);
+
+    const res = await client.query(query, values);
+
+    const logs: AuditLog[] = res.rows.map((row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      userName: row.user_name,
+      userRole: row.user_role,
+      action: row.action,
+      resource: row.resource,
+      resourceId: row.resource_id,
+      details: typeof row.details === 'string' ? JSON.parse(row.details) : row.details || {},
+      ipAddress: row.ip_address,
+      status: row.status,
+      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+    }));
+
+    return NextResponse.json({
+      logs,
+      totalCount: logs.length,
+      viewerRole: userRole,
+    });
+  } catch (err: any) {
+    console.error('Fetch audit logs error:', err);
+    return NextResponse.json({ error: 'Failed to retrieve audit logs' }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const client = await getRawClient();
+
+    let userId = 'usr-admin-01';
+    let userName = 'Elena Rostova';
+    let userRole = 'admin';
+
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const payload = await verifyToken(token);
+      if (payload) {
+        userId = payload.userId;
+        userName = payload.name;
+        userRole = payload.role;
+      }
+    }
+
+    const body = await req.json();
+    const { action, resource, resourceId, details, status = 'SUCCESS' } = body;
+
+    if (!action || !resource) {
+      return NextResponse.json({ error: 'action and resource are required fields' }, { status: 400 });
+    }
+
+    const logId = `aud-${crypto.randomBytes(4).toString('hex')}`;
+    const ipAddress = req.headers.get('x-forwarded-for') || '127.0.0.1';
+
+    await client.query(
+      `
+      INSERT INTO audit_logs (id, user_id, user_name, user_role, action, resource, resource_id, details, ip_address, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+      `,
+      [
+        logId,
+        userId,
+        userName,
+        userRole,
+        action,
+        resource,
+        resourceId || null,
+        JSON.stringify(details || {}),
+        ipAddress,
+        status,
+      ]
+    );
+
+    return NextResponse.json({ success: true, logId }, { status: 201 });
+  } catch (err: any) {
+    console.error('Create audit log error:', err);
+    return NextResponse.json({ error: 'Failed to record audit event' }, { status: 500 });
+  }
+}

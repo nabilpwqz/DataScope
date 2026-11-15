@@ -163,7 +163,7 @@ async function ensureSchemaAndIndexes(client: any) {
       // pg_trgm may already be loaded or restricted
     }
 
-    // 2. Tables
+    // 2. Core Tables
     await executeSql(
       client,
       `
@@ -310,6 +310,43 @@ async function ensureSchemaAndIndexes(client: any) {
         cache_hit boolean NOT NULL DEFAULT false,
         created_at timestamptz NOT NULL DEFAULT now()
       );
+
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id text PRIMARY KEY,
+        user_id text NOT NULL,
+        user_name text NOT NULL,
+        user_role text NOT NULL,
+        action text NOT NULL,
+        resource text NOT NULL,
+        resource_id text,
+        details jsonb NOT NULL DEFAULT '{}',
+        ip_address text,
+        status text NOT NULL DEFAULT 'SUCCESS',
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS record_comments (
+        id text PRIMARY KEY,
+        record_id text NOT NULL,
+        user_id text NOT NULL,
+        user_name text NOT NULL,
+        user_role text NOT NULL,
+        content text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS data_quality_issues (
+        id text PRIMARY KEY,
+        dataset_id text NOT NULL,
+        record_id text,
+        field_name text NOT NULL,
+        issue_type text NOT NULL,
+        severity text NOT NULL,
+        description text NOT NULL,
+        status text NOT NULL DEFAULT 'open',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        resolved_at timestamptz
+      );
     `
     );
 
@@ -328,6 +365,13 @@ async function ensureSchemaAndIndexes(client: any) {
       'CREATE INDEX IF NOT EXISTS idx_search_hist_user ON search_history (user_id, dataset_id);',
       'CREATE INDEX IF NOT EXISTS idx_history_record_id ON record_history (record_id);',
       'CREATE INDEX IF NOT EXISTS idx_perf_logs_created ON query_performance_logs (created_at);',
+      'CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs (created_at);',
+      'CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs (user_id);',
+      'CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);',
+      'CREATE INDEX IF NOT EXISTS idx_comments_record_id ON record_comments (record_id);',
+      'CREATE INDEX IF NOT EXISTS idx_quality_issues_dataset ON data_quality_issues (dataset_id);',
+      'CREATE INDEX IF NOT EXISTS idx_quality_issues_status ON data_quality_issues (status);',
+      'CREATE INDEX IF NOT EXISTS idx_quality_issues_severity ON data_quality_issues (severity);',
     ];
 
     for (const q of indexQueries) {
@@ -395,6 +439,35 @@ async function ensureBaselineData(client: any) {
           ('f-06', 'ds-sales-01', 'country', 'Country', 'string', true, true, true, false, '["Germany", "United States", "United Kingdom", "France", "Japan", "Canada"]'),
           ('f-07', 'ds-sales-01', 'region', 'Region', 'string', true, true, true, false, '["EMEA", "Americas", "APAC", "DACH", "Nordics"]'),
           ('f-08', 'ds-sales-01', 'recordDate', 'Contract Date', 'date', true, false, true, false, '["2024-01-15", "2024-06-20", "2024-11-01"]')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+    }
+
+    // Baseline Audit Logs if empty
+    const auditRes = await client.query('SELECT count(*)::int AS count FROM audit_logs;');
+    if ((auditRes.rows?.[0]?.count || 0) === 0) {
+      await client.query(`
+        INSERT INTO audit_logs (id, user_id, user_name, user_role, action, resource, details, ip_address, status)
+        VALUES
+          ('aud-01', 'usr-admin-01', 'Elena Rostova', 'admin', 'SYSTEM_BOOT', 'Core Engine', '{"engine": "Core Storage Engine", "indexedRecords": 110000}', '10.0.4.1', 'SUCCESS'),
+          ('aud-02', 'usr-analyst-01', 'Marcus Vance', 'analyst', 'SAVED_VIEW_CREATE', 'SavedView:ds-sales-01', '{"name": "Tier 1 Enterprise DACH", "filtersCount": 3}', '10.0.4.12', 'SUCCESS'),
+          ('aud-03', 'usr-admin-01', 'Elena Rostova', 'admin', 'PERMISSIONS_AUDIT', 'RBAC Matrix', '{"scannedRoles": ["admin", "analyst", "viewer"], "violations": 0}', '10.0.4.1', 'SUCCESS'),
+          ('aud-04', 'usr-viewer-01', 'Sarah Lin', 'viewer', 'RECORD_SEARCH', 'Dataset:ds-sales-01', '{"query": "Germany", "latencyMs": 4.2, "results": 1420}', '192.168.1.45', 'SUCCESS'),
+          ('aud-05', 'usr-analyst-01', 'Marcus Vance', 'analyst', 'DATA_EXPORT', 'ExportJob:ds-sales-01', '{"format": "CSV", "rows": 500, "status": "completed"}', '10.0.4.12', 'SUCCESS')
+        ON CONFLICT (id) DO NOTHING;
+      `);
+    }
+
+    // Baseline Data Quality Issues if empty
+    const dqRes = await client.query('SELECT count(*)::int AS count FROM data_quality_issues;');
+    if ((dqRes.rows?.[0]?.count || 0) === 0) {
+      await client.query(`
+        INSERT INTO data_quality_issues (id, dataset_id, field_name, issue_type, severity, description, status)
+        VALUES
+          ('dq-01', 'ds-sales-01', 'country', 'INCONSISTENT_CASE', 'low', '14 records exhibit non-standard capitalization in regional country codes (e.g. "germany" vs "Germany").', 'open'),
+          ('dq-02', 'ds-sales-01', 'numericValue', 'OUT_OF_BOUNDS', 'medium', '3 accounts reported negative annual ARR balances requiring financial reconciliation.', 'open'),
+          ('dq-03', 'ds-telemetry-02', 'metadata', 'MISSING_PAYLOAD', 'high', 'Edge node cluster #4 failed to supply JSON heartbeat metadata in 12 consecutive pings.', 'open'),
+          ('dq-04', 'ds-finance-03', 'status', 'UNVERIFIED_STATUS', 'critical', 'High-value transaction ACC-99411 lacks counterparty verification hash.', 'reviewed')
         ON CONFLICT (id) DO NOTHING;
       `);
     }

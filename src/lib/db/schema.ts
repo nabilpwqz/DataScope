@@ -208,3 +208,61 @@ export const queryPerformanceLogs = pgTable(
   })
 );
 
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').notNull(),
+    userName: text('user_name').notNull(),
+    userRole: text('user_role').notNull(),
+    action: text('action').notNull(),
+    resource: text('resource').notNull(),
+    resourceId: text('resource_id'),
+    details: jsonb('details').notNull().default('{}'),
+    ipAddress: text('ip_address'),
+    status: text('status').notNull().default('SUCCESS'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    createdIdx: index('audit_logs_created_idx').on(table.createdAt),
+    userIdx: index('audit_logs_user_idx').on(table.userId),
+    actionIdx: index('audit_logs_action_idx').on(table.action),
+  })
+);
+
+export const recordComments = pgTable(
+  'record_comments',
+  {
+    id: text('id').primaryKey(),
+    recordId: text('record_id').notNull(),
+    userId: text('user_id').notNull(),
+    userName: text('user_name').notNull(),
+    userRole: text('user_role').notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    recordIdIdx: index('comments_record_id_idx').on(table.recordId),
+  })
+);
+
+export const dataQualityIssues = pgTable(
+  'data_quality_issues',
+  {
+    id: text('id').primaryKey(),
+    datasetId: text('dataset_id').notNull(),
+    recordId: text('record_id'),
+    fieldName: text('field_name').notNull(),
+    issueType: text('issue_type').notNull(),
+    severity: text('severity').notNull(), // 'low' | 'medium' | 'high' | 'critical'
+    description: text('description').notNull(),
+    status: text('status').notNull().default('open'), // 'open' | 'reviewed' | 'resolved'
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+  },
+  (table) => ({
+    datasetIdx: index('quality_issues_dataset_idx').on(table.datasetId),
+    statusIdx: index('quality_issues_status_idx').on(table.status),
+    severityIdx: index('quality_issues_severity_idx').on(table.severity),
+  })
+);

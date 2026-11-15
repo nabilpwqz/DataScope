@@ -17,6 +17,10 @@ import {
   IconLayers,
   IconSettings,
   IconServer,
+  IconQuality,
+  IconGitBranch,
+  IconUsers,
+  IconFileText,
   IconChevronLeft,
   IconChevronRight,
   IconLogout,
@@ -42,62 +46,104 @@ export const Sidebar: React.FC = () => {
     router.push('/');
   };
 
-  const navItems = [
+  const navSections = [
     {
-      label: 'Overview',
-      href: '/dashboard',
-      icon: IconLayers,
+      title: 'Workspace',
+      items: [
+        {
+          label: 'Overview',
+          href: '/dashboard',
+          icon: IconLayers,
+        },
+        {
+          label: 'Dataset Library',
+          href: '/dashboard/datasets',
+          icon: IconDatabase,
+        },
+        {
+          label: 'Data Explorer',
+          href: '/dashboard/explorer',
+          icon: IconTable,
+          badge: 'Core',
+          badgeColor: 'success' as const,
+        },
+        {
+          label: 'Advanced Search',
+          href: '/dashboard/advanced-search',
+          icon: IconSliders,
+        },
+        {
+          label: 'Saved Views',
+          href: '/dashboard/saved-views',
+          icon: IconBookmark,
+        },
+        {
+          label: 'Search History',
+          href: '/dashboard/search-history',
+          icon: IconHistory,
+        },
+      ],
     },
     {
-      label: 'Dataset Library',
-      href: '/dashboard/datasets',
-      icon: IconDatabase,
+      title: 'Intelligence',
+      items: [
+        {
+          label: 'Data Analytics',
+          href: '/dashboard/analytics',
+          icon: IconChart,
+        },
+        {
+          label: 'Data Quality',
+          href: '/dashboard/data-quality',
+          icon: IconQuality,
+          badge: 'Score',
+          badgeColor: 'success' as const,
+        },
+        {
+          label: 'Data Lineage',
+          href: '/dashboard/data-lineage',
+          icon: IconGitBranch,
+        },
+      ],
     },
     {
-      label: 'Data Explorer',
-      href: '/dashboard/explorer',
-      icon: IconTable,
-      badge: 'Core',
-      badgeColor: 'success' as const,
+      title: 'Administration',
+      items: [
+        {
+          label: 'Users & Roles',
+          href: '/dashboard/users',
+          icon: IconUsers,
+        },
+        {
+          label: 'Audit Logs',
+          href: '/dashboard/audit-logs',
+          icon: IconFileText,
+        },
+        {
+          label: 'System Settings',
+          href: '/dashboard/settings',
+          icon: IconSettings,
+        },
+      ],
     },
     {
-      label: 'Advanced Search',
-      href: '/dashboard/advanced-search',
-      icon: IconSliders,
-    },
-    {
-      label: 'Saved Views',
-      href: '/dashboard/saved-views',
-      icon: IconBookmark,
-    },
-    {
-      label: 'Search History',
-      href: '/dashboard/search-history',
-      icon: IconHistory,
-    },
-    {
-      label: 'Data Analytics',
-      href: '/dashboard/analytics',
-      icon: IconChart,
-    },
-    {
-      label: 'Performance Monitor',
-      href: '/dashboard/performance',
-      icon: IconActivity,
-      badge: 'Live',
-      badgeColor: 'success' as const,
-    },
-    {
-      label: 'Architecture & ADRs',
-      href: '/dashboard/architecture',
-      icon: IconServer,
-      badge: 'Docs',
-      badgeColor: 'default' as const,
-    },
-    {
-      label: 'Settings & Access',
-      href: '/dashboard/settings',
-      icon: IconSettings,
+      title: 'System',
+      items: [
+        {
+          label: 'Performance Monitor',
+          href: '/dashboard/performance',
+          icon: IconActivity,
+          badge: 'Live',
+          badgeColor: 'success' as const,
+        },
+        {
+          label: 'Architecture & ADRs',
+          href: '/dashboard/architecture',
+          icon: IconServer,
+          badge: 'Docs',
+          badgeColor: 'default' as const,
+        },
+      ],
     },
   ];
 
@@ -173,42 +219,54 @@ export const Sidebar: React.FC = () => {
       )}
 
       {/* Navigation List */}
-      <nav className="flex-1 space-y-1 px-2.5 py-4 overflow-y-auto" aria-label="Dashboard navigation">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
+      <nav className="flex-1 space-y-4 px-2.5 py-3 overflow-y-auto" aria-label="Dashboard navigation">
+        {navSections.map((section, sectionIdx) => (
+          <div key={section.title} className="space-y-1">
+            {!sidebarCollapsed ? (
+              <div className="px-3 pt-1 pb-1 text-xs font-semibold text-slate-500">
+                {section.title}
+              </div>
+            ) : (
+              sectionIdx > 0 && <div className="my-2 border-t border-slate-800" />
+            )}
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'group flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500',
-                isActive
-                  ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30'
-                  : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
-              )}
-              title={sidebarCollapsed ? item.label : undefined}
-            >
-              <Icon
-                className={cn(
-                  'h-4 w-4 shrink-0 transition-colors',
-                  isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
-                )}
-              />
-              {!sidebarCollapsed && (
-                <div className="flex flex-1 items-center justify-between overflow-hidden">
-                  <span className="truncate">{item.label}</span>
-                  {item.badge && (
-                    <Badge variant={item.badgeColor} size="sm">
-                      {item.badge}
-                    </Badge>
+            {section.items.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'group flex items-center gap-3 rounded px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500',
+                    isActive
+                      ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/30'
+                      : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
                   )}
-                </div>
-              )}
-            </Link>
-          );
-        })}
+                  title={sidebarCollapsed ? `${section.title}: ${item.label}` : undefined}
+                >
+                  <Icon
+                    className={cn(
+                      'h-4 w-4 shrink-0 transition-colors',
+                      isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
+                    )}
+                  />
+                  {!sidebarCollapsed && (
+                    <div className="flex flex-1 items-center justify-between overflow-hidden">
+                      <span className="truncate">{item.label}</span>
+                      {item.badge && (
+                        <Badge variant={item.badgeColor} size="sm">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Footer System Status & Sign Out */}

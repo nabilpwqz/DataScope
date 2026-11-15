@@ -138,13 +138,26 @@ export default function DatasetsPage() {
 
               {/* Action Buttons */}
               <div className="pt-4 mt-4 border-t border-slate-800 flex items-center justify-between gap-2">
+                <Link
+                  href={`/dashboard/datasets/${d.id}`}
+                  className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded flex-1"
+                >
+                  <Button
+                    variant="outline"
+                    size="xs"
+                    className="text-xs w-full"
+                  >
+                    Schema & Details
+                  </Button>
+                </Link>
+
                 <Button
-                  variant={isSelected ? 'secondary' : 'outline'}
+                  variant={isSelected ? 'secondary' : 'subtle'}
                   size="xs"
                   onClick={() => handleSelect(d.id)}
-                  className="text-xs flex-1 focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="text-xs focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
-                  {isSelected ? 'Selected' : 'Set Active'}
+                  {isSelected ? 'Active' : 'Select'}
                 </Button>
 
                 <Link href="/dashboard/explorer" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">

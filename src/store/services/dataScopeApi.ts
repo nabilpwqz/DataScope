@@ -10,6 +10,11 @@ import {
   SearchHistoryEntry,
   AnalyticsSummary,
   PerformanceMetric,
+  AuditLog,
+  DataQualityOverview,
+  DataLineageGraph,
+  RecordComment,
+  UserSummary,
 } from '@/types';
 import { AISearchResult } from '@/lib/search/ai-assistant';
 
@@ -33,7 +38,19 @@ export const dataScopeApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ['Dataset', 'Record', 'SavedView', 'SearchHistory', 'Analytics', 'Performance'],
+  tagTypes: [
+    'Dataset',
+    'Record',
+    'SavedView',
+    'SearchHistory',
+    'Analytics',
+    'Performance',
+    'AuditLog',
+    'DataQuality',
+    'DataLineage',
+    'User',
+    'Comment',
+  ],
   keepUnusedDataFor: 60, // 60 seconds cache TTL
   refetchOnReconnect: true,
   endpoints: (builder) => ({
@@ -159,6 +176,118 @@ export const dataScopeApi = createApi({
         body,
       }),
     }),
+
+    // 10. Audit Logs
+    getAuditLogs: builder.query<
+      { logs: AuditLog[]; totalCount: number; viewerRole: string },
+      { limit?: number; action?: string; status?: string; search?: string } | void
+    >({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        if (params?.limit) queryParams.set('limit', String(params.limit));
+        if (params?.action) queryParams.set('action', params.action);
+        if (params?.status) queryParams.set('status', params.status);
+        if (params?.search) queryParams.set('search', params.search);
+        const qs = queryParams.toString();
+        return `/audit-logs${qs ? `?${qs}` : ''}`;
+      },
+      providesTags: [{ type: 'AuditLog', id: 'LIST' }],
+    }),
+
+    createAuditLog: builder.mutation<{ success: boolean; logId: string }, Partial<AuditLog>>({
+      query: (body) => ({
+        url: '/audit-logs',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [{ type: 'AuditLog', id: 'LIST' }],
+    }),
+
+    // 11. Data Quality
+    getDataQualityOverview: builder.query<
+      DataQualityOverview,
+      { datasetId?: string; status?: string; severity?: string } | void
+    >({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        if (params?.datasetId) queryParams.set('datasetId', params.datasetId);
+        if (params?.status) queryParams.set('status', params.status);
+        if (params?.severity) queryParams.set('severity', params.severity);
+        const qs = queryParams.toString();
+        return `/data-quality${qs ? `?${qs}` : ''}`;
+      },
+      providesTags: [{ type: 'DataQuality', id: 'OVERVIEW' }],
+    }),
+
+    updateDataQualityIssue: builder.mutation<
+      { success: boolean },
+      { issueId: string; status: 'open' | 'reviewed' | 'resolved' }
+    >({
+      query: (body) => ({
+        url: '/data-quality',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: [
+        { type: 'DataQuality', id: 'OVERVIEW' },
+        { type: 'AuditLog', id: 'LIST' },
+      ],
+    }),
+
+    // 12. Data Lineage
+    getDataLineage: builder.query<DataLineageGraph, void>({
+      query: () => '/data-lineage',
+      providesTags: [{ type: 'DataLineage', id: 'GRAPH' }],
+    }),
+
+    // 13. Platform Users & Roles
+    getUsers: builder.query<
+      { users: UserSummary[]; totalCount: number; viewerRole: string },
+      void
+    >({
+      query: () => '/users',
+      providesTags: [{ type: 'User', id: 'LIST' }],
+    }),
+
+    updateUserRole: builder.mutation<
+      { success: boolean; user: any },
+      { userId: string; role: 'admin' | 'analyst' | 'viewer' }
+    >({
+      query: (body) => ({
+        url: '/users',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: [
+        { type: 'User', id: 'LIST' },
+        { type: 'AuditLog', id: 'LIST' },
+      ],
+    }),
+
+    // 14. Record Collaboration Comments
+    getRecordComments: builder.query<
+      { comments: RecordComment[] },
+      { datasetId: string; recordId: string }
+    >({
+      query: ({ datasetId, recordId }) => `/datasets/${datasetId}/records/${recordId}/comments`,
+      providesTags: (result, error, arg) => [{ type: 'Comment', id: arg.recordId }],
+    }),
+
+    addRecordComment: builder.mutation<
+      { comment: RecordComment },
+      { datasetId: string; recordId: string; content: string }
+    >({
+      query: ({ datasetId, recordId, content }) => ({
+        url: `/datasets/${datasetId}/records/${recordId}/comments`,
+        method: 'POST',
+        body: { content },
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: 'Comment', id: arg.recordId },
+        { type: 'Record', id: arg.recordId },
+        { type: 'AuditLog', id: 'LIST' },
+      ],
+    }),
   }),
 });
 
@@ -176,5 +305,14 @@ export const {
   useGetPerformanceMetricsQuery,
   useParseNaturalLanguageSearchMutation,
   useTriggerExportMutation,
+  useGetAuditLogsQuery,
+  useCreateAuditLogMutation,
+  useGetDataQualityOverviewQuery,
+  useUpdateDataQualityIssueMutation,
+  useGetDataLineageQuery,
+  useGetUsersQuery,
+  useUpdateUserRoleMutation,
+  useGetRecordCommentsQuery,
+  useAddRecordCommentMutation,
 } = dataScopeApi;
 

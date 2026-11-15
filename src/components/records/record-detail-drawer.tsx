@@ -6,6 +6,8 @@ import { closeRecordDetail, openRecordDetail } from '@/store/slices/datasetSlice
 import {
   useGetRecordDetailsQuery,
   useUpdateRecordStatusMutation,
+  useGetRecordCommentsQuery,
+  useAddRecordCommentMutation,
 } from '@/store/services/dataScopeApi';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -25,6 +27,8 @@ import {
   Shield,
   ArrowRight,
   Sparkles,
+  MessageSquare,
+  Send,
 } from 'lucide-react';
 
 export const RecordDetailDrawer: React.FC = () => {
@@ -34,15 +38,38 @@ export const RecordDetailDrawer: React.FC = () => {
   );
   const { permissions } = useAppSelector((state) => state.auth);
 
-  const [activeTab, setActiveTab] = useState<'info' | 'relations' | 'history'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'relations' | 'history' | 'comments'>('info');
   const [newStatus, setNewStatus] = useState<string>('');
   const [statusReason, setStatusReason] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<boolean>(false);
+  const [newComment, setNewComment] = useState<string>('');
 
   const { data, isLoading, error } = useGetRecordDetailsQuery(
     { datasetId: selectedDatasetId, recordId: selectedRecordId! },
     { skip: !selectedRecordId || !isDetailDrawerOpen }
   );
+
+  const { data: commentsData, isLoading: isCommentsLoading } = useGetRecordCommentsQuery(
+    { datasetId: selectedDatasetId, recordId: selectedRecordId! },
+    { skip: !selectedRecordId || !isDetailDrawerOpen }
+  );
+
+  const [addRecordComment, { isLoading: isPostingComment }] = useAddRecordCommentMutation();
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !selectedRecordId) return;
+    try {
+      await addRecordComment({
+        datasetId: selectedDatasetId,
+        recordId: selectedRecordId,
+        content: newComment.trim(),
+      }).unwrap();
+      setNewComment('');
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+    }
+  };
 
   const [updateRecordStatus, { isLoading: isMutating }] = useUpdateRecordStatusMutation();
 
@@ -129,6 +156,16 @@ export const RecordDetailDrawer: React.FC = () => {
             >
               <History className="h-3.5 w-3.5" />
               Audit Trail ({history.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('comments')}
+              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'comments'
+                  ? 'border-emerald-500 text-emerald-400 font-semibold'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Notes ({commentsData?.comments?.length || 0})
             </button>
           </div>
 
@@ -367,6 +404,75 @@ export const RecordDetailDrawer: React.FC = () => {
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
+                {/* Tab 4: Investigation Comments & Notes */}
+                {activeTab === 'comments' && (
+                  <div className="space-y-4">
+                    <form onSubmit={handleCommentSubmit} className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-300 block">
+                        Record Annotation & Investigation Note
+                      </label>
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Add an investigation observation, audit note, or reconciliation tag..."
+                        rows={3}
+                        className="w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 placeholder-slate-400 focus:outline-none focus:border-emerald-500 resize-none"
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          variant="primary"
+                          size="sm"
+                          disabled={isPostingComment || !newComment.trim()}
+                          className="items-center gap-1.5 text-xs"
+                        >
+                          <Send className="h-3 w-3" />
+                          <span>{isPostingComment ? 'Posting...' : 'Post Note'}</span>
+                        </Button>
+                      </div>
+                    </form>
+
+                    <div className="border-t border-slate-800 pt-3 space-y-3">
+                      <div className="text-xs font-semibold text-slate-400">
+                        Investigation Thread ({commentsData?.comments?.length || 0})
+                      </div>
+
+                      {isCommentsLoading ? (
+                        <div className="py-6 text-center text-xs text-slate-500">
+                          Loading notes from database...
+                        </div>
+                      ) : !commentsData?.comments || commentsData.comments.length === 0 ? (
+                        <div className="py-8 text-center text-xs text-slate-500">
+                          No notes or collaborative annotations recorded for this record yet.
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          {commentsData.comments.map((cmt) => (
+                            <div
+                              key={cmt.id}
+                              className="p-3 rounded-lg border border-slate-800 bg-slate-900/80 space-y-1.5"
+                            >
+                              <div className="flex items-center justify-between text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-white">{cmt.userName}</span>
+                                  <span className="text-xs capitalize font-medium px-1.5 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">
+                                    {cmt.userRole}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-slate-400 font-mono">
+                                  {new Date(cmt.createdAt).toLocaleString()}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-wrap">
+                                {cmt.content}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </>

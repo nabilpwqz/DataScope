@@ -16,6 +16,7 @@ import {
   IconSparkles,
   IconBook,
   IconLogout,
+  IconSearch,
 } from '@/components/ui/icons';
 
 export const Header: React.FC = () => {
@@ -63,6 +64,19 @@ export const Header: React.FC = () => {
             ))}
           </select>
         </div>
+
+        {/* Command Palette Trigger */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent('datascope:open-command-palette'))}
+          aria-label="Open command palette"
+          className="hidden md:flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs text-slate-400 hover:text-slate-200 hover:border-slate-700 transition-colors"
+        >
+          <IconSearch className="h-3.5 w-3.5 text-slate-400" />
+          <span>Quick search...</span>
+          <kbd className="rounded border border-slate-700 bg-slate-800 px-1 py-0.5 font-mono text-[10px] text-slate-400">
+            Ctrl K
+          </kbd>
+        </button>
 
         {/* AI Assistant Quick Trigger */}
         <Button
