@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAppDispatch } from '@/store';
 import { setUser, switchRole } from '@/store/slices/authSlice';
 import { ReduxProvider } from '@/store/provider';
@@ -60,7 +61,13 @@ function LoginForm() {
     <div className="w-full max-w-md p-8 rounded-2xl border border-slate-800 bg-slate-900 space-y-6">
       {/* Brand Icon & Heading */}
       <div className="flex flex-col items-center text-center space-y-3">
-        <DataScopeLogo size="lg" showText={false} />
+        <Link
+          href="/"
+          className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
+          title="DataScope Home"
+        >
+          <DataScopeLogo size="lg" showText={false} />
+        </Link>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
             Sign In to DataScope

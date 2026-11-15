@@ -60,11 +60,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative px-4 sm:px-6 py-12 md:py-20 max-w-6xl mx-auto w-full text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-950/40 text-emerald-400 text-xs font-medium">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 motion-safe:animate-ping" />
-          <span>PostgreSQL 15 Trigram &amp; GIN Powered Architecture</span>
-        </div>
-
         <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-3xl mx-auto leading-tight">
           Explore enterprise datasets with precision and speed
         </h1>
@@ -255,7 +250,13 @@ export default function LandingPage() {
       <footer className="mt-auto border-t border-slate-800 bg-slate-950 py-8 px-4 sm:px-12 text-xs text-slate-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <DataScopeLogo size="sm" subtitle="Enterprise Platform" />
+            <Link
+              href="/"
+              className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
+              title="DataScope Home"
+            >
+              <DataScopeLogo size="sm" subtitle="Enterprise Platform" />
+            </Link>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-400">
             <span>Next.js 14 App Router</span>

@@ -40,7 +40,7 @@ export const Header: React.FC = () => {
       // Continue client-side session cleanup
     }
     dispatch(logout());
-    router.push('/login');
+    router.push('/');
   };
 
   return (

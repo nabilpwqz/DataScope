@@ -39,7 +39,7 @@ export const Sidebar: React.FC = () => {
       // Continue client cleanup
     }
     dispatch(logout());
-    router.push('/login');
+    router.push('/');
   };
 
   const navItems = [
@@ -111,8 +111,9 @@ export const Sidebar: React.FC = () => {
       {/* Brand Header with Bespoke Logo */}
       <div className="flex h-16 items-center justify-between px-3 border-b border-slate-800">
         <Link
-          href="/dashboard"
+          href="/"
           className="flex items-center gap-2 overflow-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
+          title="DataScope Home"
         >
           <DataScopeLogo
             size="md"
