@@ -71,6 +71,43 @@ export const dataScopeApi = createApi({
       providesTags: (result, error, id) => [{ type: 'Dataset', id }],
     }),
 
+    createDataset: builder.mutation<Dataset, Partial<Dataset>>({
+      query: (body) => ({
+        url: '/datasets',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [
+        { type: 'Dataset', id: 'LIST' },
+        { type: 'AuditLog', id: 'LIST' },
+      ],
+    }),
+
+    updateDataset: builder.mutation<Dataset, { id: string } & Partial<Dataset>>({
+      query: ({ id, ...body }) => ({
+        url: `/datasets/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: 'Dataset', id: arg.id },
+        { type: 'Dataset', id: 'LIST' },
+        { type: 'AuditLog', id: 'LIST' },
+      ],
+    }),
+
+    deleteDataset: builder.mutation<{ success: boolean }, string>({
+      query: (id) => ({
+        url: `/datasets/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, id) => [
+        { type: 'Dataset', id },
+        { type: 'Dataset', id: 'LIST' },
+        { type: 'AuditLog', id: 'LIST' },
+      ],
+    }),
+
     // 2. Search & Records
     searchRecords: builder.query<SearchQueryResponse, SearchQueryRequest>({
       query: (body) => ({
@@ -294,6 +331,9 @@ export const dataScopeApi = createApi({
 export const {
   useGetDatasetsQuery,
   useGetDatasetByIdQuery,
+  useCreateDatasetMutation,
+  useUpdateDatasetMutation,
+  useDeleteDatasetMutation,
   useSearchRecordsQuery,
   useGetRecordDetailsQuery,
   useUpdateRecordStatusMutation,

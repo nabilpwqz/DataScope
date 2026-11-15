@@ -92,12 +92,20 @@ DataScope organizes operations into four distinct workspace tiers accessible thr
 - Features real-time filtering, keyboard arrow navigation, Enter selection, and Escape dismissal.
 - Quick actions include toggling light/night modes, switching RBAC clearance roles, and triggering AI search.
 
-### 2. Advanced Data Explorer (`/dashboard/explorer`)
+### 2. Dataset Library & Schema Registry (`/dashboard/datasets`)
+- Dual display formats: High-fidelity Grid view with operational metric strips and High-density tabular layout.
+- Search and filtering: Real-time query search across dataset title, slug, and descriptions with Category and Access Level filters.
+- Operational management:
+  - Provision new dataset partitions with custom access levels and ingestion sources.
+  - In-place metadata editing for names, categories, descriptions, and access levels.
+  - Safe dataset deletion and archiving with cascade warnings and permanent compliance audit recording.
+
+### 3. Advanced Data Explorer (`/dashboard/explorer`)
 - The central exploration interface supporting full-text search, trigram typo tolerance, and composite filtering.
 - Multi-column sort, dynamic column visibility, and three density modes (Compact: 32px, Standard: 40px, Spacious: 52px).
 - Keyset cursor and offset pagination options with sub-millisecond cache hits.
 
-### 3. Continuous Data Quality Monitoring (`/dashboard/data-quality`)
+### 4. Continuous Data Quality Monitoring (`/dashboard/data-quality`)
 - Real-time quality health score calculated from four key dimensions:
   - **Completeness:** Validates non-null coverage on mandatory business attributes.
   - **Uniqueness:** Guarantees zero duplicate primary and business keys.
@@ -105,7 +113,7 @@ DataScope organizes operations into four distinct workspace tiers accessible thr
   - **Consistency:** Maintains referential harmony across related entity graphs.
 - Direct operational actions: Mark issues as "Reviewed" or "Resolved" with automatic audit log tracking.
 
-### 4. Interactive Data Lineage and Provenance Graph (`/dashboard/data-lineage`)
+### 5. Interactive Data Lineage and Provenance Graph (`/dashboard/data-lineage`)
 - Visual node topology mapping:
   - **Origins:** Salesforce CRM, Apache Kafka Event Mesh, Stripe Ledger.
   - **Ingestion Workers:** Debezium CDC Worker, Schema Validator & Trigram Indexer.
@@ -113,7 +121,7 @@ DataScope organizes operations into four distinct workspace tiers accessible thr
   - **Downstream Consumers:** Executive BI Dashboards, AI Query Assistant, Compliance Audit & Export Service.
 - Interactive node inspector displaying latency cadences, record counts, and transfer protocols (mTLS, HTTPS JSON, PostgreSQL Pool).
 
-### 5. Dedicated Dataset Detail and Schema Catalog (`/dashboard/datasets/[id]`)
+### 6. Dedicated Dataset Detail and Schema Catalog (`/dashboard/datasets/[id]`)
 - Comprehensive six-tab dataset inspection:
   1. **Overview:** Characteristics, storage partition, and indexing strategies.
   2. **Schema Inspection:** Catalog of attributes, data types, primary key flags, filterability, and sample values.
@@ -122,17 +130,17 @@ DataScope organizes operations into four distinct workspace tiers accessible thr
   5. **Access & RBAC:** Clearances required to view, modify, or export.
   6. **Activity Audit:** Historical log of schema, ingestion, and query events.
 
-### 6. Platform Identity Directory and RBAC Governance (`/dashboard/users`)
+### 7. Platform Identity Directory and RBAC Governance (`/dashboard/users`)
 - Real-time user roster with department, active session status, and policy count badges.
 - Server-validated role switching (`admin`, `analyst`, `viewer`).
 - Server-enforced capability matrix preventing unauthorized mutations.
 
-### 7. Security and Compliance Audit Logs (`/dashboard/audit-logs`)
+### 8. Security and Compliance Audit Logs (`/dashboard/audit-logs`)
 - Chronological, append-only security log recording administrative events, queries, exports, and status changes.
 - Multi-criteria filtering by action type, outcome status (`SUCCESS`, `WARNING`, `FAILURE`), and search keywords.
 - Modal payload inspector rendering formatted JSON event metadata.
 
-### 8. Collaborative Record Notes and Investigation Annotations
+### 9. Collaborative Record Notes and Investigation Annotations
 - Integrated inside the Record Detail Drawer.
 - Data analysts and administrators can record persistent investigation notes and audit remarks attached to specific records.
 - Seamlessly written to PostgreSQL and reflected in the record revision history.

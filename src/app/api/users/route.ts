@@ -135,3 +135,4 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update user role' }, { status: 500 });
   }
 }
+

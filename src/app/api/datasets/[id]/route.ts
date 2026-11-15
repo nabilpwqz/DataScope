@@ -3,6 +3,7 @@ import { getRawClient } from '@/lib/db';
 import { verifyToken } from '@/lib/auth/jwt';
 import { canAccessDataset } from '@/lib/auth/rbac';
 import { Dataset, UserRole } from '@/types';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,3 +66,146 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const datasetId = params.id;
+    const client = await getRawClient();
+
+    let actorName = 'Elena Rostova';
+    let actorRole: UserRole = 'admin';
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const payload = await verifyToken(authHeader.split(' ')[1]);
+      if (payload) {
+        actorName = payload.name;
+        actorRole = payload.role;
+      }
+    }
+
+    if (actorRole !== 'admin') {
+      return NextResponse.json({ error: 'Administrator clearance required to modify dataset metadata' }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { name, description, category, accessLevel, dataSource } = body;
+
+    const updateRes = await client.query(
+      `
+      UPDATE datasets
+      SET 
+        name = COALESCE($1, name),
+        description = COALESCE($2, description),
+        category = COALESCE($3, category),
+        access_level = COALESCE($4, access_level),
+        data_source = COALESCE($5, data_source),
+        updated_at = NOW()
+      WHERE id = $6 OR slug = $6
+      RETURNING *;
+      `,
+      [name || null, description || null, category || null, accessLevel || null, dataSource || null, datasetId]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
+    }
+
+    const updated = updateRes.rows[0];
+
+    // Log update in audit trail
+    const auditId = `aud-${crypto.randomBytes(4).toString('hex')}`;
+    await client.query(
+      `
+      INSERT INTO audit_logs (id, user_id, user_name, user_role, action, resource, resource_id, details, ip_address, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+      `,
+      [
+        auditId,
+        'usr-current',
+        actorName,
+        actorRole,
+        'DATASET_METADATA_UPDATE',
+        `Dataset:${updated.id}`,
+        updated.id,
+        JSON.stringify({ name: updated.name, accessLevel: updated.access_level, category: updated.category }),
+        req.headers.get('x-forwarded-for') || '127.0.0.1',
+        'SUCCESS',
+      ]
+    );
+
+    return NextResponse.json({
+      id: updated.id,
+      name: updated.name,
+      slug: updated.slug,
+      description: updated.description,
+      category: updated.category,
+      dataSource: updated.data_source,
+      totalRecords: updated.total_records,
+      accessLevel: updated.access_level,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at,
+    });
+  } catch (err: any) {
+    console.error('Update dataset error:', err);
+    return NextResponse.json({ error: 'Failed to update dataset' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const datasetId = params.id;
+    const client = await getRawClient();
+
+    let actorName = 'Elena Rostova';
+    let actorRole: UserRole = 'admin';
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const payload = await verifyToken(authHeader.split(' ')[1]);
+      if (payload) {
+        actorName = payload.name;
+        actorRole = payload.role;
+      }
+    }
+
+    if (actorRole !== 'admin') {
+      return NextResponse.json({ error: 'Administrator clearance required to delete datasets' }, { status: 403 });
+    }
+
+    // Delete records and fields associated with this dataset
+    await client.query('DELETE FROM dataset_records WHERE dataset_id = $1', [datasetId]);
+    await client.query('DELETE FROM dataset_fields WHERE dataset_id = $1', [datasetId]);
+    await client.query('DELETE FROM data_quality_issues WHERE dataset_id = $1', [datasetId]);
+    const delRes = await client.query('DELETE FROM datasets WHERE id = $1 RETURNING id, name', [datasetId]);
+
+    if (delRes.rows.length === 0) {
+      return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
+    }
+
+    const deleted = delRes.rows[0];
+
+    // Log deletion in audit trail
+    const auditId = `aud-${crypto.randomBytes(4).toString('hex')}`;
+    await client.query(
+      `
+      INSERT INTO audit_logs (id, user_id, user_name, user_role, action, resource, resource_id, details, ip_address, status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10);
+      `,
+      [
+        auditId,
+        'usr-current',
+        actorName,
+        actorRole,
+        'DATASET_DELETE',
+        `Dataset:${deleted.id}`,
+        deleted.id,
+        JSON.stringify({ deletedName: deleted.name }),
+        req.headers.get('x-forwarded-for') || '127.0.0.1',
+        'SUCCESS',
+      ]
+    );
+
+    return NextResponse.json({ success: true, id: deleted.id });
+  } catch (err: any) {
+    console.error('Delete dataset error:', err);
+    return NextResponse.json({ error: 'Failed to delete dataset' }, { status: 500 });
+  }
+}
