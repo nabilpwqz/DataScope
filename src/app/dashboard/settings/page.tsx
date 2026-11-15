@@ -47,10 +47,91 @@ import {
   SlidersHorizontal,
   Clock,
   EyeOff,
+  Users,
+  Bookmark,
+  Share2,
+  Edit3,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { IconMoon, IconSun } from '@/components/ui/icons';
+import { PermissionCheck } from '@/lib/auth/rbac';
 
 type SettingsTab = 'identity' | 'rendering' | 'engine' | 'security' | 'workspace';
+
+interface PrivilegeMeta {
+  name: string;
+  description: string;
+  category: 'governance' | 'data' | 'collaboration';
+  categoryLabel: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+const PRIVILEGE_DEFINITIONS: Record<keyof PermissionCheck, PrivilegeMeta> = {
+  canManageUsers: {
+    name: 'Manage Users',
+    description: 'Provision identities, assign RBAC roles, and manage API credentials.',
+    category: 'governance',
+    categoryLabel: 'Identity & Governance',
+    icon: Users,
+  },
+  canManageDatasets: {
+    name: 'Manage Datasets',
+    description: 'Create, truncate, re-index, and drop partitioned enterprise datasets.',
+    category: 'data',
+    categoryLabel: 'Data Operations',
+    icon: Database,
+  },
+  canExportData: {
+    name: 'Export Data',
+    description: 'Download raw and filtered records in CSV and JSON streaming formats.',
+    category: 'data',
+    categoryLabel: 'Data Operations',
+    icon: Download,
+  },
+  canCreateSavedViews: {
+    name: 'Create Saved Views',
+    description: 'Persist customized filter combinations, sorts, and visible columns.',
+    category: 'collaboration',
+    categoryLabel: 'Views & Collaboration',
+    icon: Bookmark,
+  },
+  canShareViews: {
+    name: 'Share Views',
+    description: 'Publish saved views across workspace teams and generate shareable links.',
+    category: 'collaboration',
+    categoryLabel: 'Views & Collaboration',
+    icon: Share2,
+  },
+  canViewSystemAnalytics: {
+    name: 'View System Analytics',
+    description: 'Inspect system query latency, buffer cache hit rates, and engine metrics.',
+    category: 'collaboration',
+    categoryLabel: 'Views & Collaboration',
+    icon: Activity,
+  },
+  canModifyRecords: {
+    name: 'Modify Records',
+    description: 'Inline edit cells, insert rows, append comments, and audit updates.',
+    category: 'data',
+    categoryLabel: 'Data Operations',
+    icon: Edit3,
+  },
+  canAccessRestrictedDatasets: {
+    name: 'Access Restricted Datasets',
+    description: 'Query internal telemetry and partner data restricted to tier-2 analysts.',
+    category: 'data',
+    categoryLabel: 'Data Operations',
+    icon: Lock,
+  },
+  canAccessAdminOnlyDatasets: {
+    name: 'Access Admin Only Datasets',
+    description: 'Access sensitive corporate treasury, ledger, and SOX audit datasets.',
+    category: 'governance',
+    categoryLabel: 'Identity & Governance',
+    icon: Key,
+  },
+};
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch();
@@ -81,6 +162,25 @@ export default function SettingsPage() {
   const [sessionTimeoutMin, setSessionTimeoutMin] = useState<number>(30);
   const [auditRetentionDays, setAuditRetentionDays] = useState<number>(365);
   const [dlpMasking, setDlpMasking] = useState<boolean>(true);
+
+  // Privilege Matrix state
+  const [privilegeFilter, setPrivilegeFilter] = useState<'all' | 'allowed' | 'restricted'>('all');
+  const [privilegeSearch, setPrivilegeSearch] = useState<string>('');
+
+  const allowedCount = Object.values(permissions).filter(Boolean).length;
+  const restrictedCount = Object.values(permissions).filter((v) => !v).length;
+
+  const filteredPrivileges = (Object.keys(PRIVILEGE_DEFINITIONS) as Array<keyof PermissionCheck>).filter((key) => {
+    const isAllowed = permissions[key];
+    if (privilegeFilter === 'allowed' && !isAllowed) return false;
+    if (privilegeFilter === 'restricted' && isAllowed) return false;
+    if (privilegeSearch.trim()) {
+      const q = privilegeSearch.toLowerCase();
+      const def = PRIVILEGE_DEFINITIONS[key];
+      return def.name.toLowerCase().includes(q) || key.toLowerCase().includes(q) || def.description.toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   const handleCopyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -389,41 +489,182 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Granular Permissions Breakdown Matrix */}
-          <div className="p-5 sm:p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                <Shield className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span>Active Role Privileges Matrix</span>
-              </h2>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                Enforced both client-side and server-side on all endpoints
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Object.entries(permissions).map(([permKey, isAllowed]) => (
-                <div
-                  key={permKey}
-                  className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/70 flex items-center justify-between gap-2 text-xs transition-colors"
-                >
-                  <div className="space-y-0.5">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100 block">
-                      {permKey
-                        .replace(/^can/, '')
-                        .replace(/([A-Z])/g, ' $1')
-                        .trim()}
-                    </span>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                      {permKey}
+          {/* Active Role Privileges Matrix Console */}
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-sm overflow-hidden">
+            {/* Header Banner */}
+            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-b from-slate-50/80 to-white dark:from-slate-900 dark:to-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-base font-bold text-slate-900 dark:text-white">
+                      Active Role Privileges Matrix
+                    </h2>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 motion-safe:animate-pulse" />
+                      Live RBAC Guard
                     </span>
                   </div>
-
-                  <Badge variant={isAllowed ? 'emerald' : 'outline'} size="sm">
-                    {isAllowed ? 'Allowed' : 'Restricted'}
-                  </Badge>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                    Enforced both client-side and server-side on all endpoints. Privileges evaluate deterministically based on cryptographic session tokens.
+                  </p>
                 </div>
-              ))}
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs">
+                  <span className="text-[11px] text-slate-500">Evaluated Role:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white capitalize">
+                    {activeRole}
+                  </span>
+                  <span className="text-slate-400">&bull;</span>
+                  <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    {allowedCount} / 9
+                  </span>
+                  <span className="text-slate-500 text-[11px]">Active</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-5 sm:p-6 space-y-5">
+              {/* Telemetry & Filter Bar */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setPrivilegeFilter('all')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                      privilegeFilter === 'all'
+                        ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    All (9)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrivilegeFilter('allowed')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                      privilegeFilter === 'allowed'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400'
+                    }`}
+                  >
+                    Allowed ({allowedCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrivilegeFilter('restricted')}
+                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
+                      privilegeFilter === 'restricted'
+                        ? 'bg-slate-800 text-white shadow-sm dark:bg-slate-700'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Restricted ({restrictedCount})
+                  </button>
+                </div>
+
+                <div className="relative w-full sm:w-64">
+                  <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={privilegeSearch}
+                    onChange={(e) => setPrivilegeSearch(e.target.value)}
+                    placeholder="Search matrix permissions..."
+                    className="w-full h-8 pl-8 pr-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* 3x3 Enriched Privileges Matrix */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {filteredPrivileges.map((permKey) => {
+                  const def = PRIVILEGE_DEFINITIONS[permKey];
+                  const isAllowed = permissions[permKey];
+                  const IconComponent = def.icon;
+
+                  return (
+                    <div
+                      key={permKey}
+                      className={`p-4 rounded-xl border transition-colors flex flex-col justify-between gap-3 ${
+                        isAllowed
+                          ? 'border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-900/60'
+                          : 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-950/30 opacity-75 hover:opacity-100'
+                      }`}
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                                isAllowed
+                                  ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                                  : 'bg-slate-200/60 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400'
+                              }`}
+                            >
+                              <IconComponent className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <h3 className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                                {def.name}
+                              </h3>
+                              <span className="text-[10px] text-slate-500 block">
+                                {def.categoryLabel}
+                              </span>
+                            </div>
+                          </div>
+
+                          <Badge variant={isAllowed ? 'emerald' : 'outline'} size="sm" className="shrink-0">
+                            {isAllowed ? 'Allowed' : 'Restricted'}
+                          </Badge>
+                        </div>
+
+                        <div className="font-mono text-[10px] text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200/60 dark:border-slate-800/60 truncate">
+                          {permKey}
+                        </div>
+
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-normal">
+                          {def.description}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
+                        <span>API Middleware &bull; Guard</span>
+                        <span
+                          className={`font-semibold ${
+                            isAllowed
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          {isAllowed ? 'Active' : 'Locked'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Matrix Footer */}
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <span>
+                    Cryptographic RBAC Invariant: Role switches instantly update client navigation, API authorization tokens, and query executors.
+                  </span>
+                </div>
+
+                <Link
+                  href="/dashboard/users"
+                  className="text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                >
+                  <span>Manage Users &amp; Permissions</span>
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
