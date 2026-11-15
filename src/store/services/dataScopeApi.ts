@@ -190,6 +190,14 @@ export const dataScopeApi = createApi({
       providesTags: [{ type: 'Performance', id: 'STATS' }],
     }),
 
+    clearPerformanceCache: builder.mutation<{ success: boolean; message: string; stats: any }, void>({
+      query: () => ({
+        url: '/performance',
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'Performance', id: 'STATS' }, { type: 'Performance', id: 'HEALTH' }],
+    }),
+
     // 8. AI Search Assistant
     parseNaturalLanguageSearch: builder.mutation<
       AISearchResult,
@@ -364,6 +372,7 @@ export const {
   useGetSearchHistoryQuery,
   useGetDatasetAnalyticsQuery,
   useGetPerformanceMetricsQuery,
+  useClearPerformanceCacheMutation,
   useParseNaturalLanguageSearchMutation,
   useTriggerExportMutation,
   useGetAuditLogsQuery,

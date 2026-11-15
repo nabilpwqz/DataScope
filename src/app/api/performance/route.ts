@@ -49,3 +49,18 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    queryCache.clear();
+    return NextResponse.json({
+      success: true,
+      message: 'Server in-memory query cache flushed successfully',
+      stats: queryCache.getStats(),
+    });
+  } catch (err: any) {
+    console.error('Flush cache error:', err);
+    return NextResponse.json({ error: 'Failed to flush server cache' }, { status: 500 });
+  }
+}
+
+
