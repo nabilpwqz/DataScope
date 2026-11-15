@@ -434,7 +434,6 @@ async function ensureBaselineData(client: any) {
           ('pref-03', 'usr-viewer-01', 'standard', 'dark', false, 30, 25, true)
         ON CONFLICT (user_id) DO NOTHING;
       `);
-    }
 
     const existingDatasets = await client.query('SELECT count(*)::int AS count FROM datasets;');
     const datasetCount = existingDatasets.rows?.[0]?.count || 0;
