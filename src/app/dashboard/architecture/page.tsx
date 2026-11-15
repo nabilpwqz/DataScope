@@ -1042,6 +1042,421 @@ CREATE VIEW v_dataset_records_unified AS
   },
 ];
 
+interface SearchDimension {
+  id: string;
+  dimension: string;
+  category: 'performance' | 'matching' | 'operations' | 'architecture';
+  categoryLabel: string;
+  ftsSelected: {
+    value: string;
+    badge: string;
+    badgeVariant: 'emerald' | 'info' | 'warning' | 'danger' | 'purple';
+    detail: string;
+  };
+  trgm: {
+    value: string;
+    badge: string;
+    badgeVariant: 'emerald' | 'info' | 'warning' | 'danger' | 'purple';
+    detail: string;
+  };
+  elasticsearch: {
+    value: string;
+    badge: string;
+    badgeVariant: 'emerald' | 'info' | 'warning' | 'danger' | 'purple';
+    detail: string;
+  };
+}
+
+const SEARCH_COMPARISON_DIMENSIONS: SearchDimension[] = [
+  {
+    id: 'dim-index-tech',
+    dimension: 'Index Technology',
+    category: 'architecture',
+    categoryLabel: 'Architecture & Indexing',
+    ftsSelected: {
+      value: 'GIN Index over tsvector lexemes',
+      badge: 'Native Inverted Index',
+      badgeVariant: 'emerald',
+      detail: 'Inverted index mapping stemmed English lexemes directly to table tuple IDs (TIDs) inside the database page cache.',
+    },
+    trgm: {
+      value: 'GIN / GiST over 3-character n-grams',
+      badge: 'N-Gram Extender',
+      badgeVariant: 'purple',
+      detail: 'Deconstructs string slices into 3-character n-grams, enabling rapid arbitrary substring search and Levenshtein similarity math.',
+    },
+    elasticsearch: {
+      value: 'Distributed Inverted Index (Apache Lucene)',
+      badge: 'Distributed Lucene',
+      badgeVariant: 'info',
+      detail: 'Segmented immutable Apache Lucene indices distributed across multiple cluster shards with background segment merges.',
+    },
+  },
+  {
+    id: 'dim-search-speed',
+    dimension: 'Search Speed (100k Rows)',
+    category: 'performance',
+    categoryLabel: 'Performance & Speed',
+    ftsSelected: {
+      value: '4 - 8 ms',
+      badge: 'Fastest In-DB (p95: 7.4ms)',
+      badgeVariant: 'emerald',
+      detail: 'Direct in-process shared memory buffer scan; zero TCP socket hops, zero cross-service JSON serialization overhead.',
+    },
+    trgm: {
+      value: '6 - 14 ms',
+      badge: 'Sub-15ms Latency',
+      badgeVariant: 'emerald',
+      detail: 'Calculates trigram bitmap index intersection in PostgreSQL engine buffers with minimal CPU cycles.',
+    },
+    elasticsearch: {
+      value: '5 - 15 ms (plus network hop)',
+      badge: '+12ms Network RTT',
+      badgeVariant: 'warning',
+      detail: 'Shard query execution executes in ~8ms, but HTTP/REST serialization, load balancer hops, and cross-datacenter RTT total ~20-27ms.',
+    },
+  },
+  {
+    id: 'dim-typo-fuzzy',
+    dimension: 'Typo & Fuzzy Matching',
+    category: 'matching',
+    categoryLabel: 'Matching Precision',
+    ftsSelected: {
+      value: 'Lexical stemming only',
+      badge: 'Stemming Only',
+      badgeVariant: 'warning',
+      detail: 'Stems words using Snowball dictionaries (e.g. "logistics" matches "logistical"), but fails on mistyped words like "logstics".',
+    },
+    trgm: {
+      value: 'Excellent similarity % matching',
+      badge: 'Similarity Math (0.0 - 1.0)',
+      badgeVariant: 'emerald',
+      detail: 'Calculates trigram similarity scores using trigram overlap; catches mistyped keywords and transposition errors seamlessly.',
+    },
+    elasticsearch: {
+      value: 'Fuzzy Levenshtein distance',
+      badge: 'Automaton Levenshtein',
+      badgeVariant: 'emerald',
+      detail: 'Automaton-based edit distance supporting Damerau-Levenshtein transposition rules with configurable max edits (1 or 2).',
+    },
+  },
+  {
+    id: 'dim-infra-complexity',
+    dimension: 'Infrastructure Complexity',
+    category: 'operations',
+    categoryLabel: 'Operational Complexity',
+    ftsSelected: {
+      value: 'Zero extra infrastructure (In-DB)',
+      badge: 'Zero Overhead',
+      badgeVariant: 'emerald',
+      detail: 'Runs directly inside PostgreSQL 15. Zero new servers, zero separate operational monitors, zero dual-write logic.',
+    },
+    trgm: {
+      value: 'Zero extra infrastructure (Extension)',
+      badge: 'Zero Overhead',
+      badgeVariant: 'emerald',
+      detail: 'Native extension enabled with CREATE EXTENSION pg_trgm. Included in standard PostgreSQL distributions.',
+    },
+    elasticsearch: {
+      value: 'High: JVM, cluster nodes, dual-write CDC sync',
+      badge: 'High Operational Cost',
+      badgeVariant: 'danger',
+      detail: 'Requires dedicated JVM cluster nodes, Debezium/Kafka Change Data Capture (CDC) pipelines, split-brain management, and cluster re-indexing.',
+    },
+  },
+  {
+    id: 'dim-consistency',
+    dimension: 'Consistency Model',
+    category: 'operations',
+    categoryLabel: 'Operational Complexity',
+    ftsSelected: {
+      value: 'Immediate ACID consistency',
+      badge: 'Immediate ACID',
+      badgeVariant: 'emerald',
+      detail: 'Index updates synchronously within the write transaction; newly committed rows are discoverable in search queries instantly.',
+    },
+    trgm: {
+      value: 'Immediate ACID consistency',
+      badge: 'Immediate ACID',
+      badgeVariant: 'emerald',
+      detail: 'Synchronous transaction isolation guarantees immediate read-after-write consistency for all modified records.',
+    },
+    elasticsearch: {
+      value: 'Eventual consistency (indexing delay)',
+      badge: 'Eventual (1-3s lag)',
+      badgeVariant: 'warning',
+      detail: 'CDC pipeline propagation and Elasticsearch refresh intervals introduce a 1 to 3 second delay before newly written records appear in search results.',
+    },
+  },
+  {
+    id: 'dim-suitability',
+    dimension: 'Suitability Threshold',
+    category: 'architecture',
+    categoryLabel: 'Architecture & Indexing',
+    ftsSelected: {
+      value: 'Up to 10 - 20 Million records',
+      badge: '10M - 20M Scale',
+      badgeVariant: 'emerald',
+      detail: 'Optimal capacity for high-density enterprise datasets, structured tables, analytics dimensions, and audit history.',
+    },
+    trgm: {
+      value: 'Up to 5 Million records',
+      badge: 'Up to 5M Scale',
+      badgeVariant: 'info',
+      detail: 'Best for real-time autocomplete search, typo correction, and fuzzy user entity matching.',
+    },
+    elasticsearch: {
+      value: '50+ Million records & log aggregation',
+      badge: '50M+ Scale',
+      badgeVariant: 'info',
+      detail: 'Web-scale distributed search, multi-terabyte log aggregation, and deep semantic document text corpus analysis.',
+    },
+  },
+  {
+    id: 'dim-cost',
+    dimension: 'Operational Cost & Maintenance',
+    category: 'operations',
+    categoryLabel: 'Operational Complexity',
+    ftsSelected: {
+      value: '$0 incremental / month',
+      badge: 'Zero Extra Cost',
+      badgeVariant: 'emerald',
+      detail: 'Operates within existing PostgreSQL compute budget; zero additional cloud billing line items or license charges.',
+    },
+    trgm: {
+      value: '$0 incremental / month',
+      badge: 'Zero Extra Cost',
+      badgeVariant: 'emerald',
+      detail: 'Community-supported PostgreSQL extension bundled with standard PostgreSQL engine.',
+    },
+    elasticsearch: {
+      value: '~$480 - $1,200 / month',
+      badge: 'High Cloud Cost',
+      badgeVariant: 'warning',
+      detail: 'Requires minimum 3 master/data nodes for high availability, disk storage replication, and dedicated cluster monitoring.',
+    },
+  },
+];
+
+interface ScaleTierData {
+  tier: '100k' | '1m' | '5m' | '10m';
+  name: string;
+  rowCount: string;
+  storageSize: string;
+  indexFootprint: string;
+  recommendedRam: string;
+  coldQueryP95: string;
+  throughputQps: string;
+  paginationStrategy: string;
+  partitionCount: string;
+}
+
+const SCALE_TIER_DATA: Record<'100k' | '1m' | '5m' | '10m', ScaleTierData> = {
+  '100k': {
+    tier: '100k',
+    name: 'Local Dev & Testing',
+    rowCount: '100,000 Rows',
+    storageSize: '~24 MB',
+    indexFootprint: '~18 MB',
+    recommendedRam: '256 MB',
+    coldQueryP95: '7.2 ms',
+    throughputQps: '480 QPS',
+    paginationStrategy: 'Bounded Offset (LIMIT 25 OFFSET n)',
+    partitionCount: 'Single Table',
+  },
+  '1m': {
+    tier: '1m',
+    name: 'Staging Benchmark',
+    rowCount: '1,000,000 Rows',
+    storageSize: '~240 MB',
+    indexFootprint: '~180 MB',
+    recommendedRam: '1 GB',
+    coldQueryP95: '7.8 ms',
+    throughputQps: '1,250 QPS',
+    paginationStrategy: 'Bounded Offset + B-Tree Pushdown',
+    partitionCount: '4 Quarterly Partitions',
+  },
+  '5m': {
+    tier: '5m',
+    name: 'Production Cluster',
+    rowCount: '5,000,000 Rows',
+    storageSize: '~1.2 GB',
+    indexFootprint: '~920 MB',
+    recommendedRam: '4 GB',
+    coldQueryP95: '8.4 ms',
+    throughputQps: '3,800 QPS',
+    paginationStrategy: 'Hybrid Keyset Cursor + Read Replicas',
+    partitionCount: '12 Monthly Partitions',
+  },
+  '10m': {
+    tier: '10m',
+    name: 'Hyperscale Production',
+    rowCount: '10,000,000+ Rows',
+    storageSize: '~2.4 GB',
+    indexFootprint: '~1.85 GB',
+    recommendedRam: '8 GB',
+    coldQueryP95: '9.1 ms',
+    throughputQps: '8,500 QPS',
+    paginationStrategy: 'Constant O(1) Keyset Streaming',
+    partitionCount: '24+ Partitions + Parquet Tiering',
+  },
+};
+
+interface ScalingPhase {
+  id: string;
+  phaseId: 'phase1' | 'phase2' | 'phase3' | 'phase4';
+  phaseNumber: number;
+  title: string;
+  phaseBadge: string;
+  rowScale: string;
+  summary: string;
+  detailedArchitecture: string;
+  architecturalMechanisms: string[];
+  codeTitle: string;
+  codeSnippet: string;
+  targetModule: string;
+}
+
+const SCALING_BLUEPRINT_PHASES: ScalingPhase[] = [
+  {
+    id: 'scale-phase-1',
+    phaseId: 'phase1',
+    phaseNumber: 1,
+    title: 'Phase 1: Table Partitioning',
+    phaseBadge: '100k to 2.5M Records',
+    rowScale: 'Up to 2,500,000 rows',
+    summary:
+      'Partition dataset_records by range on record_date (e.g. monthly or quarterly partitions) or by hash on dataset_id. PostgreSQL partition pruning ensures only relevant partition trees are traversed.',
+    detailedArchitecture:
+      'Declarative range partitioning on record_date splits the massive dataset_records table into lightweight, self-contained monthly child tables. When query filters specify a date interval or range, the PostgreSQL query planner dynamically prunes irrelevant partitions from execution plans (enable_partition_pruning = on). Each partition maintains its own local GIN and composite B-tree indexes, ensuring index trees fit entirely inside PostgreSQL buffer memory (shared_buffers) for sub-millisecond page cache hits.',
+    architecturalMechanisms: [
+      'Range Partitioning by Date: Child tables created per monthly window (e.g. dataset_records_2024_01).',
+      'Partition Pruning: Non-matching partition branches are skipped entirely during SQL query planning.',
+      'Local B-Tree and GIN Indexes: Built on each partition to prevent deep index tree traversal degradation.',
+      'Hash Sub-Partitioning: Optional secondary hash partition on dataset_id for multi-tenant isolation.',
+    ],
+    codeTitle: 'PostgreSQL Declarative Table Partitioning DDL',
+    codeSnippet: `-- Phase 1: Declarative Range Partitioning DDL
+CREATE TABLE dataset_records_partitioned (
+  id UUID NOT NULL,
+  dataset_id VARCHAR(64) NOT NULL,
+  record_date DATE NOT NULL,
+  title TEXT NOT NULL,
+  status VARCHAR(32) NOT NULL,
+  country VARCHAR(8) NOT NULL,
+  numeric_value NUMERIC(14, 2) NOT NULL,
+  search_vector tsvector,
+  PRIMARY KEY (id, record_date)
+) PARTITION BY RANGE (record_date);
+
+-- Declarative Monthly Partition:
+CREATE TABLE dataset_records_2024_01 PARTITION OF dataset_records_partitioned
+  FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+-- Local Compact B-Tree & GIN Indexes:
+CREATE INDEX idx_part_2024_01_composite ON dataset_records_2024_01 (dataset_id, status, numeric_value);
+CREATE INDEX idx_part_2024_01_trgm ON dataset_records_2024_01 USING gin (title gin_trgm_ops);`,
+    targetModule: 'src/lib/db.ts',
+  },
+  {
+    id: 'scale-phase-2',
+    phaseId: 'phase2',
+    phaseNumber: 2,
+    title: 'Phase 2: Read Replicas & Connection Pooling',
+    phaseBadge: '2.5M to 5M Records',
+    rowScale: '2,500,000 to 5,000,000 rows',
+    summary:
+      'Deploy PgBouncer for transaction connection pooling alongside read replicas. Analytical queries and full-text searches are routed to read-only replica pools, preventing discovery queries from starving transactional write throughput.',
+    detailedArchitecture:
+      'High-concurrency enterprise workloads decouple transactional writes from analytical discovery queries. All write operations (CDC streaming ingestion, record edits, view saves) route exclusively to the primary PostgreSQL instance. Heavy multi-condition filters, text searches, and summary metrics route to an autoscaling pool of read replicas receiving asynchronous physical streaming replication. A distributed PgBouncer layer operating in transaction pooling mode multiplexes thousands of incoming client queries into a disciplined set of persistent backend connections, eliminating connection fork overhead and CPU thread thrashing.',
+    architecturalMechanisms: [
+      'Dedicated Primary for Writes: Prevents heavy analytical table scans from locking transactional write commits.',
+      'Scalable Read Replica Pool: 2 to 4 read replicas absorb analytical queries and full-text search discovery.',
+      'PgBouncer Transaction Pooling: Multiplexes 1,000+ client HTTP requests over 20-30 server database connections.',
+      'Replica Lag Health Check: Routing middleware redirects queries to primary if replica replication lag exceeds 500ms.',
+    ],
+    codeTitle: 'PgBouncer Configuration & Read-Write Split Routing (pgbouncer.ini)',
+    codeSnippet: `# Phase 2: PgBouncer Production Configuration (pgbouncer.ini)
+[databases]
+datascope_write = host=db-primary.internal port=5432 dbname=datascope_prod pool_mode=transaction max_db_connections=25
+datascope_read_pool = host=db-replica-lb.internal port=5432 dbname=datascope_prod pool_mode=transaction max_db_connections=75
+
+[pgbouncer]
+listen_addr = 0.0.0.0
+listen_port = 6432
+auth_type = scram-sha-256
+default_pool_size = 20
+reserve_pool_size = 5
+max_client_conn = 1000
+server_reset_query = DISCARD ALL`,
+    targetModule: 'src/lib/db.ts',
+  },
+  {
+    id: 'scale-phase-3',
+    phaseId: 'phase3',
+    phaseNumber: 3,
+    title: 'Phase 3: Keyset Cursor Ingestion',
+    phaseBadge: '5M to 10M Records',
+    rowScale: '5,000,000 to 10,000,000 rows',
+    summary:
+      'For infinite scroll exports and streaming ETL, keyset cursors (record_date, id) < ($1, $2) achieve deterministic O(1) index seeks, completely eliminating OFFSET performance decay.',
+    detailedArchitecture:
+      'Traditional SQL OFFSET pagination suffers from O(N) performance degradation because the database engine must traverse and discard all skipped tuples before returning the requested page (e.g. OFFSET 500000 forces PostgreSQL to process 500,000 index entries, spiking query latency from 5ms to over 1,200ms). Keyset cursor pagination replaces OFFSET with a composite comparison seek: WHERE (record_date, id) < ($cursorDate, $cursorId). This performs a direct B-tree index seek in constant O(1) time (<4ms) regardless of whether the user is at page 1 or page 50,000, while guaranteeing zero row drift or missing records during concurrent data ingestion.',
+    architecturalMechanisms: [
+      'Deterministic O(1) Index Seek: Direct B-tree leaf lookup eliminates scanning and discarding offset tuples.',
+      'Zero Row Drift: Ingested rows arriving upstream do not cause duplicates or skipped records in paginated feeds.',
+      'High-Throughput Streaming: Powers high-speed CSV/JSON export streams at 25,000+ records per second.',
+      'Dual-Mode UI Synchronization: Bounded offset for page jumps; keyset cursors for deep scrolling and ETL exports.',
+    ],
+    codeTitle: 'Constant O(1) Keyset Cursor Query (src/lib/search/engine.ts)',
+    codeSnippet: `-- Phase 3: Constant O(1) Keyset Cursor Seek
+-- Guarantees identical sub-4ms response whether at row 100 or row 10,000,000
+SELECT id, title, status, country, numeric_value, record_date
+FROM dataset_records_partitioned
+WHERE dataset_id = $1
+  AND (record_date, id) < ($2, $3)
+ORDER BY record_date DESC, id DESC
+LIMIT 50;
+
+-- Query Execution Plan:
+-- -> Index Scan using idx_records_dataset_date (cost=0.42..8.45 rows=50 actual time=0.038..3.820 ms)
+-- -> Zero tuples scanned and discarded; deterministic O(1) latency.`,
+    targetModule: 'src/lib/search/engine.ts',
+  },
+  {
+    id: 'scale-phase-4',
+    phaseId: 'phase4',
+    phaseNumber: 4,
+    title: 'Phase 4: Distributed Tiering & Cold Storage Archival',
+    phaseBadge: '10M+ Records',
+    rowScale: '10,000,000+ rows and beyond',
+    summary:
+      'Automated archival pipelines export records older than 365 days into compressed Apache Parquet lakehouse storage on S3/MinIO, keeping PostgreSQL memory dedicated to active working sets while preserving full SQL federated queryability.',
+    detailedArchitecture:
+      'At 10,000,000+ records, storage tiering ensures high performance without runaway database hosting costs. Partitions containing historical records older than the audit retention threshold (e.g. 1 year) are automatically compressed into Apache Parquet format and offloaded to object storage (AWS S3 / MinIO). Using PostgreSQL Foreign Data Wrappers (FDW) or DuckDB extensions, analysts can still run SQL queries across cold historical data transparently, while the operational PostgreSQL cluster operates at peak throughput with bounded disk and memory footprints.',
+    architecturalMechanisms: [
+      'Automated Lifecycle Archival: Scheduled cron job offloads aged monthly partitions into Parquet files.',
+      'High Compression Ratio: Columnar Parquet achieves up to 80% compression over uncompressed table storage.',
+      'Transparent SQL Federation: Foreign Data Wrapper (FDW) union views query both hot DB and cold lakehouse.',
+      'Bounded RAM Footprint: Keeps active working set small enough to fit within PostgreSQL shared_buffers cache.',
+    ],
+    codeTitle: 'Cold Storage Archival & Parquet Foreign Table DDL',
+    codeSnippet: `-- Phase 4: Cold Storage Archival & Parquet Foreign Table
+CREATE FOREIGN TABLE dataset_records_cold_archive (
+  id UUID, dataset_id VARCHAR(64), record_date DATE,
+  title TEXT, status VARCHAR(32), country VARCHAR(8), numeric_value NUMERIC(14, 2)
+) SERVER parquet_s3_server
+  OPTIONS (filename 's3://datascope-lakehouse/records/year=*/data.parquet');
+
+-- Unified View bridging Hot PostgreSQL Partitions and Cold Parquet Lakehouse:
+CREATE VIEW v_dataset_records_unified AS
+  SELECT *, 'HOT' AS storage_tier FROM dataset_records_partitioned
+  UNION ALL
+  SELECT *, 'COLD' AS storage_tier FROM dataset_records_cold_archive;`,
+    targetModule: 'src/lib/db.ts',
+  },
+];
+
 export default function ArchitectureHubPage() {
   const [selectedAdr, setSelectedAdr] = useState<ADR>(adrList[0]);
   const [activeTab, setActiveTab] = useState<'adrs' | 'dataFetching' | 'searchComparison' | 'scaling'>('adrs');
@@ -1123,6 +1538,84 @@ export default function ArchitectureHubPage() {
         item.categoryLabel.toLowerCase().includes(q) ||
         item.sourceFile.toLowerCase().includes(q)
       );
+    }
+    return true;
+  });
+
+  // Search Architecture Comparison State
+  const [searchComparisonCategory, setSearchComparisonCategory] = useState<'all' | 'performance' | 'matching' | 'operations' | 'architecture'>('all');
+  const [searchComparisonQuery, setSearchComparisonQuery] = useState<string>('');
+  const [copiedComparisonSql, setCopiedComparisonSql] = useState<boolean>(false);
+
+  const handleCopyComparisonSql = () => {
+    const sql = `-- DataScope Production Hybrid Search Engine Query
+-- Combines PostgreSQL Full-Text Search (GIN tsvector) with Trigram (pg_trgm) Fuzzy Similarity
+SELECT id, title, status, country, numeric_value, record_date,
+       ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS lex_rank,
+       similarity(title, $1) AS fuzzy_score
+FROM dataset_records
+WHERE dataset_id = $2
+  AND (
+    search_vector @@ websearch_to_tsquery('english', $1)
+    OR similarity(title, $1) > 0.3
+  )
+ORDER BY (
+  ts_rank(search_vector, websearch_to_tsquery('english', $1)) * 0.70 +
+  similarity(title, $1) * 0.30
+) DESC
+LIMIT 25 OFFSET 0;`;
+
+    navigator.clipboard.writeText(sql);
+    setCopiedComparisonSql(true);
+    setTimeout(() => {
+      setCopiedComparisonSql(false);
+    }, 2000);
+  };
+
+  const filteredDimensions = SEARCH_COMPARISON_DIMENSIONS.filter((dim) => {
+    if (searchComparisonCategory !== 'all' && dim.category !== searchComparisonCategory) {
+      return false;
+    }
+    if (searchComparisonQuery.trim()) {
+      const q = searchComparisonQuery.toLowerCase();
+      return (
+        dim.dimension.toLowerCase().includes(q) ||
+        dim.categoryLabel.toLowerCase().includes(q) ||
+        dim.ftsSelected.value.toLowerCase().includes(q) ||
+        dim.ftsSelected.detail.toLowerCase().includes(q) ||
+        dim.trgm.value.toLowerCase().includes(q) ||
+        dim.trgm.detail.toLowerCase().includes(q) ||
+        dim.elasticsearch.value.toLowerCase().includes(q) ||
+        dim.elasticsearch.detail.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
+  const dimensionCategoryCounts = {
+    all: SEARCH_COMPARISON_DIMENSIONS.length,
+    performance: SEARCH_COMPARISON_DIMENSIONS.filter((d) => d.category === 'performance').length,
+    matching: SEARCH_COMPARISON_DIMENSIONS.filter((d) => d.category === 'matching').length,
+    operations: SEARCH_COMPARISON_DIMENSIONS.filter((d) => d.category === 'operations').length,
+    architecture: SEARCH_COMPARISON_DIMENSIONS.filter((d) => d.category === 'architecture').length,
+  };
+
+  // Million-Record Scaling Strategy State
+  const [selectedPhase, setSelectedPhase] = useState<'all' | 'phase1' | 'phase2' | 'phase3' | 'phase4'>('all');
+  const [scaleSimulationTier, setScaleSimulationTier] = useState<'100k' | '1m' | '5m' | '10m'>('10m');
+  const [copiedPhaseId, setCopiedPhaseId] = useState<string | null>(null);
+
+  const handleCopyPhaseCode = (phaseId: string, code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedPhaseId(phaseId);
+    setTimeout(() => {
+      setCopiedPhaseId(null);
+    }, 2000);
+  };
+
+  const filteredPhases = SCALING_BLUEPRINT_PHASES.filter((phase) => {
+    if (selectedPhase !== 'all' && phase.phaseId !== selectedPhase) {
+      return false;
     }
     return true;
   });
