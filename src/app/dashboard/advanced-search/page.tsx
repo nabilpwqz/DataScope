@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
@@ -12,7 +12,7 @@ import {
   setPage,
   setPageSize,
 } from '@/store/slices/searchConfigSlice';
-import { setSelectedDatasetId } from '@/store/slices/datasetSlice';
+import { setSelectedDatasetId, setActiveDataset } from '@/store/slices/datasetSlice';
 import { setSaveModalOpen } from '@/store/slices/savedViewsSlice';
 import {
   useSearchRecordsQuery,
@@ -53,146 +53,419 @@ interface FieldOption {
   options?: string[];
 }
 
-const availableFields: FieldOption[] = [
+const fallbackDatasets = [
   {
-    field: 'status',
-    label: 'Status',
-    type: 'select',
-    options: ['Active', 'Pending', 'Archived', 'Suspended', 'Completed', 'Flagged'],
+    id: 'ds-sales-01',
+    name: 'Global Enterprise Accounts & Revenue',
+    slug: 'global-sales',
+    category: 'Sales & Revenue',
+    totalRecords: 100000,
+    description: 'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.',
+    dataSource: 'PostgreSQL Production Cluster [us-east-1]',
+    accessLevel: 'public',
   },
   {
-    field: 'country',
-    label: 'Country',
-    type: 'select',
-    options: [
-      'Germany',
-      'United States',
-      'United Kingdom',
-      'France',
-      'Japan',
-      'Canada',
-      'Australia',
-      'Switzerland',
-      'Singapore',
-    ],
-  },
-  { field: 'numericValue', label: 'Revenue ($)', type: 'number' },
-  {
-    field: 'category',
-    label: 'Market Segment',
-    type: 'select',
-    options: [
-      'Enterprise',
-      'Mid-Market',
-      'Tier 1 Partner',
-      'SMB',
-      'Strategic Wholesale',
-      'Public Sector',
-    ],
+    id: 'ds-telemetry-02',
+    name: 'Edge Infrastructure & Telemetry Logs',
+    slug: 'cloud-telemetry',
+    category: 'Infrastructure Telemetry',
+    totalRecords: 10000,
+    description: 'Multi-region high-frequency latency, CPU utilization, and edge cluster operational metrics.',
+    dataSource: 'Kafka Streaming & S3 Parquet Lake',
+    accessLevel: 'restricted',
   },
   {
-    field: 'region',
-    label: 'Region',
-    type: 'select',
-    options: ['DACH', 'Americas', 'EMEA', 'APAC', 'Nordics'],
+    id: 'ds-finance-03',
+    name: 'Institutional Financial Transactions',
+    slug: 'financial-audit',
+    category: 'Financial Intelligence',
+    totalRecords: 10000,
+    description: 'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.',
+    dataSource: 'Core Banking Ledger DB',
+    accessLevel: 'admin_only',
   },
-  { field: 'title', label: 'Company / Title', type: 'string' },
-  { field: 'recordKey', label: 'Account Key', type: 'string' },
-  { field: 'recordDate', label: 'Contract Date', type: 'date' },
 ];
 
-const presetTemplates = [
-  {
-    name: 'High-Value Enterprise',
-    description: 'Active accounts with revenue > $50,000 in Enterprise category',
-    conditions: [
-      { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
-      { id: 'p2', field: 'numericValue', operator: 'greater_than' as FilterOperator, value: 50000 },
-      { id: 'p3', field: 'category', operator: 'equals' as FilterOperator, value: 'Enterprise' },
-    ],
-    logicalOp: 'AND' as const,
-    strategy: 'hybrid' as const,
-  },
-  {
-    name: 'European DACH Leaders',
-    description: 'Active accounts registered in Germany across the DACH economic region',
-    conditions: [
-      { id: 'p1', field: 'region', operator: 'equals' as FilterOperator, value: 'DACH' },
-      { id: 'p2', field: 'country', operator: 'equals' as FilterOperator, value: 'Germany' },
-      { id: 'p3', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
-    ],
-    logicalOp: 'AND' as const,
-    strategy: 'trgm' as const,
-  },
-  {
-    name: 'At-Risk & Flagged',
-    description: 'Accounts requiring audit intervention (Suspended or Flagged status)',
-    conditions: [
-      { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Flagged' },
-      { id: 'p2', field: 'status', operator: 'equals' as FilterOperator, value: 'Suspended' },
-    ],
-    logicalOp: 'OR' as const,
-    strategy: 'exact' as const,
-  },
-  {
-    name: 'Mid-Market Growth',
-    description: 'Mid-Market accounts with revenue between $10,000 and $75,000',
-    conditions: [
-      { id: 'p1', field: 'category', operator: 'equals' as FilterOperator, value: 'Mid-Market' },
-      { id: 'p2', field: 'numericValue', operator: 'between' as FilterOperator, value: 10000, valueTo: 75000 },
-      { id: 'p3', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
-    ],
-    logicalOp: 'AND' as const,
-    strategy: 'hybrid' as const,
-  },
-];
+const getAvailableFieldsForDataset = (datasetId: string): FieldOption[] => {
+  if (datasetId === 'ds-telemetry-02') {
+    return [
+      {
+        field: 'status',
+        label: 'Health Status',
+        type: 'select',
+        options: ['Active', 'Pending', 'Flagged'],
+      },
+      { field: 'numericValue', label: 'CPU Usage (%)', type: 'number' },
+      {
+        field: 'category',
+        label: 'Service Tier',
+        type: 'select',
+        options: ['Telemetry'],
+      },
+      {
+        field: 'country',
+        label: 'Deployment Scope',
+        type: 'select',
+        options: ['Global Cloud'],
+      },
+      {
+        field: 'region',
+        label: 'Topology',
+        type: 'select',
+        options: ['Multi-Region'],
+      },
+      { field: 'title', label: 'Cluster Event', type: 'string' },
+      { field: 'recordKey', label: 'Log Key', type: 'string' },
+      { field: 'recordDate', label: 'Timestamp', type: 'date' },
+    ];
+  }
+
+  if (datasetId === 'ds-finance-03') {
+    return [
+      {
+        field: 'status',
+        label: 'Settlement Status',
+        type: 'select',
+        options: ['Active', 'Completed', 'Pending', 'Flagged', 'Suspended', 'Archived'],
+      },
+      {
+        field: 'category',
+        label: 'Settlement Instrument',
+        type: 'select',
+        options: [
+          'Wholesale Clearing',
+          'Cross-Border Wire',
+          'Securities Settlement',
+          'Forex Swaps',
+          'Treasury Liquidity',
+          'Repo Financing',
+        ],
+      },
+      { field: 'numericValue', label: 'Settlement Value ($)', type: 'number' },
+      {
+        field: 'country',
+        label: 'Counterparty Country',
+        type: 'select',
+        options: [
+          'United States',
+          'Germany',
+          'United Kingdom',
+          'Switzerland',
+          'Japan',
+          'Singapore',
+          'France',
+          'Canada',
+        ],
+      },
+      {
+        field: 'region',
+        label: 'Financial Jurisdiction',
+        type: 'select',
+        options: ['Americas', 'DACH', 'EMEA', 'APAC'],
+      },
+      { field: 'title', label: 'Clearing Entity', type: 'string' },
+      { field: 'recordKey', label: 'Transaction ID', type: 'string' },
+      { field: 'recordDate', label: 'Value Date', type: 'date' },
+    ];
+  }
+
+  // Default ds-sales-01
+  return [
+    {
+      field: 'status',
+      label: 'Account Status',
+      type: 'select',
+      options: ['Active', 'Pending', 'Archived', 'Suspended', 'Completed', 'Flagged'],
+    },
+    {
+      field: 'country',
+      label: 'Country',
+      type: 'select',
+      options: [
+        'Germany',
+        'United States',
+        'United Kingdom',
+        'France',
+        'Japan',
+        'Canada',
+        'Australia',
+        'Switzerland',
+        'Singapore',
+      ],
+    },
+    { field: 'numericValue', label: 'Annual Revenue ($)', type: 'number' },
+    {
+      field: 'category',
+      label: 'Market Segment',
+      type: 'select',
+      options: [
+        'Enterprise',
+        'Mid-Market',
+        'Tier 1 Partner',
+        'SMB',
+        'Strategic Wholesale',
+        'Public Sector',
+      ],
+    },
+    {
+      field: 'region',
+      label: 'Region',
+      type: 'select',
+      options: ['DACH', 'Americas', 'EMEA', 'APAC', 'Nordics'],
+    },
+    { field: 'title', label: 'Company Name', type: 'string' },
+    { field: 'recordKey', label: 'Account Key', type: 'string' },
+    { field: 'recordDate', label: 'Contract Date', type: 'date' },
+  ];
+};
+
+const getDefaultConditionsForDataset = (datasetId: string): FilterCondition[] => {
+  if (datasetId === 'ds-telemetry-02') {
+    return [
+      { id: 'c1', field: 'status', operator: 'equals', value: 'Active' },
+      { id: 'c2', field: 'numericValue', operator: 'greater_than', value: 40 },
+    ];
+  }
+  if (datasetId === 'ds-finance-03') {
+    return [
+      { id: 'c1', field: 'status', operator: 'equals', value: 'Active' },
+      { id: 'c2', field: 'numericValue', operator: 'greater_than', value: 100000 },
+    ];
+  }
+  return [
+    { id: 'c1', field: 'status', operator: 'equals', value: 'Active' },
+    { id: 'c2', field: 'country', operator: 'equals', value: 'Germany' },
+    { id: 'c3', field: 'numericValue', operator: 'greater_than', value: 10000 },
+  ];
+};
+
+const getPresetsForDataset = (datasetId: string) => {
+  if (datasetId === 'ds-telemetry-02') {
+    return [
+      {
+        name: 'High CPU Load Spikes',
+        description: 'Cluster nodes with CPU usage exceeding 75% active load',
+        conditions: [
+          { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+          { id: 'p2', field: 'numericValue', operator: 'greater_than' as FilterOperator, value: 75 },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'hybrid' as const,
+      },
+      {
+        name: 'Node Heartbeat Warnings',
+        description: 'Heartbeat logs flagged for latency or dropped telemetry packets',
+        conditions: [
+          { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Flagged' },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'exact' as const,
+      },
+      {
+        name: 'Nominal Operational Range',
+        description: 'Telemetry nodes operating between 20% and 65% CPU capacity',
+        conditions: [
+          { id: 'p1', field: 'numericValue', operator: 'between' as FilterOperator, value: 20, valueTo: 65 },
+          { id: 'p2', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'hybrid' as const,
+      },
+      {
+        name: 'Pending Cluster Sync',
+        description: 'Nodes pending mesh state reconciliation in multi-region cluster',
+        conditions: [
+          { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Pending' },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'exact' as const,
+      },
+    ];
+  }
+
+  if (datasetId === 'ds-finance-03') {
+    return [
+      {
+        name: 'Mega Wire Clearing',
+        description: 'Wholesale settlements with volume exceeding $5,000,000 USD',
+        conditions: [
+          { id: 'p1', field: 'category', operator: 'equals' as FilterOperator, value: 'Wholesale Clearing' },
+          { id: 'p2', field: 'numericValue', operator: 'greater_than' as FilterOperator, value: 5000000 },
+          { id: 'p3', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'hybrid' as const,
+      },
+      {
+        name: 'DACH Cross-Border Flow',
+        description: 'Financial transactions counterparty-cleared in Switzerland or Germany',
+        conditions: [
+          { id: 'p1', field: 'region', operator: 'equals' as FilterOperator, value: 'DACH' },
+          { id: 'p2', field: 'status', operator: 'equals' as FilterOperator, value: 'Completed' },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'trgm' as const,
+      },
+      {
+        name: 'SOX Compliance Audit',
+        description: 'Transactions flagged or suspended requiring audit review',
+        conditions: [
+          { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Flagged' },
+          { id: 'p2', field: 'status', operator: 'equals' as FilterOperator, value: 'Suspended' },
+        ],
+        logicalOp: 'OR' as const,
+        strategy: 'exact' as const,
+      },
+      {
+        name: 'Liquid Forex Swaps',
+        description: 'Active institutional forex swap transactions above $1,000,000',
+        conditions: [
+          { id: 'p1', field: 'category', operator: 'equals' as FilterOperator, value: 'Forex Swaps' },
+          { id: 'p2', field: 'numericValue', operator: 'greater_than' as FilterOperator, value: 1000000 },
+          { id: 'p3', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+        ],
+        logicalOp: 'AND' as const,
+        strategy: 'hybrid' as const,
+      },
+    ];
+  }
+
+  // Default ds-sales-01
+  return [
+    {
+      name: 'High-Value Enterprise',
+      description: 'Active accounts with revenue > $50,000 in Enterprise category',
+      conditions: [
+        { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+        { id: 'p2', field: 'numericValue', operator: 'greater_than' as FilterOperator, value: 50000 },
+        { id: 'p3', field: 'category', operator: 'equals' as FilterOperator, value: 'Enterprise' },
+      ],
+      logicalOp: 'AND' as const,
+      strategy: 'hybrid' as const,
+    },
+    {
+      name: 'European DACH Leaders',
+      description: 'Active accounts registered in Germany across the DACH economic region',
+      conditions: [
+        { id: 'p1', field: 'region', operator: 'equals' as FilterOperator, value: 'DACH' },
+        { id: 'p2', field: 'country', operator: 'equals' as FilterOperator, value: 'Germany' },
+        { id: 'p3', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+      ],
+      logicalOp: 'AND' as const,
+      strategy: 'trgm' as const,
+    },
+    {
+      name: 'At-Risk & Flagged',
+      description: 'Accounts requiring audit intervention (Suspended or Flagged status)',
+      conditions: [
+        { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Flagged' },
+        { id: 'p2', field: 'status', operator: 'equals' as FilterOperator, value: 'Suspended' },
+      ],
+      logicalOp: 'OR' as const,
+      strategy: 'exact' as const,
+    },
+    {
+      name: 'Mid-Market Growth',
+      description: 'Mid-Market accounts with revenue between $10,000 and $75,000',
+      conditions: [
+        { id: 'p1', field: 'category', operator: 'equals' as FilterOperator, value: 'Mid-Market' },
+        { id: 'p2', field: 'numericValue', operator: 'between' as FilterOperator, value: 10000, valueTo: 75000 },
+        { id: 'p3', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+      ],
+      logicalOp: 'AND' as const,
+      strategy: 'hybrid' as const,
+    },
+  ];
+};
 
 export default function AdvancedSearchPage() {
   const dispatch = useAppDispatch();
   const { selectedDatasetId } = useAppSelector((state) => state.dataset);
   const { page, pageSize } = useAppSelector((state) => state.searchConfig);
 
-  // Available datasets
-  const { data: datasets = [], isLoading: isDatasetsLoading } = useGetDatasetsQuery();
-  const activeDataset = datasets.find((d) => d.id === selectedDatasetId) || datasets[0];
+  // Available datasets with guaranteed fallback list
+  const { data: remoteDatasets = [], isLoading: isDatasetsLoading } = useGetDatasetsQuery();
+  const availableDatasets = remoteDatasets.length > 0 ? remoteDatasets : fallbackDatasets;
+
+  // Resolve active dataset deterministically
+  const effectiveDatasetId = selectedDatasetId || availableDatasets[0].id;
+  const activeDataset = availableDatasets.find((d) => d.id === effectiveDatasetId) || availableDatasets[0];
+
+  // Dynamic fields and presets for the active dataset
+  const currentAvailableFields = useMemo(
+    () => getAvailableFieldsForDataset(effectiveDatasetId),
+    [effectiveDatasetId]
+  );
+  const currentPresets = useMemo(
+    () => getPresetsForDataset(effectiveDatasetId),
+    [effectiveDatasetId]
+  );
 
   // Local builder states
-  const [conditions, setConditions] = useState<FilterCondition[]>([
-    { id: 'c1', field: 'status', operator: 'equals', value: 'Active' },
-    { id: 'c2', field: 'country', operator: 'equals', value: 'Germany' },
-    { id: 'c3', field: 'numericValue', operator: 'greater_than', value: 10000 },
-  ]);
+  const [conditions, setConditions] = useState<FilterCondition[]>(() =>
+    getDefaultConditionsForDataset(effectiveDatasetId)
+  );
   const [logicalOp, setLogicalOp] = useState<'AND' | 'OR'>('AND');
   const [keywordSearch, setKeywordSearch] = useState('');
   const [selectedStrategy, setSelectedStrategy] = useState<'hybrid' | 'fts' | 'trgm' | 'exact'>('hybrid');
   const [activeSqlTab, setActiveSqlTab] = useState<'sql' | 'explain'>('sql');
   const [copiedSql, setCopiedSql] = useState(false);
 
-  // Query search records
-  const effectiveDatasetId = selectedDatasetId || (datasets.length > 0 ? datasets[0].id : 'ds-sales-01');
-  const { data: searchResponse, isLoading, isFetching } = useSearchRecordsQuery({
-    datasetId: effectiveDatasetId,
-    search: keywordSearch,
-    searchType: selectedStrategy,
-    filters: conditions,
-    filterLogicalOperator: logicalOp,
-    page,
-    pageSize,
-  });
+  // Synchronize filter rules and search when target dataset changes externally (e.g. from header)
+  const prevDatasetIdRef = useRef(effectiveDatasetId);
+  useEffect(() => {
+    if (prevDatasetIdRef.current !== effectiveDatasetId) {
+      prevDatasetIdRef.current = effectiveDatasetId;
+      setConditions(getDefaultConditionsForDataset(effectiveDatasetId));
+      setKeywordSearch('');
+      dispatch(setPage(1));
+    }
+  }, [effectiveDatasetId, dispatch]);
+
+  // Query search records with refetch on dataset or filter changes
+  const { data: searchResponse, isLoading, isFetching } = useSearchRecordsQuery(
+    {
+      datasetId: effectiveDatasetId,
+      search: keywordSearch,
+      searchType: selectedStrategy,
+      filters: conditions,
+      filterLogicalOperator: logicalOp,
+      page,
+      pageSize,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
 
   const handleDatasetChange = (newDatasetId: string) => {
+    if (newDatasetId === effectiveDatasetId) return;
     dispatch(setSelectedDatasetId(newDatasetId));
+    const targetDs = availableDatasets.find((d) => d.id === newDatasetId);
+    if (targetDs && (targetDs as any).fields) {
+      dispatch(setActiveDataset(targetDs as any));
+    }
+    dispatch(setPage(1));
+    setConditions(getDefaultConditionsForDataset(newDatasetId));
+    setKeywordSearch('');
+  };
+
+  const handleResetToDatasetDefaults = () => {
+    setConditions(getDefaultConditionsForDataset(effectiveDatasetId));
+    setKeywordSearch('');
     dispatch(setPage(1));
   };
 
   const handleAddCondition = () => {
+    const fields = currentAvailableFields;
+    const defaultField = fields[0] || { field: 'status', label: 'Status' };
     setConditions([
       ...conditions,
       {
         id: `c-${Date.now()}`,
-        field: 'category',
+        field: defaultField.field,
         operator: 'equals',
-        value: 'Enterprise',
+        value: defaultField.options ? defaultField.options[0] : 'Active',
       },
     ]);
   };
@@ -210,7 +483,13 @@ export default function AdvancedSearchPage() {
     setKeywordSearch('');
   };
 
-  const handleApplyPreset = (preset: typeof presetTemplates[0]) => {
+  const handleApplyPreset = (preset: {
+    name: string;
+    description: string;
+    conditions: FilterCondition[];
+    logicalOp: 'AND' | 'OR';
+    strategy: 'hybrid' | 'fts' | 'trgm' | 'exact';
+  }) => {
     setConditions(preset.conditions);
     setLogicalOp(preset.logicalOp);
     setSelectedStrategy(preset.strategy);
@@ -233,15 +512,19 @@ export default function AdvancedSearchPage() {
   // Client-side CSV export of currently retrieved records
   const handleExportCsv = () => {
     if (!searchResponse?.records || searchResponse.records.length === 0) return;
+    const isTelemetry = effectiveDatasetId === 'ds-telemetry-02';
+    const isFinance = effectiveDatasetId === 'ds-finance-03';
+    const valHeader = isTelemetry ? 'CPU Usage (%)' : isFinance ? 'Settlement ($)' : 'Revenue ($)';
+    const catHeader = isTelemetry ? 'Service Layer' : isFinance ? 'Instrument' : 'Market Segment';
     const headers = [
       'Record Key',
       'Title',
       'Status',
-      'Market Segment',
+      catHeader,
       'Country',
       'Region',
-      'Revenue ($)',
-      'Contract Date',
+      valHeader,
+      'Record Date',
     ];
     const rows = searchResponse.records.map((r) => [
       `"${r.recordKey}"`,
@@ -400,38 +683,110 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
         </div>
       </div>
 
-      {/* Target Dataset Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-sm text-xs">
-        <div className="flex flex-wrap items-center gap-2.5 min-w-0">
-          <Database className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <label htmlFor="dataset-select" className="font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-            Target Dataset:
-          </label>
-          <select
-            id="dataset-select"
-            value={effectiveDatasetId}
-            onChange={(e) => handleDatasetChange(e.target.value)}
-            className="h-7 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-2.5 text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-          >
-            {datasets.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name} ({d.category})
-              </option>
-            ))}
-          </select>
-          <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline truncate max-w-xs">
-            {activeDataset?.description || 'Partitioned business records'}
-          </span>
+      {/* Target Dataset Control Panel */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-sm p-4 space-y-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+          {/* Left: Title + Native Dropdown Selector */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0 shadow-sm">
+                <Database className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="dataset-select" className="text-xs font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                    Target Dataset
+                  </label>
+                  <span className="relative flex h-2 w-2">
+                    <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
+                  Select business dataset for query pushdown execution
+                </p>
+              </div>
+            </div>
+
+            {/* Select Dropdown with clear visual focus and options */}
+            <div className="relative min-w-[260px] sm:min-w-[300px]">
+              <select
+                id="dataset-select"
+                value={effectiveDatasetId}
+                onChange={(e) => handleDatasetChange(e.target.value)}
+                className="w-full h-9 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 pr-8 text-xs font-semibold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-sm"
+              >
+                {availableDatasets.map((d) => (
+                  <option
+                    key={d.id}
+                    value={d.id}
+                    className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-1.5"
+                  >
+                    {d.name} ({d.totalRecords?.toLocaleString() || '10,000'} records)
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Right: Direct 1-Click Dataset Switcher Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-950/90 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 px-2 hidden xl:inline">
+              Quick Switch:
+            </span>
+            {availableDatasets.map((d) => {
+              const isActive = d.id === effectiveDatasetId;
+              const shortName = d.id === 'ds-sales-01' ? 'Global Sales' : d.id === 'ds-telemetry-02' ? 'Cloud Telemetry' : 'Financial Ledger';
+              const recordCountLabel = d.totalRecords >= 1000 ? `${Math.round(d.totalRecords / 1000)}k` : `${d.totalRecords}`;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  onClick={() => handleDatasetChange(d.id)}
+                  className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors duration-150 flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800/70'
+                  }`}
+                >
+                  <span>{shortName}</span>
+                  <span
+                    className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-semibold ${
+                      isActive
+                        ? 'bg-emerald-700 text-white'
+                        : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {recordCountLabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="outline" size="sm" className="whitespace-nowrap text-[11px]">
-            <span className="font-mono font-semibold">{activeDataset?.totalRecords?.toLocaleString() || '110,000'}</span> records
-          </Badge>
-          <Badge variant="info" size="sm" className="whitespace-nowrap">
-            {activeDataset?.category || 'Enterprise'}
-          </Badge>
+        {/* Dataset Operational Context Strip */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-xl">
+              {activeDataset.description}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Badge variant="outline" size="sm" className="font-mono text-[11px]">
+              <span className="font-semibold text-slate-900 dark:text-white mr-1">
+                {activeDataset.totalRecords?.toLocaleString() || '100,000'}
+              </span>
+              indexed records
+            </Badge>
+            <Badge variant="info" size="sm">
+              {activeDataset.category}
+            </Badge>
+            <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-[10px] text-slate-600 dark:text-slate-300">
+              {activeDataset.dataSource?.split(' ')[0] || 'PostgreSQL'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -440,14 +795,14 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            <span>Enterprise Query Presets</span>
+            <span>Target Query Presets ({activeDataset.name.split(' ')[0]})</span>
           </span>
           <span className="text-[11px] text-slate-500 dark:text-slate-400">
             Click any template to populate multi-condition rules
           </span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-          {presetTemplates.map((preset) => (
+          {currentPresets.map((preset) => (
             <button
               key={preset.name}
               onClick={() => handleApplyPreset(preset)}
@@ -539,15 +894,23 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetToDatasetDefaults}
+              className="text-xs text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 border-slate-300 dark:border-slate-700"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset to Defaults
+            </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleClearAll}
               className="text-xs text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border-slate-300 dark:border-slate-700"
             >
-              <RotateCcw className="h-3 w-3 mr-1" />
-              Reset Conditions
+              Clear All
             </Button>
             <Button
               variant="outline"
@@ -584,7 +947,7 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
             </div>
           ) : (
             conditions.map((cond, index) => {
-              const fieldConfig = availableFields.find((f) => f.field === cond.field) || availableFields[0];
+              const fieldConfig = currentAvailableFields.find((f) => f.field === cond.field) || currentAvailableFields[0];
               const isBetween = cond.operator === 'between';
               const isNullCheck = cond.operator === 'is_null' || cond.operator === 'is_not_null';
 
@@ -603,7 +966,7 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
                     onChange={(e) => handleUpdateCondition(cond.id, { field: e.target.value })}
                     className="h-8 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-44"
                   >
-                    {availableFields.map((f) => (
+                    {currentAvailableFields.map((f) => (
                       <option key={f.field} value={f.field}>
                         {f.label}
                       </option>
