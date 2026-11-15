@@ -13,7 +13,28 @@
 [![Hallmark Craft](https://img.shields.io/badge/Hallmark%20Craft-0%20Failures-10B981?style=flat-square)](#13-hallmark-engineering-craft-and-accessibility)
 [![Security Hardened](https://img.shields.io/badge/Security-20%20Controls%20Passed-2563EB?style=flat-square)](#11-security-and-production-hardening-matrix)
 
+<div align="center">
+  <img src="./public/images/datascope-dashboard-preview.png" alt="DataScope Enterprise Platform Dashboard" width="100%" />
+</div>
+
 > **DataScope** is an enterprise data discovery and intelligence platform engineered to explore, query, validate, and govern high-volume structured business datasets. Engineered with Next.js App Router, Redux Toolkit with RTK Query, TanStack Table with virtualized windowing, and PostgreSQL indexing with Drizzle ORM, DataScope delivers sub-15ms query execution, continuous 60fps scrolling, end-to-end data lineage, automated quality heuristics, and strict server-side RBAC governance.
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center">
+        <img src="./public/images/hero-3d-mesh.png" alt="DataScope Reactive Pushdown Engine" width="100%" />
+        <br/>
+        <sub><b>Reactive Query Pipeline &amp; 3D Mesh Topology</b></sub>
+      </td>
+      <td width="50%" align="center">
+        <img src="./public/images/architecture-3d.png" alt="DataScope Enterprise Infrastructure" width="100%" />
+        <br/>
+        <sub><b>Enterprise Multi-Tier Architecture (Dark Mode)</b></sub>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 
@@ -73,18 +94,42 @@ Organizations handling high-density business records routinely encounter critica
 
 DataScope organizes operations into four distinct workspace tiers accessible through an enterprise application shell:
 
-```
-+------------------------------------------------------------------------------------------------+
-| DATASCOPE APPLICATION SHELL                                                                    |
-|                                                                                                |
-|  [ Workspace ]          [ Intelligence ]       [ Administration ]        [ System ]            |
-|  - Overview             - Data Analytics       - Users & Roles (RBAC)    - Performance Monitor |
-|  - Dataset Library      - Data Quality         - Security Audit Logs     - Architecture & ADRs |
-|  - Data Explorer (Core) - Data Lineage Graph   - System Settings         - Telemetry API       |
-|  - Advanced Search                                                                             |
-|  - Saved Views                                                                                 |
-|  - Search History                                                                              |
-+------------------------------------------------------------------------------------------------+
+```mermaid
+flowchart TD
+  subgraph Shell["DataScope Enterprise Application Shell"]
+    subgraph W1["Workspace Tier"]
+      O["Overview &amp; Metrics"]
+      D["Dataset Library &amp; Schemas"]
+      E["Data Explorer (Core Pushdown)"]
+      S["Advanced Search Engine"]
+      V["Saved Views &amp; History"]
+    end
+
+    subgraph W2["Intelligence Tier"]
+      A["Real-Time Analytics Dashboard"]
+      Q["Data Quality Heuristics"]
+      L["Interactive Lineage Graph"]
+      N["Natural Language Query (NLQ)"]
+    end
+
+    subgraph W3["Administration Tier"]
+      U["Platform Users Roster"]
+      R["RBAC Clearance Matrix"]
+      AL["Security Audit Logs"]
+      ST["System Governance Settings"]
+    end
+
+    subgraph W4["Engine Tier"]
+      P["PostgreSQL 15 Cluster"]
+      ORM["Dual ORM (Drizzle + Prisma)"]
+      C["In-Memory LRU Cache (0.1ms)"]
+      H["Live Telemetry Health API"]
+    end
+  end
+
+  W1 --> W4
+  W2 --> W4
+  W3 --> W4
 ```
 
 ### 1. Global Command Palette (`Ctrl/Cmd + K`)
@@ -114,11 +159,48 @@ DataScope organizes operations into four distinct workspace tiers accessible thr
 - Direct operational actions: Mark issues as "Reviewed" or "Resolved" with automatic audit log tracking.
 
 ### 5. Interactive Data Lineage and Provenance Graph (`/dashboard/data-lineage`)
-- Visual node topology mapping:
-  - **Origins:** Salesforce CRM, Apache Kafka Event Mesh, Stripe Ledger.
-  - **Ingestion Workers:** Debezium CDC Worker, Schema Validator & Trigram Indexer.
-  - **Datasets:** Global Enterprise Sales, Distributed Edge Telemetry, Treasury & Transactions Registry.
-  - **Downstream Consumers:** Executive BI Dashboards, AI Query Assistant, Compliance Audit & Export Service.
+
+<div align="center">
+  <img src="./public/images/datascope-lineage-topology.png" alt="DataScope Data Lineage &amp; Pipeline Topology" width="100%" />
+</div>
+
+```mermaid
+flowchart LR
+  subgraph Ingestion["Upstream Ingestion Sources"]
+    SFC["Salesforce CRM<br/>REST Webhook"]
+    KAF["Apache Kafka<br/>Event Mesh"]
+    STR["Stripe Ledger<br/>Transactional API"]
+  end
+
+  subgraph Processing["Processing &amp; Indexing Workers"]
+    DEB["Debezium CDC Worker<br/>Internal IPC"]
+    VAL["Schema Validator &amp;<br/>Trigram Indexer"]
+  end
+
+  subgraph Persistence["Persistent PostgreSQL Datasets"]
+    D1["Global Enterprise Sales<br/>110,000 Rows"]
+    D2["Distributed Edge Telemetry<br/>Continuous Feed"]
+    D3["Treasury &amp; Transactions Registry<br/>ACID Partition"]
+  end
+
+  subgraph Consumers["Downstream Consumers"]
+    BI["Executive BI Dashboards<br/>HTTPS JSON"]
+    AI["AI Query Assistant<br/>AST Query Translation"]
+    EXP["Compliance Audit &amp; Export<br/>PostgreSQL Pool"]
+  end
+
+  SFC --> DEB
+  KAF --> DEB
+  STR --> DEB
+  DEB --> VAL
+  VAL --> D1
+  VAL --> D2
+  VAL --> D3
+  D1 --> BI
+  D2 --> AI
+  D3 --> EXP
+```
+
 - Interactive node inspector displaying latency cadences, record counts, and transfer protocols (mTLS, HTTPS JSON, PostgreSQL Pool).
 
 ### 6. Dedicated Dataset Detail and Schema Catalog (`/dashboard/datasets/[id]`)
@@ -151,74 +233,43 @@ DataScope organizes operations into four distinct workspace tiers accessible thr
 
 ### System Architecture Topology
 
-```
-+---------------------------------------------------------------------------------------------------+
-| CLIENT BROWSER TIER (Next.js 14 App Router)                                                       |
-|                                                                                                   |
-|  [ URL State: searchParams ] <---> [ Redux Store: auth, dataset, ui ] <---> [ Command Palette ]   |
-|                                      |                                                            |
-|                                      v                                                            |
-|             [ RTK Query Service: dataScopeApi (Deduplication + Invalidation) ]                    |
-|                                      |                                                            |
-|                                      | (AbortController / HTTP-only Bearer JWT)                   |
-+--------------------------------------|------------------------------------------------------------+
-                                       |
-                                       v
-+---------------------------------------------------------------------------------------------------+
-| EDGE AND API GATEWAY TIER (Next.js Route Handlers)                                                |
-|                                                                                                   |
-|  [ Sliding Window Rate Limiter ] ---> [ Security Headers: CSP, HSTS ] ---> [ JWT & RBAC Validator ]|
-|                                                                           |                       |
-|  [ Server LRU Cache (0.1ms) ] <-------------------------------------------+                       |
-|         | (Cache Miss)                                                                            |
-|         v                                                                                         |
-|  [ Parameterized SQL Pushdown Builder ] <--- [ Natural Language Query Parser (AST Validator) ]    |
-+---------------------------------------------------------------------------------------------------+
-                                       |
-                                       v
-+---------------------------------------------------------------------------------------------------+
-| PERSISTENT STORAGE TIER (Neon Serverless PostgreSQL 15 Cluster)                                  |
-|                                                                                                   |
-|  [ Drizzle SQL Pushdown Engine ] <------- Connection Pool (pg) -------> [ Prisma 5.22 Models ]    |
-|                                                                           |                       |
-|  [ Composite B-Tree Indexes (status, country, value) ]                    v                       |
-|  [ GIN Inverted Indexes (tsvector + pg_trgm ops) ]       [ audit_logs, data_quality_issues ]      |
-|  [ Partitioned Business Records: 110,000+ rows ]         [ record_comments, record_history ]      |
-+---------------------------------------------------------------------------------------------------+
-```
+<div align="center">
+  <img src="./public/images/system-architecture-diagram.svg" alt="DataScope System Architecture Diagram" width="100%" />
+</div>
 
-### Query Execution Pipeline
+### Query Execution Pipeline Sequence
 
-```
-User Keystroke / Filter Selection
-   |
-   v
-[300ms Local Debounce] ---> [RTK Query In-Flight Deduplication]
-                                 |
-                                 v (HTTP POST / GET)
-                       [Route Handler: /api/datasets/:id/records]
-                                 |
-                                 +---> [Check Server LRU Cache] --(HIT: 0.1ms)--> Return Serialized JSON
-                                 |
-                                 v (MISS)
-                       [Verify JWT and RBAC Role Clearance]
-                                 |
-                                 v
-                       [Drizzle SQL Builder (Pushdown WHERE, ORDER, LIMIT)]
-                                 |
-                                 v
-                       [PostgreSQL Execution (Composite B-Tree & GIN Scan)]
-                                 |
-                                 v
-                       [Serialized Row Page (~12KB JSON Payload)]
-                                 |
-                                 +---> [Store in Server LRU Cache]
-                                 |
-                                 v
-                       [TanStack Virtual v3 (Compute Active Viewport)]
-                                 |
-                                 v
-                       [Render Exactly ~120 DOM Nodes at Steady 60 FPS]
+```mermaid
+sequenceDiagram
+  autonumber
+  actor User as User Browser (Next.js 14)
+  participant Debounce as Input Debouncer (300ms)
+  participant RTK as RTK Query (dataScopeApi)
+  participant Gateway as Edge Gateway &amp; RBAC
+  participant Cache as In-Memory LRU Cache
+  participant Drizzle as Drizzle Pushdown Builder
+  participant Postgres as Neon PostgreSQL 15 Engine
+  participant Virtual as TanStack Virtual v3
+
+  User->>Debounce: Types filter / search keyword
+  Note over Debounce: Instant local state feedback;<br/>Defers Redux dispatch 300ms
+  Debounce->>RTK: Abort prior in-flight &amp; trigger query
+  RTK->>Gateway: HTTP Request with Bearer JWT
+  Gateway->>Gateway: Check Sliding-Window Rate Limit &amp; Security Headers
+  Gateway->>Gateway: Verify JWT &amp; Enforce RBAC Role Matrix
+  Gateway->>Cache: Query Hash Lookup (MD5)
+  alt Cache HIT (0.1ms)
+    Cache-->>RTK: Return Serialized JSON Page (~12KB)
+  else Cache MISS
+    Gateway->>Drizzle: Pushdown parameters (WHERE, ORDER BY, LIMIT)
+    Drizzle->>Postgres: Parameterized SQL via Connection Pool
+    Postgres->>Postgres: Bitmap Index Scan (GIN tsvector + Composite B-Tree)
+    Postgres-->>Drizzle: Return matching record tuples
+    Drizzle-->>Cache: Save page in Server LRU Cache (TTL: 60s)
+    Drizzle-->>RTK: Return Serialized JSON Page (~12KB)
+  end
+  RTK-->>Virtual: Supply rows to viewport window calculation
+  Virtual-->>User: Render exactly ~120 DOM nodes at steady 60 FPS
 ```
 
 ---
@@ -259,6 +310,15 @@ When users rapidly change filters or type search terms, prior in-flight requests
 
 ## 5. Search Engine Architecture: Full-Text, Trigram and Hybrid Pushdown
 
+```mermaid
+flowchart LR
+  Q["User Query Term"] --> Router{"Search Router"}
+  Router -->|"Lexical Keywords"| FTS["PostgreSQL Full-Text Search<br/>GIN on tsvector • 8-14ms<br/>Snowball Stemming &amp; Lexemes"]
+  Router -->|"Mistyped / Substring"| TRGM["PostgreSQL Trigram (pg_trgm)<br/>GIN (title gin_trgm_ops) • 12-24ms<br/>N-Gram Overlap Similarity"]
+  Router -->|"Production Hybrid Mode"| HYB["Hybrid Weighted Scoring<br/>0.70 * FTS Rank + 0.30 * Trigram Score"]
+  HYB --> OUT["Sub-15ms Ranked Results<br/>Immediate ACID Consistency"]
+```
+
 ### Comparison of Search Implementations
 
 | Architectural Dimension | PostgreSQL Full-Text Search (Selected) | PostgreSQL Trigram (`pg_trgm`) | External Search Cluster (Elasticsearch / OpenSearch) |
@@ -269,7 +329,7 @@ When users rapidly change filters or type search terms, prior in-flight requests
 | **Data Synchronization** | **Instant (Strict ACID, In-Database)** | **Instant (Strict ACID, In-Database)** | Eventual consistency; requires CDC pipelines (Debezium/Kafka) |
 | **Infrastructure Overhead** | **Zero additional servers** | **Zero additional servers** | High (JVM cluster, memory sizing, shard management) |
 | **Cost and Complexity** | Minimal operational cost | Minimal operational cost | Significant hosting and DevOps overhead |
-| **Applicable Scale** | Up to ~20-30 Million records | Up to ~5-10 Million records | 50+ Million records & unstructured document corpora |
+| **Applicable Scale** | Up to ~20-30 Million records | Up to ~5-10 Million records | 50+ Million records &amp; unstructured document corpora |
 
 ### Hybrid Search Implementation
 
@@ -307,25 +367,36 @@ LIMIT 25 OFFSET 0;
 
 DataScope maintains a four-tier state architecture to prevent state pollution:
 
-```
-+--------------------------------------------------------------------------------+
-| 1. Global Client State (Redux Toolkit Slices)                                  |
-|    |-- authSlice: Authenticated user, active role, permissions matrix          |
-|    |-- datasetSlice: Active dataset, selected record ID, drawer state          |
-|    |-- searchConfigSlice: Query string, search type, filters, sort             |
-|    `-- uiPreferenceSlice: Density, DOM virtualization, theme (dark/light)      |
-+--------------------------------------------------------------------------------+
-| 2. Server Cache State (RTK Query Service: dataScopeApi)                        |
-|    |-- Serialized query endpoints (datasets, records, quality, lineage, users) |
-|    |-- Tag-based cache invalidation ('Record', 'SavedView', 'AuditLog', etc.)  |
-|    `-- Request lifecycle tracking (pending, fulfilled, rejected)               |
-+--------------------------------------------------------------------------------+
-| 3. URL Synchronization State (Next.js searchParams)                            |
-|    `-- Shareable deep-links with active filters, sort, and search              |
-+--------------------------------------------------------------------------------+
-| 4. Transient Component State (React useState)                                  |
-|    `-- Modals, command palette search buffer, local form edits                 |
-+--------------------------------------------------------------------------------+
+```mermaid
+graph TD
+  subgraph StateModel["DataScope 4-Tier State Model"]
+    subgraph Tier1["1. Global Client State (Redux Toolkit Slices)"]
+      S1["authSlice: Authenticated user, JWT token, role clearance matrix"]
+      S2["datasetSlice: Active dataset, selected record ID, drawer state"]
+      S3["searchConfigSlice: Search keyword, mode, composite filter tree, sort"]
+      S4["uiPreferenceSlice: Density (compact/standard/spacious), virtualization, theme"]
+    end
+
+    subgraph Tier2["2. Server Cache State (RTK Query: dataScopeApi)"]
+      C1["Endpoints: getDatasets, getRecords, getDataQuality, getDataLineage, getUsers"]
+      C2["Tag Invalidation: Record, SavedView, AuditLog, User, DataQuality"]
+      C3["Lifecycle: keepUnusedDataFor (60s), in-flight deduplication, AbortController"]
+    end
+
+    subgraph Tier3["3. URL Synchronization State (Next.js searchParams)"]
+      U1["Deep-Link Sync: ?query=...&amp;status=...&amp;country=...&amp;sort=...&amp;page=..."]
+      U2["Bidirectional sync: Browser history forward/back navigation"]
+    end
+
+    subgraph Tier4["4. Transient Local Component State (React useState)"]
+      L1["Command Palette (Cmd+K) input buffer &amp; highlighted index"]
+      L2["Modal visibility toggles &amp; inline form validation"]
+    end
+  end
+
+  Tier1 <--> Tier3
+  Tier1 --> Tier2
+  Tier4 -.-> Tier1
 ```
 
 ---
@@ -525,6 +596,19 @@ Execution Time: 4.120 ms (300x Performance Improvement)
 
 ## 11. Security and Production Hardening Matrix
 
+```mermaid
+flowchart TD
+  REQ["Inbound Client Request"] --> WAF["1. HTTP Security Headers (HSTS, CSP, X-Frame-Options)"]
+  WAF --> RAT["2. Sliding-Window Rate Limiter (60 req/min)"]
+  RAT --> AUTH["3. JWT Verification (HS256 Bearer Cookie)"]
+  AUTH --> RBAC{"4. Server-Side RBAC Enforcement"}
+  RBAC -->|"Unauthorized"| ERR["RFC 7807 403 Forbidden Response"]
+  RBAC -->|"Authorized"| SAN["5. Parameter Sanitization &amp; Zod Schema Validation"]
+  SAN --> DLP["6. DLP Data Masking (Redact PII in Streams)"]
+  DLP --> SQL["7. Parameterized SQL Pushdown (Drizzle ORM)"]
+  SQL --> AUD["8. Append-Only Compliance Audit Log"]
+```
+
 DataScope implements an enterprise security matrix addressing core production requirements:
 
 | # | Security Requirement | Implementation Mechanism | Verification Target |
@@ -585,7 +669,7 @@ DataScope follows the **Hallmark Engineering Standard**, guaranteeing profession
 - **Typography and Layout:** Clean sentence-case headings and labels in the body face. Monospace is reserved exclusively for code, keys, and numerical figures.
 - **Strict Accessibility (WCAG 2.1 AA):** High-contrast `:focus-visible:ring-2 focus-visible:ring-emerald-500` outlines on every interactive element.
 - **Motion and Reduced Motion:** All animations are gated with `motion-safe:` variants or fall back gracefully under `@media (prefers-reduced-motion: reduce)`.
-- **Zero-Slop Verification:** Fully compliant with the Hallmark linting engine (`npm run lint:hallmark` - **0 failures across all 41 TSX files**).
+- **Zero-Slop Verification:** Fully compliant with the Hallmark linting engine (`npm run lint:hallmark` - **0 failures across all 42 TSX files**).
 - **Strict Avoidance Guarantees:** Zero emojis, zero em dashes, zero Lucide icons on core shells (replaced with bespoke inline SVGs), zero bento grids, zero terminal windows with fake dots, zero pure white backgrounds, and zero 3-card-in-a-row layouts.
 
 ---
@@ -622,6 +706,10 @@ Run the automated live benchmark suite:
 npm run benchmark
 ```
 
+<div align="center">
+  <img src="./public/images/latency-benchmark-chart.svg" alt="DataScope Latency Benchmarks across 110,000+ Records" width="100%" />
+</div>
+
 | Benchmark Operation | Dataset Scope | Cache State | Execution Latency | Status |
 | :--- | :---: | :---: | :---: | :---: |
 | **PostgreSQL Full-Text Search (`tsvector @@ tsquery`)** | 110,000 records | Cold (MISS) | **12.4 ms** | Passed |
@@ -632,7 +720,16 @@ npm run benchmark
 
 ---
 
-## 15. Architectural Decision Records (ADRs)
+## 15. Architectural Decision Records (ADRs) & Production Scaling Blueprint
+
+```mermaid
+flowchart LR
+  subgraph ScalePath["DataScope 10,000,000+ Records Scaling Blueprint"]
+    P1["Phase 1: Table Partitioning<br/>Range by record_date / Hash by dataset_id"] --> P2["Phase 2: Read Replicas &amp; Pooling<br/>PgBouncer + Read-Only Routing"]
+    P2 --> P3["Phase 3: Keyset Cursors<br/>(record_date, id) seek • Zero OFFSET decay"]
+    P3 --> P4["Phase 4: Cold Storage Archival<br/>Parquet on S3 + FDW SQL Federation"]
+  end
+```
 
 DataScope provides 8 documented Architectural Decision Records (accessible interactively under `/dashboard/architecture`):
 

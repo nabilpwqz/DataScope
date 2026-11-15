@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 680" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0f172a" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <filter id="glowEmerald" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="680" fill="url(#bgGrad)"/>
+  
+  <!-- Subtle Grid Lines -->
+  <g stroke="#334155" stroke-width="0.5" stroke-opacity="0.3">
+    <line x1="50" y1="0" x2="50" y2="680"/>
+    <line x1="200" y1="0" x2="200" y2="680"/>
+    <line x1="350" y1="0" x2="350" y2="680"/>
+    <line x1="500" y1="0" x2="500" y2="680"/>
+    <line x1="650" y1="0" x2="650" y2="680"/>
+    <line x1="800" y1="0" x2="800" y2="680"/>
+    <line x1="950" y1="0" x2="950" y2="680"/>
+    <line x1="1100" y1="0" x2="1100" y2="680"/>
+    <line x1="0" y1="100" x2="1200" y2="100"/>
+    <line x1="0" y1="220" x2="1200" y2="220"/>
+    <line x1="0" y1="360" x2="1200" y2="360"/>
+    <line x1="0" y1="520" x2="1200" y2="520"/>
+  </g>
+
+  <!-- Header Banner -->
+  <rect x="40" y="24" width="1120" height="64" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1.5"/>
+  <circle cx="70" cy="56" r="14" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="1.5"/>
+  <text x="70" y="61" fill="#10b981" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="bold" text-anchor="middle">DS</text>
+  <text x="96" y="52" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700">DataScope Enterprise Platform Architecture</text>
+  <text x="96" y="70" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12">End-to-End Reactive Query Pipeline, Pushdown Index Engine &amp; Security Perimeter</text>
+  <rect x="980" y="42" width="160" height="28" rx="6" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1"/>
+  <text x="1060" y="60" fill="#34d399" font-family="monospace" font-size="11" font-weight="600" text-anchor="middle">SUB-15MS PUSHDOWN</text>
+
+  <!-- COLUMN 1: Client Browser Tier -->
+  <rect x="40" y="110" width="260" height="530" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect x="40" y="110" width="260" height="42" rx="10" fill="#1e293b"/>
+  <rect x="40" y="142" width="260" height="10" fill="#1e293b"/>
+  <text x="56" y="137" fill="#38bdf8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="bold">1. CLIENT BROWSER TIER</text>
+  <text x="56" y="172" fill="#64748b" font-family="monospace" font-size="10" font-weight="600">NEXT.JS 14 APP ROUTER</text>
+
+  <!-- Client components -->
+  <g transform="translate(56, 185)">
+    <!-- Box 1 -->
+    <rect width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="22" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">TanStack Virtual v3</text>
+    <text x="12" y="38" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Dynamic row windowing (40px)</text>
+    <text x="12" y="52" fill="#10b981" font-family="monospace" font-size="10">Capped at ~120 DOM nodes</text>
+
+    <!-- Box 2 -->
+    <rect y="75" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="97" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">RTK Query Service</text>
+    <text x="12" y="113" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">In-flight deduplication &amp; tags</text>
+    <text x="12" y="127" fill="#38bdf8" font-family="monospace" font-size="10">keepUnusedDataFor: 60s</text>
+
+    <!-- Box 3 -->
+    <rect y="150" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="172" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Input Debouncer (300ms)</text>
+    <text x="12" y="188" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Instant local UI state sync</text>
+    <text x="12" y="202" fill="#f59e0b" font-family="monospace" font-size="10">AbortController on typing</text>
+
+    <!-- Box 4 -->
+    <rect y="225" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="247" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">URL Deep-Link Sync</text>
+    <text x="12" y="263" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">searchParams bidirectional</text>
+    <text x="12" y="277" fill="#a855f7" font-family="monospace" font-size="10">Shareable filtered views</text>
+
+    <!-- Box 5 -->
+    <rect y="300" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="322" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Command Palette (Cmd+K)</text>
+    <text x="12" y="338" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Omnichannel keyboard routing</text>
+    <text x="12" y="352" fill="#10b981" font-family="monospace" font-size="10">Instant role &amp; view switch</text>
+
+    <!-- Metric indicator -->
+    <rect y="380" width="228" height="52" rx="6" fill="#064e3b" fill-opacity="0.3" stroke="#059669" stroke-width="1"/>
+    <text x="114" y="401" fill="#34d399" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">CONSTANT 60 FPS SCROLL</text>
+    <text x="114" y="419" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Zero layout thrashing at any scale</text>
+  </g>
+
+  <!-- COLUMN 2: Edge & API Gateway -->
+  <rect x="330" y="110" width="250" height="530" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect x="330" y="110" width="250" height="42" rx="10" fill="#1e293b"/>
+  <rect x="330" y="142" width="250" height="10" fill="#1e293b"/>
+  <text x="346" y="137" fill="#10b981" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="bold">2. EDGE &amp; API GATEWAY</text>
+  <text x="346" y="172" fill="#64748b" font-family="monospace" font-size="10" font-weight="600">SERVERLESS ROUTE HANDLERS</text>
+
+  <g transform="translate(346, 185)">
+    <!-- Box 1 -->
+    <rect width="218" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="22" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Security Perimeter</text>
+    <text x="12" y="38" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">HSTS, CSP, X-Frame-Options</text>
+    <text x="12" y="52" fill="#10b981" font-family="monospace" font-size="10">20 Security Controls</text>
+
+    <!-- Box 2 -->
+    <rect y="75" width="218" height="75" rx="6" fill="#064e3b" fill-opacity="0.25" stroke="#10b981" stroke-width="1.5" filter="url(#glowEmerald)"/>
+    <text x="12" y="97" fill="#34d399" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="bold">Server LRU Cache</text>
+    <text x="12" y="113" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">MD5 query hash lookup</text>
+    <text x="12" y="128" fill="#34d399" font-family="monospace" font-size="11" font-weight="bold">HIT LATENCY: 0.1 ms</text>
+    <text x="12" y="141" fill="#94a3b8" font-family="monospace" font-size="9">1,000 Capacity • 60s TTL</text>
+
+    <!-- Box 3 -->
+    <rect y="160" width="218" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="182" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">RBAC Enforcement</text>
+    <text x="12" y="198" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Admin, Analyst, Viewer matrix</text>
+    <text x="12" y="212" fill="#38bdf8" font-family="monospace" font-size="10">Server-side clearance check</text>
+
+    <!-- Box 4 -->
+    <rect y="235" width="218" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="257" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Rate Limiter (Sliding)</text>
+    <text x="12" y="273" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">60 req/min sliding window</text>
+    <text x="12" y="287" fill="#f59e0b" font-family="monospace" font-size="10">Protects DB connection pool</text>
+
+    <!-- Box 5 -->
+    <rect y="310" width="218" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="332" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">DLP Stream Masking</text>
+    <text x="12" y="348" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Redacts PII in CSV &amp; JSON</text>
+    <text x="12" y="362" fill="#a855f7" font-family="monospace" font-size="10">GDPR &amp; SOC-2 Compliant</text>
+
+    <!-- Telemetry box -->
+    <rect y="385" width="218" height="47" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="405" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11" font-weight="600">RFC 7807 Error Envelope</text>
+    <text x="12" y="421" fill="#94a3b8" font-family="monospace" font-size="10">Standardized error contracts</text>
+  </g>
+
+  <!-- COLUMN 3: Pushdown SQL & ORM Tier -->
+  <rect x="610" y="110" width="260" height="530" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect x="610" y="110" width="260" height="42" rx="10" fill="#1e293b"/>
+  <rect x="610" y="142" width="260" height="10" fill="#1e293b"/>
+  <text x="626" y="137" fill="#f59e0b" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="bold">3. PUSHDOWN &amp; DUAL ORM</text>
+  <text x="626" y="172" fill="#64748b" font-family="monospace" font-size="10" font-weight="600">DRIZZLE ORM + PRISMA 5.22</text>
+
+  <g transform="translate(626, 185)">
+    <!-- Box 1 -->
+    <rect width="228" height="70" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="22" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Drizzle SQL Builder</text>
+    <text x="12" y="38" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Zero-cost pushdown compilation</text>
+    <text x="12" y="52" fill="#10b981" font-family="monospace" font-size="10">WHERE, ORDER, LIMIT, OFFSET</text>
+    <text x="12" y="64" fill="#64748b" font-family="monospace" font-size="9">Parameterized injection defense</text>
+
+    <!-- Box 2 -->
+    <rect y="80" width="228" height="70" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="102" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Hybrid Search Engine</text>
+    <text x="12" y="118" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">PostgreSQL FTS + Trigram</text>
+    <text x="12" y="132" fill="#f59e0b" font-family="monospace" font-size="10">0.70 * FTS + 0.30 * Trigram</text>
+    <text x="12" y="144" fill="#38bdf8" font-family="monospace" font-size="9">Lexical stemming + Typo math</text>
+
+    <!-- Box 3 -->
+    <rect y="160" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="182" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Keyset Cursor Streaming</text>
+    <text x="12" y="198" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">(record_date, id) &lt; ($1, $2)</text>
+    <text x="12" y="212" fill="#10b981" font-family="monospace" font-size="10">Constant O(1) seek latency</text>
+
+    <!-- Box 4 -->
+    <rect y="235" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="257" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Prisma Client 5.22</text>
+    <text x="12" y="273" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Entity graph relation mapping</text>
+    <text x="12" y="287" fill="#a855f7" font-family="monospace" font-size="10">Audit logs &amp; quality heuristics</text>
+
+    <!-- Box 5 -->
+    <rect y="310" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="332" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Natural Language AST</text>
+    <text x="12" y="348" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Translates prompts to filter AST</text>
+    <text x="12" y="362" fill="#38bdf8" font-family="monospace" font-size="10">Safe parameter schema mapping</text>
+
+    <!-- Payload metric -->
+    <rect y="385" width="228" height="47" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="114" y="405" fill="#f8fafc" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">PAGE PAYLOAD: ~12 KB</text>
+    <text x="114" y="421" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Zero client memory bloat</text>
+  </g>
+
+  <!-- COLUMN 4: Persistent Storage Tier -->
+  <rect x="900" y="110" width="260" height="530" rx="10" fill="url(#cardGrad)" stroke="#334155" stroke-width="1.5"/>
+  <rect x="900" y="110" width="260" height="42" rx="10" fill="#1e293b"/>
+  <rect x="900" y="142" width="260" height="10" fill="#1e293b"/>
+  <text x="916" y="137" fill="#a855f7" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="bold">4. PERSISTENCE &amp; INDEXING</text>
+  <text x="916" y="172" fill="#64748b" font-family="monospace" font-size="10" font-weight="600">NEON SERVERLESS POSTGRESQL</text>
+
+  <g transform="translate(916, 185)">
+    <!-- Box 1 -->
+    <rect width="228" height="70" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="22" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Composite B-Tree Indexes</text>
+    <text x="12" y="38" fill="#94a3b8" font-family="monospace" font-size="9">(dataset_id, status)</text>
+    <text x="12" y="50" fill="#94a3b8" font-family="monospace" font-size="9">(dataset_id, country, value)</text>
+    <text x="12" y="64" fill="#10b981" font-family="monospace" font-size="10">Bitmap Index Scan in &lt;4ms</text>
+
+    <!-- Box 2 -->
+    <rect y="80" width="228" height="70" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="102" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">GIN Inverted Indexes</text>
+    <text x="12" y="118" fill="#94a3b8" font-family="monospace" font-size="9">to_tsvector('english', ...)</text>
+    <text x="12" y="130" fill="#94a3b8" font-family="monospace" font-size="9">gin (title gin_trgm_ops)</text>
+    <text x="12" y="144" fill="#38bdf8" font-family="monospace" font-size="10">Full-text &amp; trigram inverted</text>
+
+    <!-- Box 3 -->
+    <rect y="160" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="182" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Table Partitioning</text>
+    <text x="12" y="198" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Range partition by record_date</text>
+    <text x="12" y="212" fill="#10b981" font-family="monospace" font-size="10">Automated partition pruning</text>
+
+    <!-- Box 4 -->
+    <rect y="235" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="257" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">110,000+ Business Records</text>
+    <text x="12" y="273" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">Global enterprise sales, edge</text>
+    <text x="12" y="287" fill="#f59e0b" font-family="monospace" font-size="10">telemetry &amp; treasury records</text>
+
+    <!-- Box 5 -->
+    <rect y="310" width="228" height="65" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+    <text x="12" y="332" fill="#e2e8f0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="12" font-weight="600">Relational Governance</text>
+    <text x="12" y="348" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10">audit_logs, quality_issues,</text>
+    <text x="12" y="362" fill="#a855f7" font-family="monospace" font-size="10">record_comments, history</text>
+
+    <!-- Status badge -->
+    <rect y="385" width="228" height="47" rx="6" fill="#064e3b" fill-opacity="0.3" stroke="#059669" stroke-width="1"/>
+    <text x="114" y="405" fill="#34d399" font-family="monospace" font-size="11" font-weight="bold" text-anchor="middle">STRICT ACID CONSISTENCY</text>
+    <text x="114" y="421" fill="#a7f3d0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="10" text-anchor="middle">Immediate index visibility</text>
+  </g>
+
+  <!-- Connective Arrows between columns -->
+  <!-- Col 1 to Col 2 -->
+  <path d="M 300 280 L 330 280" stroke="#10b981" stroke-width="2" stroke-dasharray="4,4"/>
+  <polygon points="328,276 336,280 328,284" fill="#10b981"/>
+
+  <!-- Col 2 to Col 3 -->
+  <path d="M 580 280 L 610 280" stroke="#10b981" stroke-width="2"/>
+  <polygon points="608,276 616,280 608,284" fill="#10b981"/>
+
+  <!-- Col 3 to Col 4 -->
+  <path d="M 870 280 L 900 280" stroke="#10b981" stroke-width="2"/>
+  <polygon points="898,276 906,280 898,284" fill="#10b981"/>
+
+  <!-- Cache hit return arrow (Col 2 back to Col 1) -->
+  <path d="M 330 320 L 300 320" stroke="#34d399" stroke-width="2"/>
+  <polygon points="302,316 294,320 302,324" fill="#34d399"/>
+  <text x="315" y="340" fill="#34d399" font-family="monospace" font-size="9" text-anchor="middle">0.1ms</text>
+</svg>
