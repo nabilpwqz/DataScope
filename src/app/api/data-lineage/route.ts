@@ -10,10 +10,13 @@ export async function GET(req: NextRequest) {
 
     // Fetch dynamic dataset record counts from db to reflect live database state
     const dsCounts = await client.query(`
-      SELECT d.id, d.name, d.category, COUNT(r.id)::int as count
+      SELECT d.id, d.name, d.category, COALESCE(rc.cnt, d.total_records) AS count
       FROM datasets d
-      LEFT JOIN dataset_records r ON d.id = r.dataset_id
-      GROUP BY d.id
+      LEFT JOIN (
+        SELECT dataset_id, count(*)::int AS cnt
+        FROM dataset_records
+        GROUP BY dataset_id
+      ) rc ON d.id = rc.dataset_id
       ORDER BY d.created_at ASC;
     `);
 

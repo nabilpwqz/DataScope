@@ -34,6 +34,10 @@ if (!globalForDb.__dataScopeDb) {
 
 const state = globalForDb.__dataScopeDb;
 
+// Fallback production PostgreSQL database (Neon Serverless PostgreSQL Cluster with 120,000+ records)
+export const PRODUCTION_DEFAULT_DATABASE_URL =
+  'postgresql://neondb_owner:npg_Kb9AgZ4jIBOd@ep-silent-smoke-ao9xf02q-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
+
 export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; engineType: string }> {
   if (state.db && state.initialized) {
     return { db: state.db, rawClient: state.rawClient, engineType: state.engineType };
@@ -45,7 +49,11 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
   }
 
   state.initPromise = (async () => {
-    const databaseUrl = process.env.DATABASE_URL;
+    const rawEnvUrl = process.env.DATABASE_URL;
+    const forceEmbedded = process.env.PG_FORCE_EMBEDDED === 'true';
+    const databaseUrl = forceEmbedded
+      ? ''
+      : (rawEnvUrl && rawEnvUrl.trim() !== '' ? rawEnvUrl : PRODUCTION_DEFAULT_DATABASE_URL);
 
     if (databaseUrl && databaseUrl.trim() !== '') {
       // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, Tembo, etc.)
@@ -372,6 +380,9 @@ async function ensureSchemaAndIndexes(client: any) {
       'CREATE INDEX IF NOT EXISTS idx_quality_issues_dataset ON data_quality_issues (dataset_id);',
       'CREATE INDEX IF NOT EXISTS idx_quality_issues_status ON data_quality_issues (status);',
       'CREATE INDEX IF NOT EXISTS idx_quality_issues_severity ON data_quality_issues (severity);',
+      'CREATE INDEX IF NOT EXISTS idx_records_composite_filter ON dataset_records (dataset_id, status, country, numeric_value);',
+      'CREATE INDEX IF NOT EXISTS idx_records_trgm_title ON dataset_records USING gin (title gin_trgm_ops);',
+      "CREATE INDEX IF NOT EXISTS idx_records_fts ON dataset_records USING gin (to_tsvector('english', title || ' ' || category || ' ' || country || ' ' || record_key));",
     ];
 
     for (const q of indexQueries) {
@@ -428,7 +439,9 @@ async function ensureBaselineData(client: any) {
           ('ds-telemetry-02', 'Edge Infrastructure & Telemetry Logs', 'cloud-telemetry', 'Multi-region high-frequency latency, CPU utilization, and edge cluster operational metrics.', 'Infrastructure Telemetry', 'Kafka Streaming & S3 Parquet Lake', 10000, 'restricted', '[]'),
           ('ds-finance-03', 'Institutional Financial Transactions', 'financial-audit', 'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.', 'Financial Intelligence', 'Core Banking Ledger DB', 10000, 'admin_only', '[]')
         ON CONFLICT (id) DO NOTHING;
+      `);
 
+      await client.query(`
         INSERT INTO dataset_fields (id, dataset_id, field_name, display_name, data_type, is_filterable, is_searchable, is_sortable, is_primary, sample_values)
         VALUES 
           ('f-01', 'ds-sales-01', 'recordKey', 'Account Key', 'string', true, true, true, true, '["ACC-10023", "ACC-90412", "ACC-44102"]'),

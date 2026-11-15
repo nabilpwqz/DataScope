@@ -42,9 +42,15 @@ const defaultViewerUser: User = {
 
 const initialRole: UserRole = 'admin';
 
+export const SIGNED_USER_TOKENS: Record<UserRole, string> = {
+  admin: 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJ1c3ItYWRtaW4tMDEiLCJlbWFpbCI6ImFkbWluQGRhdGFzY29wZS5pbyIsIm5hbWUiOiJFbGVuYSBSb3N0b3ZhIiwicm9sZSI6ImFkbWluIiwiZGVwYXJ0bWVudCI6IkVudGVycHJpc2UgQXJjaGl0ZWN0dXJlIiwiaWF0IjoxNzk0NzgxOTg0LCJleHAiOjE3OTUzODY3ODR9.mlzQUeivagxX9PQweRUIAs9V3JP9HKZXC2_CYHalC7o',
+  analyst: 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJ1c3ItYW5hbHlzdC0wMSIsImVtYWlsIjoiYW5hbHlzdEBkYXRhc2NvcGUuaW8iLCJuYW1lIjoiTWFyY3VzIFZhbmNlIiwicm9sZSI6ImFuYWx5c3QiLCJkZXBhcnRtZW50IjoiU3RyYXRlZ2ljIEludGVsbGlnZW5jZSIsImlhdCI6MTc5NDc4MTk4NCwiZXhwIjoxNzk1Mzg2Nzg0fQ.MZYWYMopi39tEtJIflrg5IoywXkFfeSDq5YmmkdpsRs',
+  viewer: 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiJ1c3Itdmlld2VyLTAxIiwiZW1haWwiOiJ2aWV3ZXJAZGF0YXNjb3BlLmlvIiwibmFtZSI6IlNhcmFoIExpbiIsInJvbGUiOiJ2aWV3ZXIiLCJkZXBhcnRtZW50IjoiUHJvZHVjdCBPcGVyYXRpb25zIiwiaWF0IjoxNzk0NzgxOTg0LCJleHAiOjE3OTUzODY3ODR9.o_O0wcQee3VjCocSOtpkWmEeOhk0uWueVPM6Kth7iAM',
+};
+
 const initialState: AuthState = {
   user: defaultAdminUser,
-  token: 'mock-jwt-admin-token',
+  token: SIGNED_USER_TOKENS.admin,
   isAuthenticated: true,
   activeRole: initialRole,
   permissions: getRolePermissions(initialRole),
@@ -66,13 +72,21 @@ export const authSlice = createSlice({
       state.permissions = getRolePermissions(action.payload);
       if (action.payload === 'admin') {
         state.user = defaultAdminUser;
-        state.token = 'mock-jwt-admin-token';
+        state.token = SIGNED_USER_TOKENS.admin;
       } else if (action.payload === 'analyst') {
         state.user = defaultAnalystUser;
-        state.token = 'mock-jwt-analyst-token';
+        state.token = SIGNED_USER_TOKENS.analyst;
       } else {
         state.user = defaultViewerUser;
-        state.token = 'mock-jwt-viewer-token';
+        state.token = SIGNED_USER_TOKENS.viewer;
+      }
+      // Also sync session cookie in browser environment
+      if (typeof window !== 'undefined') {
+        fetch('/api/auth/switch-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: action.payload }),
+        }).catch(() => {});
       }
     },
     logout: (state) => {

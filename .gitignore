@@ -15,6 +15,7 @@ yarn-error.log*
 # Database
 .pgdata/
 .test_pgdata/
+test-pgdata/
 
 # OS
 .DS_Store

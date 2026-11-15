@@ -16,8 +16,12 @@ export async function GET() {
 
     let recordsCount = 0;
     try {
-      const recRes = await rawClient.query('SELECT count(*)::int AS records_count FROM dataset_records;');
-      recordsCount = recRes.rows?.[0]?.records_count || 0;
+      const sumRes = await rawClient.query('SELECT COALESCE(SUM(total_records), 0)::int AS records_count FROM datasets;');
+      recordsCount = Number(sumRes.rows?.[0]?.records_count || 0);
+      if (recordsCount === 0) {
+        const recRes = await rawClient.query('SELECT count(*)::int AS records_count FROM dataset_records;');
+        recordsCount = recRes.rows?.[0]?.records_count || 0;
+      }
     } catch (_) {}
 
     const memoryUsage = process.memoryUsage();

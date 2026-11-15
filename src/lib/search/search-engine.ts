@@ -47,6 +47,14 @@ export class SearchEngine {
     const cachedResult = queryCache.get(cacheKey);
     if (cachedResult) {
       const execTime = Math.round((performance.now() - startTime) * 10) / 10;
+      this.logPerformanceMetric({
+        endpoint: '/api/datasets/[id]/records',
+        queryType: request.search ? (request.searchType || 'hybrid') : 'indexed_filter',
+        queryHash,
+        executionTimeMs: execTime,
+        totalRecordsScanned: cachedResult.totalRecords,
+        cacheHit: true,
+      }).catch(() => {});
       return {
         ...cachedResult,
         executionTimeMs: execTime,
@@ -170,12 +178,7 @@ export class SearchEngine {
     }
     const sortSql = sortClauses.length > 0 ? sortClauses.join(', ') : 'record_date DESC';
 
-    // 5. Total Count Query (Optimized for large tables with condition)
-    const countSql = `SELECT COUNT(*)::int AS total FROM dataset_records WHERE ${whereSql};`;
-    const countRes = await client.query(countSql, params);
-    const totalRecords = countRes.rows && countRes.rows[0] ? countRes.rows[0].total : 0;
-
-    // 6. Data Fetch Query with Pagination
+    // 5. Data Fetch Query with Pagination
     let recordsSql: string;
     let queryParams: any[];
 
@@ -208,7 +211,26 @@ export class SearchEngine {
       `;
     }
 
-    const recordsRes = await client.query(recordsSql, queryParams);
+    const countSql = `SELECT COUNT(*)::int AS total FROM dataset_records WHERE ${whereSql};`;
+
+    // 6. Execute count and records query concurrently for optimal response time
+    const [countResult, recordsRes] = await Promise.all([
+      (async () => {
+        if (!search && filters.length === 0) {
+          try {
+            const dsRes = await client.query('SELECT total_records FROM datasets WHERE id = $1', [datasetId]);
+            if (dsRes.rows && dsRes.rows[0] && dsRes.rows[0].total_records != null) {
+              return Number(dsRes.rows[0].total_records);
+            }
+          } catch (_) {}
+        }
+        const countRes = await client.query(countSql, params);
+        return countRes.rows && countRes.rows[0] ? Number(countRes.rows[0].total) : 0;
+      })(),
+      client.query(recordsSql, queryParams),
+    ]);
+
+    const totalRecords = countResult;
     const rawRows = recordsRes.rows || [];
 
     const records: DatasetRecord[] = rawRows.map((r: any) => ({

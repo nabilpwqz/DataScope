@@ -112,3 +112,4 @@
     <text x="215" y="22" fill="#fecaca" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="11">Sequential scan without DataScope composite indexes took <tspan font-family="monospace" font-weight="bold" fill="#ef4444">1,240.4 ms</tspan> (Over 300x slower).</text>
   </g>
 </svg>
+

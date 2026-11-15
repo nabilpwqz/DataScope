@@ -27,10 +27,13 @@ export async function GET(req: NextRequest) {
       SELECT 
         d.id, d.name, d.slug, d.description, d.category, d.data_source, 
         d.total_records, d.access_level, d.schema_definition, d.created_at, d.updated_at,
-        COUNT(r.id)::int as actual_records_count
+        COALESCE(rc.cnt, d.total_records) AS actual_records_count
       FROM datasets d
-      LEFT JOIN dataset_records r ON d.id = r.dataset_id
-      GROUP BY d.id
+      LEFT JOIN (
+        SELECT dataset_id, count(*)::int AS cnt
+        FROM dataset_records
+        GROUP BY dataset_id
+      ) rc ON d.id = rc.dataset_id
       ORDER BY d.created_at ASC;
     `);
 
