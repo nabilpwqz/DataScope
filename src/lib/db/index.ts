@@ -164,6 +164,12 @@ export async function executeSql(client: any, query: string, params: any[] = [])
 
 async function ensureSchemaAndIndexes(client: any) {
   try {
+    // Quick existence check to bypass redundant DDL on warm remote databases
+    const checkTable = await client.query("SELECT 1 FROM information_schema.tables WHERE table_name = 'dataset_records' LIMIT 1;").catch(() => null);
+    if (checkTable && checkTable.rows && checkTable.rows.length > 0) {
+      return;
+    }
+
     // 1. Extensions
     try {
       await executeSql(client, 'CREATE EXTENSION IF NOT EXISTS pg_trgm;');
@@ -400,11 +406,13 @@ async function ensureSchemaAndIndexes(client: any) {
 
 async function ensureBaselineData(client: any) {
   try {
-    const existingUsers = await client.query('SELECT count(*)::int AS count FROM users;');
-    const userCount = existingUsers.rows?.[0]?.count || 0;
+    // Quick existence check to bypass redundant baseline seeding on already populated databases
+    const existingUsers = await client.query('SELECT 1 FROM users LIMIT 1;').catch(() => null);
+    if (existingUsers && existingUsers.rows && existingUsers.rows.length > 0) {
+      return;
+    }
 
-    if (userCount === 0) {
-      const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(10);
       const adminPass = await bcrypt.hash('admin123', salt);
       const analystPass = await bcrypt.hash('analyst123', salt);
       const viewerPass = await bcrypt.hash('viewer123', salt);
