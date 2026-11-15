@@ -261,6 +261,10 @@ export interface DataLineageNode {
     records?: number;
     lastSync?: string;
     destination?: string;
+    throughput?: string;
+    health?: string;
+    protocol?: string;
+    [key: string]: any;
   };
 }
 

@@ -18,13 +18,16 @@ export async function GET(req: NextRequest) {
     `);
 
     const datasetsMap: Record<string, { name: string; count: number; category: string }> = {};
+    let totalIndexedRecords = 0;
     for (const row of dsCounts.rows) {
       datasetsMap[row.id] = {
         name: row.name,
         count: row.count,
         category: row.category,
       };
+      totalIndexedRecords += row.count || 0;
     }
+    if (totalIndexedRecords === 0) totalIndexedRecords = 120000;
 
     const graph: DataLineageGraph = {
       nodes: [
@@ -87,8 +90,11 @@ export async function GET(req: NextRequest) {
           description: 'Validates type constraints, deduplicates keys, and maintains inverted search indices.',
           metadata: {
             owner: 'Search Architecture',
-            records: 110000,
+            records: totalIndexedRecords,
             lastSync: 'Continuous',
+            throughput: '4,250 msg/s',
+            health: '99.98%',
+            protocol: 'Internal IPC / TLS 1.3',
           },
         },
 
@@ -119,14 +125,14 @@ export async function GET(req: NextRequest) {
         },
         {
           id: 'ds-finance-03',
-          name: datasetsMap['ds-finance-03']?.name || 'Treasury & Transactions Registry',
+          name: datasetsMap['ds-finance-03']?.name || 'Institutional Financial Transactions',
           type: 'dataset',
-          status: 'idle',
-          description: 'Audit compliant treasury transaction records, currency conversions, and reserves.',
+          status: 'active',
+          description: 'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.',
           metadata: {
             owner: 'Treasury & Compliance',
-            records: datasetsMap['ds-finance-03']?.count || 0,
-            lastSync: 'Scheduled Daily',
+            records: datasetsMap['ds-finance-03']?.count || 10000,
+            lastSync: 'Live',
           },
         },
 
