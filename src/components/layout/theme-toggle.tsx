@@ -16,39 +16,20 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className = '' }
     try {
       const stored = localStorage.getItem('datascope_theme');
       if (stored === 'light' || stored === 'dark') {
-        if (stored !== theme) {
-          dispatch(setTheme(stored));
-        }
-      } else if (document.documentElement.classList.contains('light')) {
-        dispatch(setTheme('light'));
+        dispatch(setTheme(stored));
+      } else {
+        const isLight = document.documentElement.classList.contains('light');
+        dispatch(setTheme(isLight ? 'light' : 'dark'));
       }
     } catch {
-      // localStorage may fail in restricted environments
+      // In restricted environments
     }
-  }, [dispatch, theme]);
-
-  // Synchronize document classes and localStorage on theme update
-  useEffect(() => {
-    if (!mounted) return;
-    const root = document.documentElement;
-    if (theme === 'light') {
-      root.classList.remove('dark');
-      root.classList.add('light');
-      try {
-        localStorage.setItem('datascope_theme', 'light');
-      } catch {}
-    } else {
-      root.classList.remove('light');
-      root.classList.add('dark');
-      try {
-        localStorage.setItem('datascope_theme', 'dark');
-      } catch {}
-    }
-  }, [theme, mounted]);
+  }, [dispatch]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     const root = document.documentElement;
+
     if (nextTheme === 'light') {
       root.classList.remove('dark');
       root.classList.add('light');
@@ -56,24 +37,40 @@ export const ThemeToggle: React.FC<{ className?: string }> = ({ className = '' }
       root.classList.remove('light');
       root.classList.add('dark');
     }
+
     try {
       localStorage.setItem('datascope_theme', nextTheme);
     } catch {}
+
     dispatch(setTheme(nextTheme));
   };
+
+  const isLight = mounted && theme === 'light';
 
   return (
     <button
       onClick={toggleTheme}
       type="button"
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-      title={`Active theme: ${theme} (Click to toggle)`}
-      className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-700 bg-slate-900 text-slate-300 hover:text-white hover:border-slate-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${className}`}
+      aria-label={
+        isLight
+          ? 'Current theme: Light Mode. Click to switch to Night Mode'
+          : 'Current theme: Night Mode. Click to switch to Light Mode'
+      }
+      title={
+        isLight
+          ? 'Theme: Light Mode (Click for Night Mode)'
+          : 'Theme: Night Mode (Click for Light Mode)'
+      }
+      className={`relative inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        isLight
+          ? 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 shadow-sm'
+          : 'border border-slate-700 bg-slate-900 text-slate-300 hover:border-slate-500 hover:text-white'
+      } ${className}`}
     >
-      {theme === 'dark' ? (
-        <IconSun className="h-4 w-4 text-amber-400 transition-transform duration-200 hover:rotate-45" />
+      {isLight ? (
+        <IconSun className="h-4 w-4 text-amber-500 transition-transform duration-200 hover:rotate-45" />
       ) : (
-        <IconMoon className="h-4 w-4 text-slate-700 transition-transform duration-200 hover:-rotate-12" />
+        <IconMoon className="h-4 w-4 text-emerald-400 transition-transform duration-200 hover:-rotate-12" />
       )}
     </button>
   );

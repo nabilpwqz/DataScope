@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { switchRole } from '@/store/slices/authSlice';
 import {
   setTableDensity,
+  setTheme,
   toggleVirtualization,
   toggleHighlightMatches,
 } from '@/store/slices/uiPreferenceSlice';
@@ -19,11 +20,12 @@ import {
   Trash2,
   CheckCircle2,
 } from 'lucide-react';
+import { IconMoon, IconSun } from '@/components/ui/icons';
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch();
   const { user, activeRole, permissions } = useAppSelector((state) => state.auth);
-  const { tableDensity, useVirtualization, highlightMatches } = useAppSelector(
+  const { tableDensity, useVirtualization, highlightMatches, theme } = useAppSelector(
     (state) => state.uiPreference
   );
   const [cacheFlushed, setCacheFlushed] = useState(false);
@@ -31,6 +33,21 @@ export default function SettingsPage() {
   const handleClearCache = async () => {
     setCacheFlushed(true);
     setTimeout(() => setCacheFlushed(false), 3000);
+  };
+
+  const handleThemeChange = (newTheme: 'dark' | 'light') => {
+    const root = document.documentElement;
+    if (newTheme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+    try {
+      localStorage.setItem('datascope_theme', newTheme);
+    } catch {}
+    dispatch(setTheme(newTheme));
   };
 
   return (
@@ -139,7 +156,37 @@ export default function SettingsPage() {
           <span>Frontend Rendering &amp; Display Preferences</span>
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 rounded-lg border border-slate-800 bg-slate-950 space-y-2">
+            <span className="text-xs font-semibold text-slate-200">Theme appearance</span>
+            <div className="flex gap-1 pt-1">
+              <button
+                type="button"
+                onClick={() => handleThemeChange('dark')}
+                className={`px-3 py-1 text-xs rounded capitalize flex-1 flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  theme === 'dark'
+                    ? 'bg-emerald-600 text-white font-bold'
+                    : 'bg-slate-900 text-slate-400 hover:text-white'
+                }`}
+              >
+                <IconMoon className="h-3.5 w-3.5" />
+                <span>Night</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleThemeChange('light')}
+                className={`px-3 py-1 text-xs rounded capitalize flex-1 flex items-center justify-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  theme === 'light'
+                    ? 'bg-emerald-600 text-white font-bold'
+                    : 'bg-slate-900 text-slate-400 hover:text-white'
+                }`}
+              >
+                <IconSun className="h-3.5 w-3.5" />
+                <span>Light</span>
+              </button>
+            </div>
+          </div>
+
           <div className="p-4 rounded-lg border border-slate-800 bg-slate-950 space-y-2">
             <span className="text-xs font-semibold text-slate-200">Table row density</span>
             <div className="flex gap-1 pt-1">
