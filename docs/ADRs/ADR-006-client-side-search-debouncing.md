@@ -32,3 +32,4 @@ Selected **300ms Debouncing** on search inputs via a dedicated Redux action (`se
 ## Performance and Architecture Implications
 - Reduces average query rate per active searching user from ~12 queries/minute down to 2 queries/minute.
 - Database CPU utilization during peak concurrent search sessions drops by approximately 65%.
+

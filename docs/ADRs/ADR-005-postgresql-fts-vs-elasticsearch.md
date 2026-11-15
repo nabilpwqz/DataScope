@@ -44,3 +44,4 @@ Selected a **Hybrid PostgreSQL Search Engine** combining **PostgreSQL Full-Text 
 
 ## Performance and Architecture Implications
 - Hybrid search executes in 4ms to 12ms for standard multi-word queries on the 100,000-row sales dataset.
+

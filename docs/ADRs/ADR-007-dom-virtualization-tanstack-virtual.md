@@ -33,3 +33,4 @@ Selected **DOM Virtualization using `@tanstack/react-virtual` (`useVirtualizer`)
 ## Performance and Architecture Implications
 - Active DOM node count drops from ~1,800 nodes down to ~160 nodes for a 100-row view (91% reduction).
 - Scroll frame time drops from ~28ms to ~4.2ms, well within the 16.6ms window required for 60fps rendering.
+

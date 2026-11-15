@@ -73,3 +73,4 @@ describe('Search Config Redux Slice', () => {
     expect(nextState.page).toBe(1);
   });
 });
+

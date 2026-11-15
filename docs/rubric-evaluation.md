@@ -92,3 +92,4 @@ Our platform was architected from inception to scale to 10,000,000+ records via 
 1. **Serverless Cold Connection Latency**: Serverless Next.js functions connecting to remote PostgreSQL across regions incur a 60-80ms TCP/TLS handshake on cold instances (mitigated by Neon connection pooling and warm keep-alive pings).
 2. **Search Beyond 50M Records**: While PostgreSQL Full-Text Search and Trigram indexes deliver sub-10ms performance on 100k to 5M rows, scaling beyond 50M unstructured documents would benefit from an auxiliary OpenSearch cluster.
 3. **Collaborative Presence**: Saved view updates are currently polled on focus or invalidated via mutations. Implementing WebSockets (or Supabase Realtime) would allow real-time collaborative cursors and co-filtering across distributed teams.
+

@@ -32,3 +32,4 @@ Selected **Server-Side Pushdown Pagination** combining indexed SQL `LIMIT` and `
 ## Performance and Architecture Implications
 - Reduces network transfer from ~85MB to ~12KB per request (99.98% payload reduction).
 - Page transitions complete in 12ms to 18ms over database B-Tree index scans.
+

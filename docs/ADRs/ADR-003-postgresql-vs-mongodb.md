@@ -33,3 +33,4 @@ Selected **PostgreSQL with Drizzle ORM**, utilizing composite B-Tree indexes, JS
 
 ## Performance and Architecture Implications
 - PostgreSQL query planner uses index-only scans for high-frequency queries, achieving average execution times between 2ms and 8ms.
+

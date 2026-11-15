@@ -33,3 +33,4 @@ Selected a **Hybrid Dual-Strategy Pagination Architecture**:
 ## Performance and Architecture Implications
 - Offset pagination: ~4ms for pages 1 through 50; ~25ms at offset 50,000.
 - Keyset cursor pagination: constant 3ms to 5ms across all depths (up to millions of rows).
+

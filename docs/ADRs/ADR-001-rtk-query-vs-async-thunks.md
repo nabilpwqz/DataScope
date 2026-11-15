@@ -35,3 +35,4 @@ Selected **RTK Query** with normalized tag-based invalidation (`providesTags` an
 ## Performance and Architecture Implications
 - Eliminates over 80% of redundant network flights through in-flight deduplication and memory cache reuse.
 - Memory consumption is strictly bounded by RTK Query subscription reference counting: unmounted query subscriptions are automatically garbage-collected after the retention period.
+

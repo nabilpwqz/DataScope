@@ -156,3 +156,4 @@ To expand from 120,000 records to 10 million records:
 
 3. **Deterministic Keyset Cursor Streaming**:
    - Replaces `OFFSET` with indexed cursor bounds: `WHERE (record_date, id) < ($1, $2)`, achieving true O(1) streaming latency across all depths.
+
