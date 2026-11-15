@@ -174,6 +174,7 @@ export interface UserPreferences {
 
 export interface AnalyticsSummary {
   totalRecords: number;
+  totalValue?: number;
   recordsByCategory: { category: string; count: number; totalValue: number }[];
   recordsByStatus: { status: string; count: number; percentage: number }[];
   growthTrends: { date: string; count: number; cumulative: number }[];
@@ -181,6 +182,15 @@ export interface AnalyticsSummary {
   averageValue: number;
   medianValue: number;
   filterUsageStats: { field: string; usageCount: number }[];
+  regionalDistribution?: { region: string; count: number; totalValue: number }[];
+  valuePercentiles?: {
+    min: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    p90: number;
+    max: number;
+  };
 }
 
 export interface PerformanceMetric {

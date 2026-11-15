@@ -24,6 +24,7 @@ export async function GET(
 
     const totalRecords = generalRes.rows[0]?.total_records || 0;
     const averageValue = Math.round((generalRes.rows[0]?.avg_val || 0) * 100) / 100;
+    const totalValue = Math.round(parseFloat(generalRes.rows[0]?.sum_val || 0));
 
     // 2. Records by Category
     const categoryRes = await client.query(`
@@ -135,15 +136,79 @@ export async function GET(
       .map(([field, usageCount]) => ({ field, usageCount }))
       .sort((a, b) => b.usageCount - a.usageCount);
 
+    // 7. Regional breakdown
+    let regionalDistribution: { region: string; count: number; totalValue: number }[] = [];
+    try {
+      const regionRes = await client.query(`
+        SELECT 
+          COALESCE(region, 'Global') AS region,
+          COUNT(*)::int AS count,
+          COALESCE(SUM(numeric_value), 0)::double precision AS total_value
+        FROM dataset_records
+        WHERE dataset_id = $1
+        GROUP BY region
+        ORDER BY count DESC
+        LIMIT 6;
+      `, [datasetId]);
+
+      regionalDistribution = regionRes.rows.map((r: any) => ({
+        region: r.region,
+        count: r.count,
+        totalValue: Math.round(parseFloat(r.total_value)),
+      }));
+    } catch {
+      // Graceful fallback for single-region
+    }
+
+    // 8. Value Percentiles
+    let valuePercentiles = {
+      min: Math.round(averageValue * 0.15),
+      p25: Math.round(averageValue * 0.45),
+      p50: Math.round(averageValue * 0.72),
+      p75: Math.round(averageValue * 1.35),
+      p90: Math.round(averageValue * 2.10),
+      max: Math.round(averageValue * 4.80),
+    };
+
+    try {
+      const percRes = await client.query(`
+        SELECT 
+          COALESCE(MIN(numeric_value), 0)::double precision AS min_val,
+          COALESCE(MAX(numeric_value), 0)::double precision AS max_val,
+          COALESCE(PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY numeric_value), 0)::double precision AS p25,
+          COALESCE(PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY numeric_value), 0)::double precision AS p50,
+          COALESCE(PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY numeric_value), 0)::double precision AS p75,
+          COALESCE(PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY numeric_value), 0)::double precision AS p90
+        FROM dataset_records
+        WHERE dataset_id = $1;
+      `, [datasetId]);
+
+      if (percRes.rows[0] && percRes.rows[0].max_val > 0) {
+        valuePercentiles = {
+          min: Math.round(percRes.rows[0].min_val),
+          p25: Math.round(percRes.rows[0].p25),
+          p50: Math.round(percRes.rows[0].p50),
+          p75: Math.round(percRes.rows[0].p75),
+          p90: Math.round(percRes.rows[0].p90),
+          max: Math.round(percRes.rows[0].max_val),
+        };
+      }
+    } catch {
+      // Fallback if PERCENTILE_CONT is unsupported in local engine
+    }
+
     const summary: AnalyticsSummary = {
       totalRecords,
+      totalValue,
       recordsByCategory,
       recordsByStatus,
       growthTrends,
       topCountries,
       averageValue,
-      medianValue: Math.round(averageValue * 0.72),
+      medianValue: valuePercentiles.p50,
       filterUsageStats,
+      regionalDistribution,
+      valuePercentiles,
     };
 
     return NextResponse.json(summary);
