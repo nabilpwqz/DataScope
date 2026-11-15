@@ -362,9 +362,9 @@ export default function DashboardOverviewPage() {
           </div>
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-              Sub-10ms SLA
+              Pushdown SQL
             </span>
-            <span className="text-slate-400">Pushdown</span>
+            <span className="text-slate-400">Indexed Scan</span>
           </div>
         </div>
 

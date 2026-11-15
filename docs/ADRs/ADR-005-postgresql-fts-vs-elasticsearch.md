@@ -7,7 +7,7 @@ ACCEPTED
 Organizations require high-speed keyword discovery, lexical stemming, and relevance ranking across large structured and semi-structured datasets. The architecture must balance search latency, typo tolerance, infrastructure operational complexity, and data consistency.
 
 ## Decision Drivers
-- Maintaining sub-15ms response times across 100,000+ indexed records
+- Maintaining sub-15ms in-database index scan times across 100,000+ indexed records
 - Guaranteeing immediate ACID data consistency without synchronization lag
 - Avoiding the high operational cost and maintenance of separate search clusters (JVM, ZooKeeper/OpenSearch nodes)
 - Providing lexical stemming, prefix search, and typo-tolerant fuzzy matching

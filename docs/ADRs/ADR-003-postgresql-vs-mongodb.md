@@ -23,7 +23,7 @@ Selected **PostgreSQL with Drizzle ORM**, utilizing composite B-Tree indexes, JS
 
 ### Positive Consequences
 - Full ACID compliance guarantees that state changes (e.g., status updates, comments) are committed atomically with immutable audit log entries.
-- Composite B-Tree indexes on `(dataset_id, status, numeric_value)` and `(dataset_id, record_date DESC)` allow sub-5ms index scans across 100,000+ rows.
+- Composite B-Tree indexes on `(dataset_id, status, numeric_value)` and `(dataset_id, record_date DESC)` allow efficient logarithmic index scans across 100,000+ rows.
 - Full-text search (`tsvector`, `tsquery`, `ts_rank`) executes natively within the database engine without external services.
 - Drizzle ORM provides zero-overhead, end-to-end TypeScript type generation from database schema to API layer.
 

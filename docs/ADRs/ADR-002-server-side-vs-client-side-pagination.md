@@ -9,7 +9,7 @@ Datasets containing 100,000 to millions of records cannot be serialized and down
 ## Decision Drivers
 - Maintaining constant, lightweight network payloads (~15KB) regardless of dataset size
 - Avoiding client browser memory spikes and tab crashes
-- Ensuring sub-20ms round-trip API responses on 100,000+ record datasets
+- Ensuring efficient bounded API responses on 100,000+ record datasets
 - Providing immediate UI interactivity upon route transition
 
 ## Considered Alternatives

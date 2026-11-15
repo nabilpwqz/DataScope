@@ -65,7 +65,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-          Search, filter, and inspect complex enterprise business records with sub-10ms query execution.
+          Search, filter, and inspect complex enterprise business records with indexed PostgreSQL pushdown execution and in-memory LRU caching.
         </p>
 
         {/* Hero Actions */}
@@ -224,7 +224,7 @@ export default function LandingPage() {
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Two-Tier Caching &amp; Deduplication</h3>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                RTK Query client cache deduplicates inflight network requests while server-side LRU cache serves frequent searches in sub-1ms response times.
+                RTK Query client cache deduplicates inflight network requests while server-side LRU cache serves frequent searches in 0.1ms.
               </p>
             </div>
           </div>
@@ -238,12 +238,12 @@ export default function LandingPage() {
             Validated Enterprise Performance
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
-            Benchmark results captured on 110,000 seeded business records in PostgreSQL.
+            Benchmark results captured on 120,000 seeded business records in PostgreSQL.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
             <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              Target SLA: &lt; 10.0 ms
+              Engine Scan: &lt; 10.0 ms | Cloud HTTP: 80-250 ms
             </span>
             <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
               Hardware: Isolated Dedicated Node

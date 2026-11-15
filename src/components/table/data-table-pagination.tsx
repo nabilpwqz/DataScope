@@ -65,7 +65,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             <span
               className={`h-1.5 w-1.5 rounded-full ${cacheHit ? 'bg-amber-400' : 'bg-emerald-400'}`}
             />
-            {cacheHit ? 'Cache Hit' : 'DB Exec'}: {executionTimeMs}ms
+            {cacheHit ? 'Cache Hit' : 'Query Time'}: {executionTimeMs}ms
           </span>
         )}
       </div>

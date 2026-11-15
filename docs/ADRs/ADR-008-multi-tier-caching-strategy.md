@@ -7,7 +7,7 @@ ACCEPTED
 Repeated execution of identical multi-condition search and filter queries degrades database CPU throughput and increases p95 latency. However, naive caching risks serving stale data when dataset records are updated, or causing memory leaks in serverless runtimes.
 
 ## Decision Drivers
-- Delivering sub-1ms response times for repeated queries across users
+- Delivering 0.1ms retrieval times for repeated queries across users
 - Bounding server and client memory usage with deterministic eviction policies
 - Ensuring automatic cache invalidation when records, statuses, or comments are modified
 - Handling multi-condition filter combinations deterministically

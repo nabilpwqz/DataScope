@@ -999,7 +999,7 @@ export default function AnalyticsPage() {
                   <span>Index Pushdown Alignment</span>
                 </h3>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  DataScope automatically compares user search filter frequency against database index definitions to ensure multi-condition pushdowns maintain sub-10ms response times.
+                  DataScope automatically compares user search filter frequency against database index definitions to ensure multi-condition pushdowns execute efficiently via indexed scans.
                 </p>
 
                 <div className="space-y-2 pt-2">

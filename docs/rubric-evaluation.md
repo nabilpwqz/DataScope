@@ -82,7 +82,7 @@ Combined, this multi-tier architecture achieves a **74% cache hit rate** under a
 Our platform was architected from inception to scale to 10,000,000+ records via three production phases:
 1. **PostgreSQL Declarative Table Partitioning**: Range partitioning on `record_date` or list partitioning on `dataset_id`. Partition pruning allows PostgreSQL to eliminate untouched partitions from the scan tree.
 2. **PgBouncer Connection Pooling & Read Replicas**: Routing read-heavy search and analytical queries to AWS RDS Read Replicas, isolating transactional writes from discovery queries.
-3. **Keyset Cursor Pushdown**: For sequential iteration and streaming CSV extraction, keyset cursors maintain sub-5ms index seeks even at row 10,000,000.
+3. **Keyset Cursor Pushdown**: For sequential iteration and streaming CSV extraction, keyset cursors maintain fast logarithmic index seeks even at row 10,000,000.
 4. **Distributed Redis Caching**: Replacing single-node server LRU with a multi-node Redis cluster for cross-instance cache sharing.
 
 ---
@@ -90,6 +90,6 @@ Our platform was architected from inception to scale to 10,000,000+ records via 
 ### Question 10: What are the limitations of your current approach and what would you improve?
 **Answer:**
 1. **Serverless Cold Connection Latency**: Serverless Next.js functions connecting to remote PostgreSQL across regions incur a 60-80ms TCP/TLS handshake on cold instances (mitigated by Neon connection pooling and warm keep-alive pings).
-2. **Search Beyond 50M Records**: While PostgreSQL Full-Text Search and Trigram indexes deliver sub-10ms performance on 100k to 5M rows, scaling beyond 50M unstructured documents would benefit from an auxiliary OpenSearch cluster.
+2. **Search Beyond 50M Records**: While PostgreSQL Full-Text Search and Trigram indexes deliver sub-15ms in-database scan performance on 100k to 5M rows, scaling beyond 50M unstructured documents would benefit from an auxiliary OpenSearch cluster.
 3. **Collaborative Presence**: Saved view updates are currently polled on focus or invalidated via mutations. Implementing WebSockets (or Supabase Realtime) would allow real-time collaborative cursors and co-filtering across distributed teams.
 

@@ -78,7 +78,7 @@ async function runBenchmark() {
   console.log(` -> Retrieved from Cache in ${cachedRes.executionTimeMs}ms (Cache: ${cachedRes.cacheHit ? 'HIT' : 'MISS'})`);
 
   console.log('\n================================================================');
-  console.log('  All Benchmarks Completed Successfully with Sub-15ms Latency!');
+  console.log('  All Benchmarks Completed Successfully with Measured Query Telemetry!');
   console.log('================================================================\n');
   process.exit(0);
 }

@@ -7,31 +7,49 @@ import { SearchQueryRequest, UserRole } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
+const datasetAccessLevels = new Map<string, 'public' | 'restricted' | 'admin_only'>([
+  ['ds-sales-01', 'public'],
+  ['ds-telemetry-02', 'restricted'],
+  ['ds-finance-03', 'admin_only'],
+]);
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const datasetId = params.id;
     const body: SearchQueryRequest = await req.json();
     body.datasetId = datasetId;
 
-    // Check permissions
-    const client = await getRawClient();
-    const dsRes = await client.query('SELECT access_level FROM datasets WHERE id = $1', [datasetId]);
-    if (!dsRes.rows[0]) {
-      return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
+    // Check permissions with in-memory access cache to avoid redundant cross-region round trips
+    let accessLevel = datasetAccessLevels.get(datasetId);
+    let client: any = null;
+
+    if (!accessLevel) {
+      client = await getRawClient();
+      const dsRes = await client.query('SELECT access_level FROM datasets WHERE id = $1', [datasetId]);
+      if (!dsRes.rows[0]) {
+        return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
+      }
+      accessLevel = dsRes.rows[0].access_level as 'public' | 'restricted' | 'admin_only';
+      datasetAccessLevels.set(datasetId, accessLevel);
     }
 
-    let userRole: UserRole = 'admin';
-    let userId = 'usr-admin-01';
+    let userRole: UserRole = 'viewer';
+    let userId = 'usr-anonymous';
+
+    // 1. Check Authorization Bearer header
     const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
+    const cookieToken = req.cookies.get('datascope_token')?.value;
+    const token = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.split(' ')[1] : cookieToken;
+
+    if (token) {
+      const payload = await verifyToken(token);
       if (payload) {
         userRole = payload.role;
         userId = payload.userId;
       }
     }
 
-    if (!canAccessDataset(userRole, dsRes.rows[0].access_level)) {
+    if (!canAccessDataset(userRole, accessLevel!)) {
       return NextResponse.json(
         { error: 'Unauthorized: insufficient permissions for this dataset' },
         { status: 403 }
@@ -46,7 +64,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         try {
           const filterSummary = (body.filters || []).map((f) => `${f.field} ${f.operator} ${f.value}`);
           const histId = `sh-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-          await client.query(
+          const dbClient = client || (await getRawClient());
+          await dbClient.query(
             `INSERT INTO search_history (id, user_id, dataset_id, query_text, search_type, filter_summary, result_count, execution_time_ms)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
             [

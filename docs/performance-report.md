@@ -19,7 +19,7 @@ Testing was conducted across both local multi-core environments and remote cloud
 
 ### Key Latency Observations
 1. **In-Memory Cache (Tier 2 LRU)** achieves deterministic **0.1 ms** retrieval times, completely bypassing database engine execution and network transmission.
-2. **Pushdown Filtering** executes in sub-10ms locally because of composite B-Tree indexes on `(dataset_id, status, numeric_value)`.
+2. **Pushdown Filtering** executes in sub-10ms in-database because of composite B-Tree indexes on `(dataset_id, status, numeric_value)`.
 3. **Network Transit vs. Engine Time**: Under cloud conditions, 70-80ms of reported latency represents TLS handshake and round-trip packet transmission between serverless functions and database regions. Engine execution itself remains under 10ms.
 
 ---

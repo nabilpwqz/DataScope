@@ -11,8 +11,10 @@ export async function GET() {
     const engineType = await getEngineType();
 
     // Measure active DB latency
+    const pingStart = performance.now();
     const pingRes = await rawClient.query('SELECT 1 AS ping, count(*)::int AS datasets_count FROM datasets;');
-    const latencyMs = Number((performance.now() - startTime).toFixed(2));
+    const latencyMs = Number((performance.now() - pingStart).toFixed(2));
+    const totalDurationMs = Number((performance.now() - startTime).toFixed(2));
 
     let recordsCount = 0;
     try {
@@ -41,6 +43,7 @@ export async function GET() {
           healthy: true,
           engineType,
           latencyMs,
+          totalDurationMs,
           totalDatasets: pingRes.rows?.[0]?.datasets_count || 0,
           totalRecords: recordsCount,
         },

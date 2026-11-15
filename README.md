@@ -17,7 +17,7 @@
   <img src="./public/images/datascope-dashboard-preview.png" alt="DataScope Enterprise Platform Dashboard" width="100%" />
 </div>
 
-> **DataScope** is an enterprise data discovery and intelligence platform engineered to explore, query, validate, and govern high-volume structured business datasets. Engineered with Next.js App Router, Redux Toolkit with RTK Query, TanStack Table with virtualized windowing, and PostgreSQL indexing with Drizzle ORM, DataScope delivers sub-15ms query execution, continuous 60fps scrolling, end-to-end data lineage, automated quality heuristics, and strict server-side RBAC governance.
+> **DataScope** is an enterprise data discovery and intelligence platform engineered to explore, query, validate, and govern high-volume structured business datasets. Engineered with Next.js App Router, Redux Toolkit with RTK Query, TanStack Table with virtualized windowing, and PostgreSQL indexing with Drizzle ORM, DataScope delivers indexed database pushdown execution, continuous 60fps scrolling, end-to-end data lineage, automated quality heuristics, and strict server-side RBAC governance.
 
 <div align="center">
   <table width="100%">
@@ -85,7 +85,7 @@ Organizations handling high-density business records routinely encounter critica
 | **Multi-Condition Filters** | Composite B-Tree and GIN indexes for selective pruning before row fetching. | Multi-column filter queries execute in **< 45ms** across 110,000+ indexed records. |
 | **Request Storms and Jitter** | 300ms input debouncing coupled with RTK Query `AbortController` cancellation for superseded flights. | Zero race-condition overwrites; ~80% reduction in unnecessary API calls during active typing. |
 | **DOM Scrolling Stutter** | Row windowing via `@tanstack/react-virtual` with dynamic overscan buffers. | Constant DOM footprint (~120 nodes); steady **60fps** scroll performance. |
-| **Search Engine Redundancy** | Native PostgreSQL Full-Text Search (`tsvector @@ tsquery`) + Trigram similarity (`pg_trgm`) + Exact matching. | Strict ACID consistency, immediate index visibility, and sub-15ms response times without external cluster overhead. |
+| **Search Engine Redundancy** | Native PostgreSQL Full-Text Search (`tsvector @@ tsquery`) + Trigram similarity (`pg_trgm`) + Exact matching. | Strict ACID consistency, immediate index visibility, and sub-15ms in-database execution without external cluster overhead. |
 | **Data Staleness and Latency** | Two-tier caching: In-flight deduplication via RTK Query + in-memory server LRU cache. | Cache hit latency drops to **0.1ms** with tag-based invalidation on mutations. |
 
 ---
@@ -316,7 +316,7 @@ flowchart LR
   Router -->|"Lexical Keywords"| FTS["PostgreSQL Full-Text Search<br/>GIN on tsvector • 8-14ms<br/>Snowball Stemming &amp; Lexemes"]
   Router -->|"Mistyped / Substring"| TRGM["PostgreSQL Trigram (pg_trgm)<br/>GIN (title gin_trgm_ops) • 12-24ms<br/>N-Gram Overlap Similarity"]
   Router -->|"Production Hybrid Mode"| HYB["Hybrid Weighted Scoring<br/>0.70 * FTS Rank + 0.30 * Trigram Score"]
-  HYB --> OUT["Sub-15ms Ranked Results<br/>Immediate ACID Consistency"]
+  HYB --> OUT["Ranked In-DB Results<br/>Immediate ACID Consistency"]
 ```
 
 ### Comparison of Search Implementations
@@ -737,7 +737,7 @@ DataScope provides 8 documented Architectural Decision Records (accessible inter
 - **[ADR-002: Server-Side Pushdown Filtering vs. Client-Side Slicing](docs/ADRs/ADR-002-server-side-vs-client-side-pagination.md)** - Enforced database-level filtering to maintain a constant ~12KB payload regardless of dataset volume.
 - **[ADR-003: PostgreSQL Relational Schema with Drizzle ORM vs. Document Store](docs/ADRs/ADR-003-postgresql-vs-mongodb.md)** - Selected PostgreSQL for strict ACID guarantees, strong relational joins, and native inverted indexes.
 - **[ADR-004: Keyset Cursor Pagination vs. Offset Pagination](docs/ADRs/ADR-004-offset-vs-keyset-pagination.md)** - Implemented keyset cursors for deep scrolling to eliminate the $O(N)$ penalty of large offsets.
-- **[ADR-005: Native PostgreSQL Full-Text and Trigram Search vs. Elasticsearch](docs/ADRs/ADR-005-postgresql-fts-vs-elasticsearch.md)** - Deployed PostgreSQL GIN indexes to achieve sub-15ms search without external cluster complexity.
+- **[ADR-005: Native PostgreSQL Full-Text and Trigram Search vs. Elasticsearch](docs/ADRs/ADR-005-postgresql-fts-vs-elasticsearch.md)** - Deployed PostgreSQL GIN indexes to achieve high-speed search without external cluster complexity.
 - **[ADR-006: 300ms Client-Side Search Debouncing](docs/ADRs/ADR-006-client-side-search-debouncing.md)** - Decoupled immediate local typing response from Redux store dispatches, mitigating request storms.
 - **[ADR-007: TanStack Virtual DOM Windowing for 60fps Scrolling](docs/ADRs/ADR-007-dom-virtualization-tanstack-virtual.md)** - Implemented virtualized windowing to constrain DOM elements to ~120 nodes.
 - **[ADR-008: Multi-Tier Caching Strategy](docs/ADRs/ADR-008-multi-tier-caching-strategy.md)** - Combined client RTK Query deduplication with server-side LRU query caching (0.1ms hits).
