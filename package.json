@@ -1,6 +1,6 @@
 {
   "name": "datascope-platform",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DataScope - Enterprise Data Discovery & Intelligence Platform",
   "private": true,
   "scripts": {
