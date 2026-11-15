@@ -325,6 +325,27 @@ export const dataScopeApi = createApi({
         { type: 'AuditLog', id: 'LIST' },
       ],
     }),
+
+    // 15. System Health
+    getSystemHealth: builder.query<
+      {
+        status: string;
+        timestamp: string;
+        version: string;
+        database: {
+          healthy: boolean;
+          engineType: string;
+          latencyMs: number;
+          totalDatasets: number;
+          totalRecords: number;
+        };
+        system: { rssMb: string; heapUsedMb: string; heapTotalMb: string };
+      },
+      void
+    >({
+      query: () => '/health',
+      providesTags: [{ type: 'Performance', id: 'HEALTH' }],
+    }),
   }),
 });
 
@@ -354,5 +375,6 @@ export const {
   useUpdateUserRoleMutation,
   useGetRecordCommentsQuery,
   useAddRecordCommentMutation,
+  useGetSystemHealthQuery,
 } = dataScopeApi;
 
