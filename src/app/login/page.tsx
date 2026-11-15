@@ -371,6 +371,17 @@ function LoginForm() {
           </Button>
         </div>
       </div>
+
+      {/* Registration link */}
+      <div className="pt-3 border-t border-slate-800 text-center text-xs text-slate-400">
+        Need an enterprise account?{' '}
+        <Link
+          href="/register"
+          className="text-emerald-400 hover:text-emerald-300 font-medium focus-visible:outline-none focus-visible:underline"
+        >
+          Register new account
+        </Link>
+      </div>
     </div>
   );
 }

@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx scripts/seed.ts",
-    "seed:large": "tsx scripts/seed-large.ts",
+    "seed:large": "tsx scripts/seed.ts",
+    "db:seed": "tsx scripts/seed.ts",
     "benchmark": "tsx scripts/benchmark.ts",
     "test": "vitest run",
     "lint:hallmark": "node scripts/run-sloplint.js"

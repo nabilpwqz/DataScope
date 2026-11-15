@@ -74,6 +74,26 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
     overscan: 10,
   });
 
+  const handleExportSelected = () => {
+    const selectedList = records.filter((r) => selectedRowIds[r.id]);
+    if (selectedList.length === 0) return;
+
+    const csvHeader = 'Record Key,Title,Category,Status,Value,Country,Region,Date\n';
+    const csvLines = selectedList.map((r) => {
+      const escapedTitle = `"${(r.title || '').replace(/"/g, '""')}"`;
+      return `${r.recordKey},${escapedTitle},${r.category},${r.status},${r.numericValue},${r.country},${r.region},${r.recordDate}`;
+    });
+    const blob = new Blob([csvHeader + csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `datascope-selected-${selectedList.length}-records-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleSelectAll = () => {
     if (isAllSelected) {
       dispatch(clearRowSelection());
@@ -156,9 +176,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               <Button
                 variant="subtle"
                 size="xs"
-                onClick={() => {
-                  alert(`Exporting ${selectedCount} selected records as CSV…`);
-                }}
+                onClick={handleExportSelected}
                 className="text-xs gap-1"
               >
                 <Download className="h-3 w-3" />
