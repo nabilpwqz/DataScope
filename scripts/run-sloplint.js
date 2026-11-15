@@ -19,8 +19,16 @@ function walk(dir) {
 const files = walk('src');
 console.log(`Auditing ${files.length} tsx files with Hallmark sloplint...`);
 
+let sloplintPath = path.resolve('.skills/hallmark/scripts/sloplint.mjs');
+if (!fs.existsSync(sloplintPath)) {
+  const globalPath = path.join(process.env.USERPROFILE || '', '.gemini/config/skills/hallmark/scripts/sloplint.mjs');
+  if (fs.existsSync(globalPath)) {
+    sloplintPath = globalPath;
+  }
+}
+
 try {
-  const output = execSync(`node .skills/hallmark/scripts/sloplint.mjs ${files.join(' ')}`, {
+  const output = execSync(`node "${sloplintPath}" ${files.join(' ')}`, {
     encoding: 'utf-8',
     stdio: 'pipe'
   });

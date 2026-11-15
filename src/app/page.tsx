@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { DataScopeLogo } from '@/components/brand/logo';
 import { SpatialDataLens } from '@/components/landing/spatial-data-lens';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { Footer } from '@/components/layout/footer';
 import {
   IconTable,
   IconServer,
@@ -535,29 +536,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8 px-4 sm:px-12 text-xs text-slate-500 dark:text-slate-400 transition-colors">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
-              title="DataScope Home"
-            >
-              <DataScopeLogo size="sm" subtitle="Enterprise Platform" />
-            </Link>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 dark:text-slate-400">
-            <span>Next.js 14 App Router</span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>TypeScript Strict</span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>PostgreSQL &amp; Prisma</span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>Dockerized</span>
-          </div>
-        </div>
-      </footer>
+      {/* Enterprise Platform Footer */}
+      <Footer />
     </div>
   );
 }
