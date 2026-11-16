@@ -96,10 +96,10 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-2 sm:p-4">
       <div className="flex flex-col w-full max-w-3xl rounded-xl border border-slate-800 bg-slate-950 overflow-hidden motion-safe:animate-in motion-safe:fade-in-50 motion-safe:zoom-in-95">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-slate-900">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
               <SlidersHorizontal className="h-5 w-5" />
@@ -120,17 +120,17 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        <div className="p-3 sm:p-6 space-y-3 sm:space-y-4 max-h-[75vh] overflow-y-auto">
           {/* Logical Match Operator Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-lg border border-slate-800 bg-slate-900/60">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 sm:p-3 rounded-lg border border-slate-800 bg-slate-900/60">
             <span className="text-xs font-medium text-slate-300">
               Match records where <strong className="text-white">all</strong> or{' '}
               <strong className="text-white">any</strong> conditions apply:
             </span>
-            <div className="flex items-center rounded border border-slate-700 bg-slate-950 p-0.5">
+            <div className="flex items-center rounded border border-slate-700 bg-slate-950 p-0.5 w-full sm:w-auto">
               <button
                 onClick={() => setLocalOp('AND')}
-                className={`px-3 py-1 text-xs rounded font-bold transition-colors ${localOp === 'AND'
+                className={`flex-1 sm:flex-initial px-3 py-1 text-xs rounded font-bold transition-colors ${localOp === 'AND'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
                   }`}
@@ -139,7 +139,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
               </button>
               <button
                 onClick={() => setLocalOp('OR')}
-                className={`px-3 py-1 text-xs rounded font-bold transition-colors ${localOp === 'OR'
+                className={`flex-1 sm:flex-initial px-3 py-1 text-xs rounded font-bold transition-colors ${localOp === 'OR'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white'
                   }`}
@@ -157,9 +157,9 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
               return (
                 <div
                   key={cond.id}
-                  className="flex flex-col sm:flex-row items-center gap-2 p-3 rounded-lg border border-slate-800/90 bg-slate-900/40 hover:border-slate-700 transition-colors"
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 sm:p-3 rounded-lg border border-slate-800/90 bg-slate-900/40 hover:border-slate-700 transition-colors"
                 >
-                  <span className="font-mono text-xs text-slate-500 font-bold w-6">
+                  <span className="font-mono text-xs text-slate-500 font-bold w-6 shrink-0 self-center sm:self-auto">
                     #{index + 1}
                   </span>
 
@@ -180,7 +180,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
                         value: defaultVal,
                       });
                     }}
-                    className="h-9 rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-200 focus:outline-none focus:border-blue-500 flex-1 sm:w-44"
+                    className="h-9 rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-full sm:w-44"
                   >
                     {availableFields.map((f) => (
                       <option key={f.field} value={f.field}>
@@ -197,7 +197,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
                         operator: e.target.value as FilterOperator,
                       })
                     }
-                    className="h-9 rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-200 focus:outline-none focus:border-blue-500 flex-1 sm:w-36 font-mono"
+                    className="h-9 rounded-md border border-slate-700 bg-slate-900 px-3 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-full sm:w-36 font-mono"
                   >
                     <option value="equals">equals (=)</option>
                     <option value="contains">contains (ILIKE)</option>
@@ -211,7 +211,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
 
                   {/* Value Input */}
                   {cond.operator !== 'is_null' && cond.operator !== 'is_not_null' && (
-                    <div className="flex-1 flex gap-2 w-full sm:w-auto">
+                    <div className="w-full sm:flex-1 flex gap-2">
                       {fieldConfig.type === 'select' && fieldConfig.options ? (
                         <select
                           value={String(cond.value)}
@@ -257,7 +257,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
                   {/* Delete Condition Button */}
                   <button
                     onClick={() => handleRemoveCondition(cond.id)}
-                    className="h-9 w-9 flex items-center justify-center rounded-md border border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    className="h-9 w-9 shrink-0 self-end sm:self-center flex items-center justify-center rounded-md border border-slate-800 bg-slate-900 text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
                     title="Remove rule"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -268,7 +268,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
           </div>
 
           {/* Action Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
             <Button
               variant="outline"
               size="sm"
@@ -292,7 +292,7 @@ export const FilterBuilder: React.FC<FilterBuilderProps> = ({ isOpen, onClose })
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-900/80">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-800 bg-slate-900/80">
           <Button variant="ghost" size="sm" onClick={onClose} className="text-xs">
             Cancel
           </Button>

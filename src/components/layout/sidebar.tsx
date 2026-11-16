@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { toggleSidebar } from '@/store/slices/uiPreferenceSlice';
+import { toggleSidebar, setMobileMenuOpen } from '@/store/slices/uiPreferenceSlice';
 import { logout } from '@/store/slices/authSlice';
 import {
   IconDatabase,
@@ -24,6 +24,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconLogout,
+  IconX,
 } from '@/components/ui/icons';
 import { DataScopeLogo } from '@/components/brand/logo';
 import { cn } from '@/lib/utils';
@@ -33,7 +34,7 @@ export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { sidebarCollapsed } = useAppSelector((state) => state.uiPreference);
+  const { sidebarCollapsed, mobileMenuOpen } = useAppSelector((state) => state.uiPreference);
   const { activeRole } = useAppSelector((state) => state.auth);
 
   const handleSignOut = async () => {
@@ -43,6 +44,7 @@ export const Sidebar: React.FC = () => {
       // Continue client cleanup
     }
     dispatch(logout());
+    dispatch(setMobileMenuOpen(false));
     router.push('/');
   };
 
@@ -148,46 +150,93 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside
-      className={cn(
-        'relative flex flex-col border-r border-slate-800 bg-slate-950 z-30 select-none',
-        sidebarCollapsed ? 'w-16' : 'w-64'
+    <>
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/75 md:hidden motion-safe:animate-in motion-safe:fade-in-50"
+          onClick={() => dispatch(setMobileMenuOpen(false))}
+          aria-hidden="true"
+        />
       )}
-    >
-      {/* Brand Header with Bespoke Logo */}
-      <div className="flex h-16 items-center justify-between px-3 border-b border-slate-800">
-        <Link
-          href="/"
-          className="flex items-center gap-2 overflow-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
-          title="DataScope Home"
-        >
-          <DataScopeLogo
-            size="md"
-            showText={!sidebarCollapsed}
-            subtitle="Enterprise v1.0"
-          />
-        </Link>
-        <button
-          onClick={() => dispatch(toggleSidebar())}
-          className="flex h-7 w-7 items-center justify-center rounded border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
-          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {sidebarCollapsed ? (
-            <IconChevronRight className="h-4 w-4" />
-          ) : (
-            <IconChevronLeft className="h-4 w-4" />
-          )}
-        </button>
-      </div>
 
-      {/* Role Indicator Banner */}
-      {!sidebarCollapsed ? (
-        <div className="mx-3 mt-3 p-2.5 rounded border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <aside
+        className={cn(
+          'flex flex-col border-r border-slate-800 bg-slate-950 select-none transition-transform duration-200 ease-in-out',
+          // Mobile: slide-in fixed drawer on phones & tablets
+          'fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw]',
+          mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full',
+          // Desktop: relative in standard flex flow
+          'md:relative md:translate-x-0 md:z-30',
+          sidebarCollapsed ? 'md:w-16' : 'md:w-64'
+        )}
+      >
+        {/* Brand Header with Bespoke Logo */}
+        <div className="flex h-16 items-center justify-between px-3 border-b border-slate-800">
+          <Link
+            href="/"
+            onClick={() => dispatch(setMobileMenuOpen(false))}
+            className="flex items-center gap-2 overflow-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 rounded p-1"
+            title="DataScope Home"
+          >
+            <DataScopeLogo
+              size="md"
+              showText={!sidebarCollapsed || mobileMenuOpen}
+              subtitle="Enterprise v1.0"
+            />
+          </Link>
+
+          {/* Mobile close button */}
+          <button
+            onClick={() => dispatch(setMobileMenuOpen(false))}
+            className="md:hidden flex h-8 w-8 items-center justify-center rounded border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Close navigation menu"
+          >
+            <IconX className="h-4 w-4" />
+          </button>
+
+          {/* Desktop collapse button */}
+          <button
+            onClick={() => dispatch(toggleSidebar())}
+            className="hidden md:flex h-7 w-7 items-center justify-center rounded border border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500"
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? (
+              <IconChevronRight className="h-4 w-4" />
+            ) : (
+              <IconChevronLeft className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+
+        {/* Role Indicator Banner */}
+        {!sidebarCollapsed || mobileMenuOpen ? (
+          <div className="mx-3 mt-3 p-2.5 rounded border border-slate-800 bg-slate-900/60 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  'h-2 w-2 rounded-full motion-safe:animate-pulse',
+                  activeRole === 'admin'
+                    ? 'bg-emerald-400'
+                    : activeRole === 'analyst'
+                    ? 'bg-slate-300'
+                    : 'bg-emerald-500'
+                )}
+              />
+              <span className="text-xs text-slate-300 font-medium capitalize">
+                Role: <strong className="text-white">{activeRole}</strong>
+              </span>
+            </div>
+            <Badge variant="success" size="sm">
+              RBAC active
+            </Badge>
+          </div>
+        ) : (
+          <div className="mx-auto mt-3 hidden md:block" title={`Current Role: ${activeRole}`}>
             <span
               className={cn(
-                'h-2 w-2 rounded-full motion-safe:animate-pulse',
+                'block h-2.5 w-2.5 rounded-full motion-safe:animate-pulse',
                 activeRole === 'admin'
                   ? 'bg-emerald-400'
                   : activeRole === 'analyst'
@@ -195,28 +244,8 @@ export const Sidebar: React.FC = () => {
                   : 'bg-emerald-500'
               )}
             />
-            <span className="text-xs text-slate-300 font-medium capitalize">
-              Role: <strong className="text-white">{activeRole}</strong>
-            </span>
           </div>
-          <Badge variant="success" size="sm">
-            RBAC active
-          </Badge>
-        </div>
-      ) : (
-        <div className="mx-auto mt-3" title={`Current Role: ${activeRole}`}>
-          <span
-            className={cn(
-              'block h-2.5 w-2.5 rounded-full motion-safe:animate-pulse',
-              activeRole === 'admin'
-                ? 'bg-emerald-400'
-                : activeRole === 'analyst'
-                ? 'bg-slate-300'
-                : 'bg-emerald-500'
-            )}
-          />
-        </div>
-      )}
+        )}
 
       {/* Navigation List */}
       <nav className="flex-1 space-y-4 px-2.5 py-3 overflow-y-auto" aria-label="Dashboard navigation">
@@ -238,6 +267,7 @@ export const Sidebar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => dispatch(setMobileMenuOpen(false))}
                   className={cn(
                     'group flex items-center gap-3 rounded px-3 py-1.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500',
                     isActive
@@ -252,7 +282,7 @@ export const Sidebar: React.FC = () => {
                       isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'
                     )}
                   />
-                  {!sidebarCollapsed && (
+                  {(!sidebarCollapsed || mobileMenuOpen) && (
                     <div className="flex flex-1 items-center justify-between overflow-hidden">
                       <span className="truncate">{item.label}</span>
                       {item.badge && (
@@ -271,7 +301,7 @@ export const Sidebar: React.FC = () => {
 
       {/* Footer System Status & Sign Out */}
       <div className="p-3 border-t border-slate-800 bg-slate-950 space-y-2">
-        {!sidebarCollapsed ? (
+        {!sidebarCollapsed || mobileMenuOpen ? (
           <>
             <div className="flex flex-col gap-1 text-xs text-slate-400">
               <div className="flex items-center justify-between">
@@ -292,7 +322,7 @@ export const Sidebar: React.FC = () => {
             </button>
           </>
         ) : (
-          <div className="flex flex-col items-center gap-2" title="PostgreSQL 110,000+ Records Ready">
+          <div className="flex flex-col items-center gap-2 hidden md:flex" title="PostgreSQL 110,000+ Records Ready">
             <span className="h-2 w-2 rounded-full bg-emerald-400" />
             <button
               onClick={handleSignOut}
@@ -306,5 +336,6 @@ export const Sidebar: React.FC = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };

@@ -42,16 +42,17 @@ export default function LandingPage() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           <ThemeToggle />
           <Link href="/login" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">
-            <Button variant="ghost" size="sm" className="text-xs text-slate-700 dark:text-slate-300">
+            <Button variant="ghost" size="sm" className="text-xs px-2 sm:px-3 text-slate-700 dark:text-slate-300">
               Sign In
             </Button>
           </Link>
           <Link href="/dashboard/explorer" className="focus-visible:ring-2 focus-visible:ring-emerald-500 rounded">
-            <Button variant="primary" size="sm" className="text-xs font-semibold gap-1.5">
-              <span>Launch Explorer</span>
+            <Button variant="primary" size="sm" className="text-xs font-semibold gap-1.5 px-2.5 sm:px-3">
+              <span className="hidden xs:inline">Launch </span>
+              <span>Explorer</span>
               <IconArrowRight className="h-3.5 w-3.5" />
             </Button>
           </Link>

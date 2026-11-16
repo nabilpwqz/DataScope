@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from '@/store';
 import { setUser, logout } from '@/store/slices/authSlice';
 import { setSelectedDatasetId } from '@/store/slices/datasetSlice';
 import { setAiModalOpen } from '@/store/slices/savedViewsSlice';
+import { toggleMobileMenu } from '@/store/slices/uiPreferenceSlice';
 import { useGetDatasetsQuery } from '@/store/services/dataScopeApi';
 import { UserRole } from '@/types';
 import { Button } from '../ui/button';
@@ -18,6 +19,7 @@ import {
   IconBook,
   IconLogout,
   IconSearch,
+  IconMenu,
 } from '@/components/ui/icons';
 
 export const Header: React.FC = () => {
@@ -62,17 +64,26 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950 px-4 md:px-6">
-      {/* Left: Active Dataset Selector & Quick Triggers */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 shadow-sm max-w-[260px] sm:max-w-none">
-          <IconDatabase className="h-4 w-4 text-emerald-400 shrink-0" />
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950 px-3 sm:px-4 md:px-6">
+      {/* Left: Mobile Navigation Trigger & Active Dataset Selector */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile Hamburger Drawer Trigger */}
+        <button
+          onClick={() => dispatch(toggleMobileMenu())}
+          aria-label="Open mobile navigation menu"
+          className="md:hidden flex h-8 w-8 items-center justify-center rounded border border-slate-800 bg-slate-900 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+        >
+          <IconMenu className="h-4 w-4" />
+        </button>
+
+        <div className="flex items-center gap-1.5 sm:gap-2 rounded-md border border-slate-800 bg-slate-900 px-2 sm:px-3 py-1.5 shadow-sm max-w-[130px] xs:max-w-[170px] sm:max-w-none min-w-0">
+          <IconDatabase className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-400 shrink-0" />
           <span className="text-xs font-medium text-slate-400 hidden sm:inline">Dataset:</span>
           <select
             value={selectedDatasetId}
             onChange={handleDatasetChange}
             aria-label="Select active business dataset"
-            className="bg-transparent text-xs sm:text-sm font-semibold text-slate-100 focus:outline-none cursor-pointer truncate"
+            className="bg-transparent text-xs sm:text-sm font-semibold text-slate-100 focus:outline-none cursor-pointer truncate w-full"
           >
             {datasets.map((d) => (
               <option key={d.id} value={d.id} className="bg-slate-900 text-slate-200">
@@ -126,9 +137,9 @@ export const Header: React.FC = () => {
       </div>
 
       {/* Right: Controls, Role Badge, Theme & Sign Out */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 shrink-0">
         {/* Real Authenticated Role Badge (Server-Enforced) */}
-        <div className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs">
+        <div className="flex items-center gap-1 rounded-md border border-slate-800 bg-slate-900 px-2 py-1 text-xs">
           <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Role:</span>
           <span
             className={`font-medium text-[10px] px-1.5 py-0.5 rounded capitalize ${
@@ -155,8 +166,8 @@ export const Header: React.FC = () => {
         <ThemeToggle />
 
         {/* User Profile Avatar */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-emerald-400 font-semibold text-xs border border-slate-700">
+        <div className="flex items-center gap-1.5 sm:gap-2 pl-1.5 sm:pl-2 border-l border-slate-800">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-800 text-emerald-400 font-semibold text-xs border border-slate-700">
             {userName ? userName.charAt(0) : 'U'}
           </div>
           <div className="hidden xl:flex flex-col text-left">
@@ -176,10 +187,10 @@ export const Header: React.FC = () => {
           onClick={handleSignOut}
           title="Sign out of DataScope session"
           aria-label="Sign out"
-          className="items-center gap-1.5 text-xs text-slate-300 hover:text-rose-300 hover:border-rose-500/50 hover:bg-rose-950/20 transition-colors"
+          className="items-center gap-1.5 text-xs px-2 sm:px-3 text-slate-300 hover:text-rose-300 hover:border-rose-500/50 hover:bg-rose-950/20 transition-colors"
         >
           <IconLogout className="h-3.5 w-3.5 text-slate-400 group-hover:text-rose-400" />
-          <span className="hidden sm:inline">Sign Out</span>
+          <span className="hidden md:inline">Sign Out</span>
         </Button>
       </div>
     </header>

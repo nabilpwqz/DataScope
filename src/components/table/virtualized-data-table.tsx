@@ -199,14 +199,14 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
       <div
         ref={parentRef}
         className="flex-1 overflow-auto relative custom-scrollbar select-text"
-        style={{ contain: 'strict' }}
+        style={{ contain: 'strict', WebkitOverflowScrolling: 'touch' }}
       >
-        <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
+        <table className="w-full text-left border-collapse table-fixed min-w-[960px]">
           {/* Sticky Table Header */}
           <thead className="sticky top-0 z-10 bg-slate-900 border-b border-slate-800 text-xs font-semibold text-slate-300 shadow-sm">
-            <tr>
+            <tr className="flex items-center min-w-[960px]">
               {/* Checkbox column */}
-              <th className="w-10 px-3 py-3 text-center">
+              <th className="w-10 shrink-0 px-3 py-3 text-center">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -219,7 +219,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.recordKey !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('recordKey'))}
-                  className="w-32 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-32 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Key</span>
@@ -231,7 +231,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.title !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('title'))}
-                  className="w-72 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-72 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Company / Title</span>
@@ -243,7 +243,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.category !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('category'))}
-                  className="w-36 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-36 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Segment</span>
@@ -255,7 +255,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.status !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('status'))}
-                  className="w-32 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-32 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Status</span>
@@ -267,7 +267,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.numericValue !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('numericValue'))}
-                  className="w-40 px-4 py-3 cursor-pointer hover:text-white group select-none text-right"
+                  className="w-40 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none text-right"
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>Revenue ($)</span>
@@ -279,7 +279,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.country !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('country'))}
-                  className="w-36 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-36 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Country</span>
@@ -291,7 +291,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.region !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('region'))}
-                  className="w-32 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-32 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Region</span>
@@ -303,7 +303,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
               {visibleColumns.recordDate !== false && (
                 <th
                   onClick={() => dispatch(toggleColumnSort('recordDate'))}
-                  className="w-36 px-4 py-3 cursor-pointer hover:text-white group select-none"
+                  className="w-36 shrink-0 px-4 py-3 cursor-pointer hover:text-white group select-none"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Date</span>
@@ -312,7 +312,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                 </th>
               )}
 
-              <th className="w-16 px-3 py-3 text-right">Action</th>
+              <th className="w-16 shrink-0 px-3 py-3 text-right">Action</th>
             </tr>
           </thead>
 
@@ -338,7 +338,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                   <tr
                     key={record.id}
                     onClick={() => dispatch(openRecordDetail(record.id))}
-                    className={`absolute left-0 top-0 w-full flex items-center transition-colors cursor-pointer ${
+                    className={`absolute left-0 top-0 w-full min-w-[960px] flex items-center transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-blue-900/20 hover:bg-blue-900/30'
                         : 'hover:bg-slate-900/70 even:bg-slate-950 odd:bg-slate-900/30'
@@ -349,7 +349,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     }}
                   >
                     <td
-                      className="w-10 px-3 py-2 text-center"
+                      className="w-10 shrink-0 px-3 py-2 text-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         dispatch(toggleRowSelection(record.id));
@@ -365,7 +365,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     </td>
 
                     {visibleColumns.recordKey !== false && (
-                      <td className="w-32 px-4 py-2 font-mono text-emerald-400 font-medium truncate">
+                      <td className="w-32 shrink-0 px-4 py-2 font-mono text-emerald-400 font-medium truncate">
                         <SearchHighlighter
                           text={record.recordKey}
                           searchQuery={searchQuery}
@@ -375,7 +375,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.title !== false && (
-                      <td className="w-72 px-4 py-2 text-slate-100 font-medium truncate">
+                      <td className="w-72 shrink-0 px-4 py-2 text-slate-100 font-medium truncate">
                         <SearchHighlighter
                           text={record.title}
                           searchQuery={searchQuery}
@@ -385,13 +385,13 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.category !== false && (
-                      <td className="w-36 px-4 py-2 text-slate-400 truncate">
+                      <td className="w-36 shrink-0 px-4 py-2 text-slate-400 truncate">
                         {record.category}
                       </td>
                     )}
 
                     {visibleColumns.status !== false && (
-                      <td className="w-32 px-4 py-2">
+                      <td className="w-32 shrink-0 px-4 py-2">
                         <Badge variant={getStatusBadgeVariant(record.status)} size="sm">
                           {record.status}
                         </Badge>
@@ -399,13 +399,13 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.numericValue !== false && (
-                      <td className="w-40 px-4 py-2 text-right font-mono font-medium text-emerald-400">
+                      <td className="w-40 shrink-0 px-4 py-2 text-right font-mono font-medium text-emerald-400">
                         {formatCurrency(record.numericValue)}
                       </td>
                     )}
 
                     {visibleColumns.country !== false && (
-                      <td className="w-36 px-4 py-2 text-slate-300 truncate">
+                      <td className="w-36 shrink-0 px-4 py-2 text-slate-300 truncate">
                         <SearchHighlighter
                           text={record.country}
                           searchQuery={searchQuery}
@@ -415,18 +415,18 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.region !== false && (
-                      <td className="w-32 px-4 py-2 text-slate-400 truncate">
+                      <td className="w-32 shrink-0 px-4 py-2 text-slate-400 truncate">
                         {record.region}
                       </td>
                     )}
 
                     {visibleColumns.recordDate !== false && (
-                      <td className="w-36 px-4 py-2 text-slate-400 font-mono">
+                      <td className="w-36 shrink-0 px-4 py-2 text-slate-400 font-mono">
                         {formatDate(record.recordDate)}
                       </td>
                     )}
 
-                    <td className="w-16 px-3 py-2 text-right">
+                    <td className="w-16 shrink-0 px-3 py-2 text-right">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -447,14 +447,14 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                   <tr
                     key={record.id}
                     onClick={() => dispatch(openRecordDetail(record.id))}
-                    className={`transition-colors cursor-pointer ${
+                    className={`flex items-center min-w-[960px] transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-blue-900/20 hover:bg-blue-900/30'
                         : 'hover:bg-slate-900/70 even:bg-slate-950 odd:bg-slate-900/30'
                     }`}
                   >
                     <td
-                      className="w-10 px-3 py-2.5 text-center"
+                      className="w-10 shrink-0 px-3 py-2.5 text-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         dispatch(toggleRowSelection(record.id));
@@ -470,7 +470,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     </td>
 
                     {visibleColumns.recordKey !== false && (
-                      <td className="w-32 px-4 py-2.5 font-mono text-blue-400 font-medium truncate">
+                      <td className="w-32 shrink-0 px-4 py-2.5 font-mono text-blue-400 font-medium truncate">
                         <SearchHighlighter
                           text={record.recordKey}
                           searchQuery={searchQuery}
@@ -480,7 +480,7 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.title !== false && (
-                      <td className="w-72 px-4 py-2.5 text-slate-100 font-medium truncate">
+                      <td className="w-72 shrink-0 px-4 py-2.5 text-slate-100 font-medium truncate">
                         <SearchHighlighter
                           text={record.title}
                           searchQuery={searchQuery}
@@ -490,13 +490,13 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.category !== false && (
-                      <td className="w-36 px-4 py-2.5 text-slate-400 truncate">
+                      <td className="w-36 shrink-0 px-4 py-2.5 text-slate-400 truncate">
                         {record.category}
                       </td>
                     )}
 
                     {visibleColumns.status !== false && (
-                      <td className="w-32 px-4 py-2.5">
+                      <td className="w-32 shrink-0 px-4 py-2.5">
                         <Badge variant={getStatusBadgeVariant(record.status)} size="sm">
                           {record.status}
                         </Badge>
@@ -504,13 +504,13 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.numericValue !== false && (
-                      <td className="w-40 px-4 py-2.5 text-right font-mono font-medium text-emerald-400">
+                      <td className="w-40 shrink-0 px-4 py-2.5 text-right font-mono font-medium text-emerald-400">
                         {formatCurrency(record.numericValue)}
                       </td>
                     )}
 
                     {visibleColumns.country !== false && (
-                      <td className="w-36 px-4 py-2.5 text-slate-300 truncate">
+                      <td className="w-36 shrink-0 px-4 py-2.5 text-slate-300 truncate">
                         <SearchHighlighter
                           text={record.country}
                           searchQuery={searchQuery}
@@ -520,18 +520,18 @@ export const VirtualizedDataTable: React.FC<VirtualizedDataTableProps> = ({
                     )}
 
                     {visibleColumns.region !== false && (
-                      <td className="w-32 px-4 py-2.5 text-slate-400 truncate">
+                      <td className="w-32 shrink-0 px-4 py-2.5 text-slate-400 truncate">
                         {record.region}
                       </td>
                     )}
 
                     {visibleColumns.recordDate !== false && (
-                      <td className="w-36 px-4 py-2.5 text-slate-400 font-mono">
+                      <td className="w-36 shrink-0 px-4 py-2.5 text-slate-400 font-mono">
                         {formatDate(record.recordDate)}
                       </td>
                     )}
 
-                    <td className="w-16 px-3 py-2.5 text-right">
+                    <td className="w-16 shrink-0 px-3 py-2.5 text-right">
                       <Button
                         variant="ghost"
                         size="icon"

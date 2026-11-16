@@ -51,9 +51,9 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-slate-800 bg-slate-950/90 text-xs text-slate-400">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 border-t border-slate-800 bg-slate-950/90 text-xs text-slate-400">
       {/* Left: Summary and latency stats */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3 text-center sm:text-left">
         <span>
           Showing <strong className="text-slate-100 font-mono">{startIdx.toLocaleString()}</strong> to{' '}
           <strong className="text-slate-100 font-mono">{endIdx.toLocaleString()}</strong> of{' '}
@@ -71,10 +71,10 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
       </div>
 
       {/* Right: Controls & Page Jump */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2.5 sm:gap-4">
         {/* Page Size Selector */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[11px] text-slate-500">Rows per page:</span>
+          <span className="text-[11px] text-slate-500 whitespace-nowrap">Rows:</span>
           <select
             value={pageSize}
             onChange={(e) => dispatch(setPageSize(Number(e.target.value)))}
@@ -111,7 +111,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             size="icon"
             onClick={() => dispatch(setPage(1))}
             disabled={!hasPrevPage}
-            className="h-8 w-8 text-slate-400 hover:text-white"
+            className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400 hover:text-white"
             title="First Page"
           >
             <ChevronsLeft className="h-3.5 w-3.5" />
@@ -121,13 +121,13 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             size="icon"
             onClick={() => dispatch(setPage(currentPage - 1))}
             disabled={!hasPrevPage}
-            className="h-8 w-8 text-slate-400 hover:text-white"
+            className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400 hover:text-white"
             title="Previous Page"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
           </Button>
 
-          <span className="px-2 text-xs font-mono font-medium text-slate-200">
+          <span className="px-1.5 sm:px-2 text-xs font-mono font-medium text-slate-200">
             {currentPage} of {totalPages || 1}
           </span>
 
@@ -136,7 +136,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             size="icon"
             onClick={() => dispatch(setPage(currentPage + 1))}
             disabled={!hasNextPage}
-            className="h-8 w-8 text-slate-400 hover:text-white"
+            className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400 hover:text-white"
             title="Next Page"
           >
             <ChevronRight className="h-3.5 w-3.5" />
@@ -146,7 +146,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             size="icon"
             onClick={() => dispatch(setPage(totalPages))}
             disabled={!hasNextPage}
-            className="h-8 w-8 text-slate-400 hover:text-white"
+            className="h-7 w-7 sm:h-8 sm:w-8 text-slate-400 hover:text-white"
             title="Last Page"
           >
             <ChevronsRight className="h-3.5 w-3.5" />

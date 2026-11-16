@@ -238,7 +238,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md p-8 rounded-2xl border border-slate-800 bg-slate-900 space-y-6">
+    <div className="w-full max-w-md p-4 sm:p-8 rounded-2xl border border-slate-800 bg-slate-900 space-y-4 sm:space-y-6">
       {/* Brand Icon & Heading */}
       <div className="flex flex-col items-center text-center space-y-3">
         <Link

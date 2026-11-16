@@ -100,13 +100,13 @@ export const DynamicFilterBar: React.FC<DynamicFilterBarProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2.5 px-4 py-3 bg-slate-900 border-b border-slate-800 text-xs">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Left: Quick Presets */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-slate-400 flex items-center gap-1 mr-1">
+    <div className="flex flex-col gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-900 border-b border-slate-800 text-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        {/* Left: Quick Presets (Horizontal Swipe on Mobile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 whitespace-nowrap min-w-0">
+          <span className="text-xs text-slate-400 flex items-center gap-1 mr-1 shrink-0">
             <Filter className="h-3 w-3 text-emerald-400" />
-            Quick filters:
+            <span className="hidden sm:inline">Quick filters:</span>
           </span>
           {quickPresets.map((preset, idx) => {
             const isApplied = filters.some(
@@ -117,7 +117,7 @@ export const DynamicFilterBar: React.FC<DynamicFilterBarProps> = ({
                 key={idx}
                 type="button"
                 onClick={() => handleAddPreset(preset)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shrink-0 ${
                   isApplied
                     ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 cursor-default'
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white'
@@ -131,7 +131,7 @@ export const DynamicFilterBar: React.FC<DynamicFilterBarProps> = ({
           <button
             type="button"
             onClick={handleApplySpecBenchmark}
-            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shrink-0 ${
               isSpecBenchmarkApplied
                 ? 'bg-emerald-600 text-white border-emerald-500 font-bold'
                 : 'bg-emerald-950/40 text-emerald-300 border-emerald-800 hover:bg-emerald-900/60'
@@ -148,7 +148,7 @@ export const DynamicFilterBar: React.FC<DynamicFilterBarProps> = ({
         </div>
 
         {/* Right: Advanced Query Builder trigger & clear */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {filters.length > 1 && (
             <div className="flex items-center rounded border border-slate-800 bg-slate-950 p-0.5">
               <button

@@ -267,18 +267,18 @@ function DataExplorerContent() {
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-950 overflow-hidden">
       {/* Search & Control Action Bar */}
-      <div className="flex flex-col gap-3 px-6 py-3 border-b border-slate-800 bg-slate-900/40">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-2.5 sm:gap-3 px-3 sm:px-6 py-2.5 sm:py-3 border-b border-slate-800 bg-slate-900/40">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
           {/* Left: Global Search + Strategy Picker */}
-          <div className="flex flex-wrap items-center gap-2 flex-1 max-w-3xl">
-            <div className="relative flex-1 min-w-[240px]">
+          <div className="flex flex-wrap items-center gap-2 flex-1 max-w-3xl w-full min-w-0">
+            <div className="relative flex-1 min-w-[180px] xs:min-w-[220px] w-full">
               <Input
                 type="text"
                 value={search}
                 onChange={handleSearchChange}
-                placeholder="Search across 100,000+ indexed records (e.g. Siemens, Germany, Logistics)..."
+                placeholder="Search 100,000+ records..."
                 icon={<Search className="h-4 w-4 text-slate-400" />}
-                className="bg-slate-950 border-slate-700 text-sm h-9"
+                className="bg-slate-950 border-slate-700 text-xs sm:text-sm h-9 w-full"
               />
               {isFetching && (
                 <div className="absolute right-3 top-2.5">
@@ -292,24 +292,24 @@ function DataExplorerContent() {
               value={searchField}
               onChange={(e) => dispatch(setSearchField(e.target.value))}
               aria-label="Filter search by specific field"
-              className="h-9 rounded-md border border-slate-700 bg-slate-900 px-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+              className="h-9 rounded-md border border-slate-700 bg-slate-900 px-2 sm:px-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 shrink-0"
             >
               <option value="">All Fields</option>
-              <option value="title">Company Name</option>
+              <option value="title">Company</option>
               <option value="recordKey">Account Key</option>
               <option value="country">Country</option>
               <option value="category">Segment</option>
             </select>
 
             {/* Search Engine Strategy Selector */}
-            <div className="flex items-center rounded-md border border-slate-800 bg-slate-950 p-1">
+            <div className="flex items-center rounded-md border border-slate-800 bg-slate-950 p-1 overflow-x-auto no-scrollbar max-w-full shrink-0">
               <span className="text-xs text-slate-400 px-1.5 hidden sm:inline">
                 Engine:
               </span>
               <button
                 onClick={() => dispatch(setSearchType('hybrid'))}
                 title="Hybrid: Full-text search + Substring matching"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'hybrid'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 shrink-0 ${searchType === 'hybrid'
                     ? 'bg-emerald-600 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
                   }`}
@@ -319,7 +319,7 @@ function DataExplorerContent() {
               <button
                 onClick={() => dispatch(setSearchType('fts'))}
                 title="PostgreSQL Full-Text Search (tsvector @@ tsquery)"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'fts'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 shrink-0 ${searchType === 'fts'
                     ? 'bg-slate-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
                   }`}
@@ -329,7 +329,7 @@ function DataExplorerContent() {
               <button
                 onClick={() => dispatch(setSearchType('trgm'))}
                 title="PostgreSQL Trigram Search (similarity & fuzzy typo matching)"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'trgm'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 shrink-0 ${searchType === 'trgm'
                     ? 'bg-emerald-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white'
                   }`}
@@ -339,7 +339,7 @@ function DataExplorerContent() {
               <button
                 onClick={() => dispatch(setSearchType('exact'))}
                 title="Exact substring match (ILIKE)"
-                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${searchType === 'exact'
+                className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 shrink-0 ${searchType === 'exact'
                     ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 font-semibold'
                     : 'text-slate-400 hover:text-white'
                   }`}
@@ -350,13 +350,13 @@ function DataExplorerContent() {
           </div>
 
           {/* Right: Actions (Save View, Export, Columns) */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
             {permissions.canCreateSavedViews && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => dispatch(setSaveModalOpen(true))}
-                className="text-xs text-slate-300 border-slate-700 bg-slate-900/80 hover:bg-slate-800"
+                className="text-xs text-slate-300 border-slate-700 bg-slate-900/80 hover:bg-slate-800 px-2 sm:px-3"
               >
                 <BookmarkPlus className="h-3.5 w-3.5 text-blue-400" />
                 <span className="hidden sm:inline">Save View</span>

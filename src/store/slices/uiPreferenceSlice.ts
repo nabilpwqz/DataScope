@@ -6,6 +6,7 @@ export interface UIPreferenceState {
   visibleColumns: Record<string, boolean>;
   columnWidths: Record<string, number>;
   sidebarCollapsed: boolean;
+  mobileMenuOpen: boolean;
   highlightMatches: boolean;
   useVirtualization: boolean;
 }
@@ -36,6 +37,7 @@ const initialState: UIPreferenceState = {
     recordDate: 140,
   },
   sidebarCollapsed: false,
+  mobileMenuOpen: false,
   highlightMatches: true,
   useVirtualization: true,
 };
@@ -66,6 +68,12 @@ export const uiPreferenceSlice = createSlice({
     setSidebarCollapsed: (state, action: PayloadAction<boolean>) => {
       state.sidebarCollapsed = action.payload;
     },
+    toggleMobileMenu: (state) => {
+      state.mobileMenuOpen = !state.mobileMenuOpen;
+    },
+    setMobileMenuOpen: (state, action: PayloadAction<boolean>) => {
+      state.mobileMenuOpen = action.payload;
+    },
     toggleHighlightMatches: (state) => {
       state.highlightMatches = !state.highlightMatches;
     },
@@ -86,6 +94,8 @@ export const {
   setColumnWidth,
   toggleSidebar,
   setSidebarCollapsed,
+  toggleMobileMenu,
+  setMobileMenuOpen,
   toggleHighlightMatches,
   toggleVirtualization,
   resetColumnPreferences,

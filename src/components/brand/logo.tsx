@@ -79,7 +79,7 @@ export const DataScopeLogo: React.FC<LogoProps> = ({
             DataScope
           </span>
           {subtitle && (
-            <span className={`text-slate-400 dark:text-slate-400 font-medium ${sub}`}>
+            <span className={`text-slate-400 dark:text-slate-400 font-medium ${sub} hidden sm:block`}>
               {subtitle}
             </span>
           )}

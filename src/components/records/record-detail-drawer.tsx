@@ -99,10 +99,10 @@ export const RecordDetailDrawer: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-black/75 motion-safe:animate-in motion-safe:fade-in-50">
-      <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
+      <div className="absolute inset-y-0 right-0 flex max-w-full pl-0 sm:pl-10">
         <div className="w-screen max-w-xl bg-slate-950 border-l border-slate-800 flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800 bg-slate-900">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded bg-emerald-600/20 text-emerald-400 font-mono font-bold text-sm border border-emerald-500/30">
                 <FileText className="h-5 w-5" />
@@ -126,10 +126,10 @@ export const RecordDetailDrawer: React.FC = () => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-800 bg-slate-900/40 px-6 text-xs font-medium">
+          <div className="flex border-b border-slate-800 bg-slate-900/40 px-3 sm:px-6 text-xs font-medium overflow-x-auto no-scrollbar whitespace-nowrap">
             <button
               onClick={() => setActiveTab('info')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'info'
+              className={`py-3 px-3 sm:px-4 border-b-2 flex items-center gap-1.5 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'info'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
@@ -139,7 +139,7 @@ export const RecordDetailDrawer: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('relations')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'relations'
+              className={`py-3 px-3 sm:px-4 border-b-2 flex items-center gap-1.5 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'relations'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
@@ -149,7 +149,7 @@ export const RecordDetailDrawer: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'history'
+              className={`py-3 px-3 sm:px-4 border-b-2 flex items-center gap-1.5 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'history'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
@@ -159,7 +159,7 @@ export const RecordDetailDrawer: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('comments')}
-              className={`py-3 px-4 border-b-2 flex items-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'comments'
+              className={`py-3 px-3 sm:px-4 border-b-2 flex items-center gap-1.5 transition-colors shrink-0 focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeTab === 'comments'
                   ? 'border-emerald-500 text-emerald-400 font-semibold'
                   : 'border-transparent text-slate-400 hover:text-slate-200'
                 }`}
@@ -170,7 +170,7 @@ export const RecordDetailDrawer: React.FC = () => {
           </div>
 
           {/* Drawer Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
             {isLoading ? (
               <div className="py-20 text-center space-y-3">
                 <div className="h-7 w-7 motion-safe:animate-spin rounded-full border-2 border-emerald-500 border-t-transparent mx-auto" />
