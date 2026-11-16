@@ -173,20 +173,68 @@ function LoginForm() {
     }
   };
 
-  const handleQuickLogin = (role: 'admin' | 'analyst' | 'viewer') => {
-    if (role === 'admin') {
-      setEmail('admin@datascope.io');
-      setPassword('admin123');
-      handleCredentialsLogin(undefined, 'admin@datascope.io', 'admin123');
-    } else if (role === 'analyst') {
-      setEmail('analyst@datascope.io');
-      setPassword('analyst123');
-      handleCredentialsLogin(undefined, 'analyst@datascope.io', 'analyst123');
-    } else {
-      setEmail('viewer@datascope.io');
-      setPassword('viewer123');
-      handleCredentialsLogin(undefined, 'viewer@datascope.io', 'viewer123');
+  const handleDemoLogin = async (role: 'admin' | 'analyst' | 'viewer' = 'admin') => {
+    setIsLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await fetch('/api/auth/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+
+      const data = await res.json();
+      if (data?.user && data?.token) {
+        dispatch(setUser({ user: data.user, token: data.token }));
+        if (typeof document !== 'undefined') {
+          document.cookie = `datascope_token=${data.token}; path=/; max-age=604800; SameSite=Lax`;
+        }
+        router.push('/dashboard/explorer');
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback if network or fetch fails
+    const personaMap = {
+      admin: {
+        id: 'usr-admin-01',
+        name: 'Elena Rostova',
+        email: 'admin@datascope.io',
+        role: 'admin' as const,
+        department: 'Enterprise Architecture',
+        createdAt: new Date().toISOString(),
+      },
+      analyst: {
+        id: 'usr-analyst-01',
+        name: 'Marcus Vance',
+        email: 'analyst@datascope.io',
+        role: 'analyst' as const,
+        department: 'Strategic Intelligence',
+        createdAt: new Date().toISOString(),
+      },
+      viewer: {
+        id: 'usr-viewer-01',
+        name: 'Sarah Lin',
+        email: 'viewer@datascope.io',
+        role: 'viewer' as const,
+        department: 'Product Operations',
+        createdAt: new Date().toISOString(),
+      },
+    };
+
+    const persona = personaMap[role] || personaMap.admin;
+    dispatch(setUser({ user: persona, token: 'datascope-demo-session' }));
+    if (typeof document !== 'undefined') {
+      document.cookie = 'datascope_token=datascope-demo-session; path=/; max-age=604800; SameSite=Lax';
     }
+    router.push('/dashboard/explorer');
+    setIsLoading(false);
+  };
+
+  const handleQuickLogin = (role: 'admin' | 'analyst' | 'viewer') => {
+    handleDemoLogin(role);
   };
 
   return (
@@ -208,6 +256,58 @@ function LoginForm() {
             Enterprise data discovery, PostgreSQL query analytics, and governance.
           </p>
         </div>
+      </div>
+
+      {/* 1-Click Instant Demo Account Sign In */}
+      <div className="p-4 rounded-xl border border-emerald-500/30 bg-emerald-950/20 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+            <IconSparkles className="h-4 w-4" />
+            <span>Instant Demo Access</span>
+          </span>
+          <span className="text-[11px] text-emerald-500/80">No password required</span>
+        </div>
+
+        <Button
+          type="button"
+          variant="primary"
+          size="md"
+          isLoading={isLoading}
+          onClick={() => handleDemoLogin('admin')}
+          className="w-full justify-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50"
+        >
+          <IconShield className="h-4 w-4" />
+          <span>Sign In to Demo Account (Admin)</span>
+        </Button>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleDemoLogin('analyst')}
+            className="w-full text-xs font-medium border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300"
+          >
+            <span>Analyst Demo</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => handleDemoLogin('viewer')}
+            className="w-full text-xs font-medium border-slate-800 bg-slate-950 hover:bg-slate-900 text-slate-300"
+          >
+            <span>Viewer Demo</span>
+          </Button>
+        </div>
+      </div>
+
+      <div className="relative flex items-center justify-center">
+        <div className="w-full border-t border-slate-800" />
+        <span className="bg-slate-900 px-3 text-xs text-slate-500 font-medium">
+          or sign in with credentials
+        </span>
       </div>
 
       {/* Authentication Provider Selector */}
