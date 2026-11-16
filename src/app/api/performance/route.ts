@@ -34,6 +34,38 @@ export async function GET(req: NextRequest) {
       ORDER BY avg_time DESC;
     `);
 
+    // 4. Fetch aggregate real stats from query_metrics
+    const aggRes = await client.query(`
+      SELECT 
+        COUNT(*)::int as total_queries,
+        COALESCE(AVG(execution_time_ms)::real, 0) as avg_execution_time_ms,
+        COALESCE(MAX(execution_time_ms)::real, 0) as max_execution_time_ms,
+        COALESCE(MIN(execution_time_ms)::real, 0) as min_execution_time_ms,
+        COALESCE(SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END)::int, 0) as total_cache_hits
+      FROM query_metrics;
+    `);
+
+    // 5. Fetch live dataset scale from datasets table
+    const dsRes = await client.query(`
+      SELECT COALESCE(SUM(total_records), 0)::int as total_indexed_records
+      FROM datasets;
+    `);
+
+    const agg = aggRes.rows[0] || {};
+    const totalQueries = Number(agg.total_queries || 0);
+    const avgExecutionTimeMs = Math.round(Number(agg.avg_execution_time_ms || 0) * 10) / 10;
+    const totalCacheHits = Number(agg.total_cache_hits || 0);
+    const dbHitRate = totalQueries > 0 ? Math.round((totalCacheHits / totalQueries) * 1000) / 10 : 0;
+    const totalIndexedRecords = Number(dsRes.rows[0]?.total_indexed_records || 0);
+
+    const aggregates = {
+      totalQueries,
+      avgExecutionTimeMs,
+      totalCacheHits,
+      dbHitRate,
+      totalIndexedRecords,
+    };
+
     const metrics: PerformanceMetric[] = logsRes.rows.map((r: any) => ({
       id: r.id,
       timestamp: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
@@ -47,6 +79,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       metrics,
       cacheStats,
+      aggregates,
       expensiveQueriesSummary: expensiveRes.rows,
     });
   } catch (err: any) {

@@ -41,7 +41,7 @@ export class SearchEngine {
   public static async executeQuery(request: SearchQueryRequest): Promise<SearchQueryResponse> {
     const startTime = performance.now();
     const queryHash = this.generateQueryHash(request);
-    const cacheKey = `dataset:${request.datasetId}:${queryHash}`;
+    const cacheKey = queryCache.generateCacheKey(request.datasetId, queryHash);
 
     // 1. Check LRU Cache
     const cachedResult = queryCache.get(cacheKey);
