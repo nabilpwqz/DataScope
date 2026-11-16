@@ -131,7 +131,7 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs">
           <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Role:</span>
           <span
-            className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+            className={`font-medium text-[10px] px-1.5 py-0.5 rounded capitalize ${
               activeRole === 'admin'
                 ? 'bg-rose-950/70 border border-rose-800/60 text-rose-300'
                 : activeRole === 'analyst'

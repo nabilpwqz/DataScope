@@ -450,7 +450,7 @@ export default function SettingsPage() {
                   Enforced Active Role:
                 </span>
                 <div className="flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <span className="font-medium text-xs text-emerald-600 dark:text-emerald-400 capitalize">
                     {activeRole}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-slate-400">

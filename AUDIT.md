@@ -218,3 +218,4 @@ Remediation will proceed in strict chronological sequence:
 2. **Phase 1 Execution**: Implement NextAuth credentials provider, `middleware.ts`, centralized `authorize()` helper, `access_permissions` table, and write automated test proving 403 authorization denial for Viewers.
 3. **Phase 2 Execution**: Completely remove Prisma, standardize on Drizzle ORM, update schema for all required entities, and upgrade `scripts/seed.ts` for 120k and 1M row generation.
 4. **Subsequent Phases**: Execute Phases 3 through 10 in accordance with the specification.
+

@@ -54,3 +54,4 @@ To minimize the impact of cross-region WAN propagation:
 2. **Pushdown Filtering & Pagination**: Restricting result payloads to 25-100 rows (~12 KB) ensures network transit time is dominated by latency rather than serialization bandwidth.
 3. **Async Telemetry Logging**: Performance logging to `query_metrics` and `search_history` is handled asynchronously, preventing diagnostic writes from adding latency to the user query response path.
 4. **Target Production Topology**: In a fully enterprise-co-located production deployment, deploying Vercel and PostgreSQL within the same AWS region (e.g. both in `us-east-1` or both in `eu-central-1`) brings total end-to-end API response latency down to 6 - 18 ms.
+

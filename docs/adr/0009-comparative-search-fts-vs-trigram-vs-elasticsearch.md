@@ -42,3 +42,4 @@ DataScope adopts native PostgreSQL Full-Text Search backed by stored `tsvector` 
 ### Consequences
 - **Positive**: Zero operational overhead, immediate consistency on record mutations, sub-10 ms query execution on 120,000+ live records, simplified disaster recovery.
 - **Negative**: Typo tolerance is limited to lexical stemming and prefix matching rather than arbitrary edit-distance permutations. When fuzziness is strictly required, pg_trgm is selectively activated on small-scale filtered subsets.
+
