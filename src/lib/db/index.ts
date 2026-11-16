@@ -34,10 +34,6 @@ if (!globalForDb.__dataScopeDb) {
 
 const state = globalForDb.__dataScopeDb;
 
-// Fallback production PostgreSQL database (Neon Serverless PostgreSQL Cluster with 120,000+ records)
-export const PRODUCTION_DEFAULT_DATABASE_URL =
-  'postgresql://neondb_owner:npg_Kb9AgZ4jIBOd@ep-silent-smoke-ao9xf02q-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require';
-
 export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; engineType: string }> {
   if (state.db && state.initialized) {
     return { db: state.db, rawClient: state.rawClient, engineType: state.engineType };
@@ -53,7 +49,7 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
     const forceEmbedded = process.env.PG_FORCE_EMBEDDED === 'true';
     const databaseUrl = forceEmbedded
       ? ''
-      : (rawEnvUrl && rawEnvUrl.trim() !== '' ? rawEnvUrl : PRODUCTION_DEFAULT_DATABASE_URL);
+      : (rawEnvUrl && rawEnvUrl.trim() !== '' ? rawEnvUrl : '');
 
     if (databaseUrl && databaseUrl.trim() !== '') {
       // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, Tembo, etc.)
@@ -164,8 +160,8 @@ export async function executeSql(client: any, query: string, params: any[] = [])
 
 async function ensureSchemaAndIndexes(client: any) {
   try {
-    // Quick existence check to bypass redundant DDL on warm remote databases
-    const checkTable = await client.query("SELECT 1 FROM information_schema.tables WHERE table_name = 'dataset_records' LIMIT 1;").catch(() => null);
+    // Quick existence check to bypass redundant DDL on warm databases
+    const checkTable = await client.query("SELECT 1 FROM information_schema.tables WHERE table_name = 'access_permissions' LIMIT 1;").catch(() => null);
     if (checkTable && checkTable.rows && checkTable.rows.length > 0) {
       return;
     }
@@ -361,6 +357,47 @@ async function ensureSchemaAndIndexes(client: any) {
         created_at timestamptz NOT NULL DEFAULT now(),
         resolved_at timestamptz
       );
+
+      CREATE TABLE IF NOT EXISTS roles (
+        id text PRIMARY KEY,
+        name text NOT NULL,
+        description text NOT NULL,
+        permissions jsonb NOT NULL DEFAULT '[]',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS access_permissions (
+        id text PRIMARY KEY,
+        user_id text,
+        role text,
+        dataset_id text NOT NULL,
+        can_read boolean NOT NULL DEFAULT true,
+        can_write boolean NOT NULL DEFAULT false,
+        can_export boolean NOT NULL DEFAULT false,
+        can_manage boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      INSERT INTO roles (id, name, description, permissions)
+      VALUES 
+        ('admin', 'Administrator', 'Full system and data governance access across all datasets and settings', '["manage_users", "manage_datasets", "manage_permissions", "export_data", "save_views", "view_analytics", "read_all", "write_all"]'),
+        ('analyst', 'Intelligence Analyst', 'Deep analytical query access, export capabilities, and saved views', '["read_restricted", "export_data", "save_views", "share_views", "view_analytics"]'),
+        ('viewer', 'Business Viewer', 'Read-only exploratory access to designated public datasets', '["read_public", "basic_filters", "view_shared_views"]')
+      ON CONFLICT (id) DO NOTHING;
+
+      INSERT INTO access_permissions (id, role, dataset_id, can_read, can_write, can_export, can_manage)
+      VALUES
+        ('perm-admin-sales', 'admin', 'ds-sales-01', true, true, true, true),
+        ('perm-analyst-sales', 'analyst', 'ds-sales-01', true, false, true, false),
+        ('perm-viewer-sales', 'viewer', 'ds-sales-01', true, false, false, false),
+
+        ('perm-admin-telem', 'admin', 'ds-telemetry-02', true, true, true, true),
+        ('perm-analyst-telem', 'analyst', 'ds-telemetry-02', true, false, true, false),
+
+        ('perm-admin-fin', 'admin', 'ds-finance-03', true, true, true, true)
+      ON CONFLICT (id) DO NOTHING;
     `
     );
 
@@ -507,52 +544,8 @@ async function ensureBaselineData(client: any) {
         ON CONFLICT (id) DO NOTHING;
       `);
     }
-
-    // Baseline Roles
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS roles (
-        id text PRIMARY KEY,
-        name text NOT NULL,
-        description text NOT NULL,
-        permissions jsonb NOT NULL DEFAULT '[]',
-        created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now()
-      );
-
-      CREATE TABLE IF NOT EXISTS access_permissions (
-        id text PRIMARY KEY,
-        user_id text REFERENCES users(id) ON DELETE CASCADE,
-        role text,
-        dataset_id text NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
-        can_read boolean NOT NULL DEFAULT true,
-        can_write boolean NOT NULL DEFAULT false,
-        can_export boolean NOT NULL DEFAULT false,
-        can_manage boolean NOT NULL DEFAULT false,
-        created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now()
-      );
-
-      INSERT INTO roles (id, name, description, permissions)
-      VALUES 
-        ('admin', 'Administrator', 'Full system and data governance access across all datasets and settings', '["manage_users", "manage_datasets", "manage_permissions", "export_data", "save_views", "view_analytics", "read_all", "write_all"]'),
-        ('analyst', 'Intelligence Analyst', 'Deep analytical query access, export capabilities, and saved views', '["read_restricted", "export_data", "save_views", "share_views", "view_analytics"]'),
-        ('viewer', 'Business Viewer', 'Read-only exploratory access to designated public datasets', '["read_public", "basic_filters", "view_shared_views"]')
-      ON CONFLICT (id) DO NOTHING;
-
-      INSERT INTO access_permissions (id, role, dataset_id, can_read, can_write, can_export, can_manage)
-      VALUES
-        ('perm-admin-sales', 'admin', 'ds-sales-01', true, true, true, true),
-        ('perm-analyst-sales', 'analyst', 'ds-sales-01', true, false, true, false),
-        ('perm-viewer-sales', 'viewer', 'ds-sales-01', true, false, false, false),
-
-        ('perm-admin-telem', 'admin', 'ds-telemetry-02', true, true, true, true),
-        ('perm-analyst-telem', 'analyst', 'ds-telemetry-02', true, false, true, false),
-
-        ('perm-admin-fin', 'admin', 'ds-finance-03', true, true, true, true)
-      ON CONFLICT (id) DO NOTHING;
-    `);
   } catch (err) {
-    console.warn('Notice: Baseline data check completed with notice:', err);
+    console.error('ensureBaselineData error:', err);
   }
 }
 

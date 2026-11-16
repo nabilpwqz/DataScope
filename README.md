@@ -783,7 +783,12 @@ npm run benchmark
 # 7. Verify Hallmark craft compliance (0 FAIL)
 npm run lint:hallmark
 
-# 8. Start Next.js development server
+# 8. Run Continuous Integration pipeline (Typecheck + Lint + Tests + Build)
+npm run ci
+# Or quick mode (Typecheck + Lint + Tests)
+npm run ci:quick
+
+# 9. Start Next.js development server
 npm run dev
 ```
 
@@ -799,6 +804,14 @@ docker compose up -d --build
 
 # Verify container health status
 docker compose ps
+```
+
+#### Containerized CI Pipeline Runner
+
+DataScope includes an independent Docker CI runner (`docker-compose.ci.yml`) to execute continuous integration validations (TypeScript check, Hallmark sloplint, Vitest test suite) in a reproducible containerized PostgreSQL 15 environment without external CI platform dependencies:
+
+```bash
+docker compose -f docker-compose.ci.yml up --abort-on-container-exit --exit-code-from datascope-ci
 ```
 
 ### Vercel Serverless Deployment

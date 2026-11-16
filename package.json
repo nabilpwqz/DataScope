@@ -16,7 +16,11 @@
     "benchmark": "tsx scripts/benchmark.ts",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "lint:hallmark": "node scripts/run-sloplint.js"
+    "lint:hallmark": "node scripts/run-sloplint.js",
+    "ci": "node scripts/ci-runner.js",
+    "ci:quick": "node scripts/ci-runner.js --quick",
+    "ci:e2e": "node scripts/ci-runner.js --e2e",
+    "prepare-hooks": "node scripts/install-hooks.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.2.12",

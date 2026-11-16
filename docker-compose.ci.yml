@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: datascope-ci-postgres
+    environment:
+      POSTGRES_DB: datascope_ci
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d datascope_ci"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  datascope-ci:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: datascope-ci-runner
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/datascope_ci
+      NEXTAUTH_SECRET: datascope-ci-runner-secret-key-32-chars-minimum
+      NEXTAUTH_URL: http://localhost:3000
+      JWT_SECRET: datascope-ci-runner-secret-key-32-chars-minimum
+      SEARCH_STRATEGY: hybrid
+      NEXT_TELEMETRY_DISABLED: 1
+    command: ["node", "scripts/ci-runner.js", "--quick"]
+

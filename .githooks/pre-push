@@ -1,0 +1,9 @@
+#!/bin/sh
+# DataScope pre-push hook
+echo "Executing DataScope pre-push automated validation..."
+node scripts/ci-runner.js --quick
+if [ $? -ne 0 ]; then
+  echo "DataScope pre-push validation failed. Push aborted."
+  exit 1
+fi
+
