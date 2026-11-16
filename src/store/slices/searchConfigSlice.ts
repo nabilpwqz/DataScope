@@ -86,6 +86,24 @@ export const searchConfigSlice = createSlice({
       state.page = 1;
       state.cursor = null;
     },
+    addSortCondition: (state, action: PayloadAction<SortCondition>) => {
+      const existing = state.sort.find((s) => s.field === action.payload.field);
+      if (existing) {
+        existing.direction = action.payload.direction;
+      } else {
+        state.sort.push(action.payload);
+      }
+      state.page = 1;
+      state.cursor = null;
+    },
+    removeSortCondition: (state, action: PayloadAction<string>) => {
+      state.sort = state.sort.filter((s) => s.field !== action.payload);
+      if (state.sort.length === 0) {
+        state.sort = [{ field: 'recordDate', direction: 'desc' }];
+      }
+      state.page = 1;
+      state.cursor = null;
+    },
     toggleColumnSort: (state, action: PayloadAction<string>) => {
       const col = action.payload;
       const existingIdx = state.sort.findIndex((s) => s.field === col);
@@ -164,6 +182,8 @@ export const {
   setFilters,
   setFilterLogicalOperator,
   setSort,
+  addSortCondition,
+  removeSortCondition,
   toggleColumnSort,
   setPage,
   setPageSize,
