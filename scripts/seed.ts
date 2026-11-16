@@ -228,25 +228,25 @@ async function seed() {
     for (let i = 0; i < currentBatchCount; i++) {
       const globalIndex = b * salesChunkSize + i + 1;
       const recordKey = `ACC-${String(globalIndex).padStart(7, '0')}`;
-      
+
       const compBase = companies[globalIndex % companies.length];
       const prefix = prefixes[(globalIndex * 7) % prefixes.length];
       const suffix = suffixes[(globalIndex * 13) % suffixes.length];
       const title = `${prefix} ${compBase} ${suffix}`.replace(/'/g, "''");
-      
+
       const category = categories[globalIndex % categories.length];
       // realistic status distribution: mostly Active, some Pending, fewer Suspended/Flagged
       const statusIdx = (globalIndex % 100 < 65) ? 0 : (globalIndex % 100 < 80) ? 1 : (globalIndex % 100 < 90) ? 2 : (globalIndex % 100 < 95) ? 3 : (globalIndex % 100 < 98) ? 4 : 5;
       const status = statuses[statusIdx];
-      
+
       // Revenue distribution: power-law / tiered
       const isMegaTier = (globalIndex % 100) < 5;
       const isMidTier = (globalIndex % 100) < 30;
-      let revenue = isMegaTier 
+      let revenue = isMegaTier
         ? Math.round(500000 + (globalIndex % 4500000))
-        : isMidTier 
-        ? Math.round(25000 + (globalIndex % 475000))
-        : Math.round(1500 + (globalIndex % 23500));
+        : isMidTier
+          ? Math.round(25000 + (globalIndex % 475000))
+          : Math.round(1500 + (globalIndex % 23500));
 
       const countryObj = countries[globalIndex % countries.length];
       const country = countryObj.name;
