@@ -1,14 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import {
   setSearch,
   setDebouncedSearch,
   setSearchType,
   setSearchField,
+  setPage,
+  setPageSize,
+  setSort,
+  setFilters,
   applySavedViewConfig,
 } from '@/store/slices/searchConfigSlice';
+import { setSelectedDatasetId } from '@/store/slices/datasetSlice';
 import { setSaveModalOpen } from '@/store/slices/savedViewsSlice';
 import {
   useSearchRecordsQuery,
@@ -38,7 +44,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
-export default function DataExplorerPage() {
+function DataExplorerContent() {
   const dispatch = useAppDispatch();
   const { selectedDatasetId } = useAppSelector((state) => state.dataset);
   const {
@@ -56,8 +62,131 @@ export default function DataExplorerPage() {
   } = useAppSelector((state) => state.searchConfig);
   const { permissions } = useAppSelector((state) => state.auth);
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const isUpdatingFromUrl = useRef(false);
+  const prevSearchRef = useRef(debouncedSearch);
+
   const [isFilterBuilderOpen, setIsFilterBuilderOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // 1. Bidirectional Sync: URL SearchParams -> Redux State (Back/Forward, Bookmark, Refresh)
+  useEffect(() => {
+    if (!searchParams) return;
+
+    isUpdatingFromUrl.current = true;
+
+    const datasetParam = searchParams.get('dataset');
+    if (datasetParam && datasetParam !== selectedDatasetId) {
+      dispatch(setSelectedDatasetId(datasetParam));
+    }
+
+    const qParam = searchParams.get('q') ?? '';
+    if (qParam !== search) {
+      dispatch(setSearch(qParam));
+      dispatch(setDebouncedSearch(qParam));
+    }
+
+    const typeParam = searchParams.get('type') as any;
+    if (typeParam && ['hybrid', 'fts', 'trgm', 'exact'].includes(typeParam) && typeParam !== searchType) {
+      dispatch(setSearchType(typeParam));
+    }
+
+    const fieldParam = searchParams.get('field') ?? '';
+    if (fieldParam !== searchField) {
+      dispatch(setSearchField(fieldParam));
+    }
+
+    const pageParam = parseInt(searchParams.get('page') || '1', 10);
+    if (!isNaN(pageParam) && pageParam !== page) {
+      dispatch(setPage(pageParam));
+    }
+
+    const pageSizeParam = parseInt(searchParams.get('pageSize') || '25', 10);
+    if (!isNaN(pageSizeParam) && pageSizeParam !== pageSize) {
+      dispatch(setPageSize(pageSizeParam));
+    }
+
+    const sortParam = searchParams.get('sort');
+    if (sortParam) {
+      const [f, d] = sortParam.split(':');
+      if (f && (d === 'asc' || d === 'desc')) {
+        if (!sort.length || sort[0].field !== f || sort[0].direction !== d) {
+          dispatch(setSort([{ field: f, direction: d as 'asc' | 'desc' }]));
+        }
+      }
+    }
+
+    const filtersParam = searchParams.get('filters');
+    if (filtersParam) {
+      try {
+        const parsedFilters = JSON.parse(filtersParam);
+        if (Array.isArray(parsedFilters) && JSON.stringify(parsedFilters) !== JSON.stringify(filters)) {
+          dispatch(setFilters(parsedFilters));
+        }
+      } catch (_) {}
+    }
+
+    const statusParam = searchParams.get('status');
+    if (statusParam && !filtersParam) {
+      const hasStatus = filters.some((f) => f.field === 'status' && f.value === statusParam);
+      if (!hasStatus) {
+        dispatch(
+          setFilters([
+            { id: 'f-status-url', field: 'status', operator: 'equals', value: statusParam },
+          ])
+        );
+      }
+    }
+
+    setTimeout(() => {
+      isUpdatingFromUrl.current = false;
+    }, 50);
+  }, [searchParams]);
+
+  // 2. Bidirectional Sync: Redux State -> URL SearchParams (User Table Interactions)
+  useEffect(() => {
+    if (isUpdatingFromUrl.current) return;
+
+    const params = new URLSearchParams();
+    if (selectedDatasetId) params.set('dataset', selectedDatasetId);
+    if (debouncedSearch) params.set('q', debouncedSearch);
+    if (searchType !== 'hybrid') params.set('type', searchType);
+    if (searchField) params.set('field', searchField);
+    if (page > 1) params.set('page', String(page));
+    if (pageSize !== 25) params.set('pageSize', String(pageSize));
+    if (sort.length > 0 && !(sort[0].field === 'recordDate' && sort[0].direction === 'desc')) {
+      params.set('sort', `${sort[0].field}:${sort[0].direction}`);
+    }
+    if (filters.length > 0) {
+      params.set('filters', JSON.stringify(filters));
+    }
+
+    const newQueryString = params.toString();
+    const currentQueryString = searchParams?.toString() || '';
+
+    if (newQueryString !== currentQueryString) {
+      const targetUrl = newQueryString ? `${pathname}?${newQueryString}` : pathname;
+      if (prevSearchRef.current !== debouncedSearch) {
+        prevSearchRef.current = debouncedSearch;
+        router.push(targetUrl, { scroll: false });
+      } else {
+        router.replace(targetUrl, { scroll: false });
+      }
+    }
+  }, [
+    selectedDatasetId,
+    debouncedSearch,
+    searchType,
+    searchField,
+    page,
+    pageSize,
+    sort,
+    filters,
+    pathname,
+  ]);
 
   // Fetch Dataset metadata
   const { data: dataset } = useGetDatasetByIdQuery(selectedDatasetId);
@@ -281,6 +410,14 @@ export default function DataExplorerPage() {
         onClose={() => setIsFilterBuilderOpen(false)}
       />
     </div>
+  );
+}
+
+export default function DataExplorerPage() {
+  return (
+    <React.Suspense fallback={<div className="flex-1 p-6 text-xs text-slate-400">Loading Data Explorer...</div>}>
+      <DataExplorerContent />
+    </React.Suspense>
   );
 }
 
