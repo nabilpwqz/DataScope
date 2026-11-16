@@ -535,13 +535,9 @@ async function ensureSchemaAndIndexes(client: any) {
 
 async function ensureBaselineData(client: any) {
   try {
-    // Quick existence check to bypass redundant baseline seeding on already populated databases
     const existingUsers = await client.query('SELECT 1 FROM users LIMIT 1;').catch(() => null);
-    if (existingUsers && existingUsers.rows && existingUsers.rows.length > 0) {
-      return;
-    }
-
-    const salt = await bcrypt.genSalt(10);
+    if (!existingUsers || !existingUsers.rows || existingUsers.rows.length === 0) {
+      const salt = await bcrypt.genSalt(10);
       const adminPass = await bcrypt.hash('admin123', salt);
       const analystPass = await bcrypt.hash('analyst123', salt);
       const viewerPass = await bcrypt.hash('viewer123', salt);
@@ -563,6 +559,7 @@ async function ensureBaselineData(client: any) {
           ('pref-03', 'usr-viewer-01', 'standard', 'dark', false, 30, 25, true)
         ON CONFLICT (user_id) DO NOTHING;
       `);
+    }
 
     const existingDatasets = await client.query('SELECT count(*)::int AS count FROM datasets;');
     const datasetCount = existingDatasets.rows?.[0]?.count || 0;
@@ -635,6 +632,86 @@ async function ensureBaselineData(client: any) {
           ('dq-04', 'ds-finance-03', 'status', 'UNVERIFIED_STATUS', 'critical', 'High-value transaction ACC-99411 lacks counterparty verification hash.', 'reviewed')
         ON CONFLICT (id) DO NOTHING;
       `);
+    }
+
+    // Baseline Dataset Records if table is empty (ensures search & table are populated on initial load)
+    const recordsRes = await client.query('SELECT 1 FROM dataset_records LIMIT 1;').catch(() => null);
+    if (!recordsRes || !recordsRes.rows || recordsRes.rows.length === 0) {
+      const now = Date.now();
+      const recordsToInsert: string[] = [];
+
+      const baselineSales = [
+        { name: 'Siemens Industrial Automation AG', country: 'Germany', region: 'DACH', status: 'Active', val: 845000, daysAgo: 2, cat: 'Enterprise' },
+        { name: 'SAP Enterprise Cloud Technologies', country: 'Germany', region: 'DACH', status: 'Active', val: 1250000, daysAgo: 5, cat: 'Enterprise' },
+        { name: 'Bavaria Robotics & Vision GmbH', country: 'Germany', region: 'DACH', status: 'Active', val: 42000, daysAgo: 8, cat: 'Mid-Market' },
+        { name: 'Deutsche FinTech Solutions AG', country: 'Germany', region: 'DACH', status: 'Active', val: 185000, daysAgo: 12, cat: 'Strategic Wholesale' },
+        { name: 'Vortex Security Deutschland GmbH', country: 'Germany', region: 'DACH', status: 'Active', val: 68000, daysAgo: 15, cat: 'Tier 1 Partner' },
+        { name: 'Krypton Semiconductor Dresden AG', country: 'Germany', region: 'DACH', status: 'Active', val: 310000, daysAgo: 18, cat: 'Enterprise' },
+        { name: 'Helios Solar Grid Berlin GmbH', country: 'Germany', region: 'DACH', status: 'Active', val: 15400, daysAgo: 22, cat: 'Mid-Market' },
+        { name: 'Falcon Supply Chain Frankfurt AG', country: 'Germany', region: 'DACH', status: 'Active', val: 92000, daysAgo: 26, cat: 'Tier 1 Partner' },
+        { name: 'Kinetic Motor Corp Stuttgart', country: 'Germany', region: 'DACH', status: 'Active', val: 560000, daysAgo: 28, cat: 'Enterprise' },
+        { name: 'DataGrid Analytics Munich GmbH', country: 'Germany', region: 'DACH', status: 'Active', val: 24500, daysAgo: 29, cat: 'Mid-Market' },
+        { name: 'Stripe Global Payment Processing', country: 'United States', region: 'Americas', status: 'Active', val: 2850000, daysAgo: 4, cat: 'Enterprise' },
+        { name: 'Databricks Lakehouse Systems', country: 'United States', region: 'Americas', status: 'Active', val: 1420000, daysAgo: 11, cat: 'Enterprise' },
+        { name: 'Snowflake Cloud Data Platform', country: 'United States', region: 'Americas', status: 'Active', val: 980000, daysAgo: 19, cat: 'Enterprise' },
+        { name: 'Arm Holdings Microprocessor IP', country: 'United Kingdom', region: 'EMEA', status: 'Active', val: 780000, daysAgo: 7, cat: 'Enterprise' },
+        { name: 'DeepMind Artificial Intelligence Lab', country: 'United Kingdom', region: 'EMEA', status: 'Active', val: 1950000, daysAgo: 14, cat: 'Enterprise' },
+        { name: 'Dassault Systemes Industrial 3D', country: 'France', region: 'EMEA', status: 'Active', val: 640000, daysAgo: 9, cat: 'Enterprise' },
+        { name: 'Tokyo Electron Semiconductor Systems', country: 'Japan', region: 'APAC', status: 'Active', val: 820000, daysAgo: 16, cat: 'Enterprise' },
+        { name: 'Shopify E-Commerce Cloud Global', country: 'Canada', region: 'Americas', status: 'Active', val: 520000, daysAgo: 21, cat: 'Enterprise' },
+        { name: 'Novartis Healthcare Research AG', country: 'Switzerland', region: 'DACH', status: 'Active', val: 910000, daysAgo: 13, cat: 'Enterprise' },
+        { name: 'DBS Digital Treasury Services', country: 'Singapore', region: 'APAC', status: 'Active', val: 430000, daysAgo: 24, cat: 'Enterprise' },
+      ];
+
+      for (let i = 0; i < baselineSales.length; i++) {
+        const item = baselineSales[i];
+        const id = `rec-sales-base-${String(i + 1).padStart(5, '0')}`;
+        const key = `ACC-${String(10000 + i).padStart(7, '0')}`;
+        const recDate = new Date(now - item.daysAgo * 86400000).toISOString();
+        const meta = JSON.stringify({ tier: 'Tier 1 Platinum', leadSource: 'Direct Enterprise', riskScore: 12 });
+        const vector = `${key} ${item.name} ${item.cat} ${item.country} ${item.region} ${item.status}`;
+        recordsToInsert.push(
+          `('${id}', 'ds-sales-01', '${key}', '${item.name}', '${item.cat}', '${item.status}', ${item.val}, '${item.country}', '${item.region}', '${recDate}', '${meta}', to_tsvector('english', '${vector}'))`
+        );
+      }
+
+      for (let i = 1; i <= 10; i++) {
+        const id = `rec-tel-base-${String(i).padStart(5, '0')}`;
+        const key = `LOG-${String(i).padStart(7, '0')}`;
+        const status = i === 3 ? 'Flagged' : i === 7 ? 'Pending' : 'Active';
+        const cpu = 25 + (i * 7);
+        const daysAgo = i * 2;
+        const recDate = new Date(now - daysAgo * 86400000).toISOString();
+        const title = `Edge Cluster Node [edge-eu-central-1] Heartbeat #${i}`;
+        const meta = JSON.stringify({ cpuUsage: cpu, node: 'edge-eu-central-1', latencyP99Ms: 14 + i });
+        const vector = `${key} ${title} Telemetry Global Cloud Multi-Region ${status}`;
+        recordsToInsert.push(
+          `('${id}', 'ds-telemetry-02', '${key}', '${title}', 'Telemetry', '${status}', ${cpu}, 'Global Cloud', 'Multi-Region', '${recDate}', '${meta}', to_tsvector('english', '${vector}'))`
+        );
+      }
+
+      for (let i = 1; i <= 10; i++) {
+        const id = `rec-fin-base-${String(i).padStart(5, '0')}`;
+        const key = `TXN-${String(i).padStart(7, '0')}`;
+        const status = i === 4 ? 'Flagged' : 'Active';
+        const val = 1500000 + (i * 750000);
+        const daysAgo = i * 3;
+        const recDate = new Date(now - daysAgo * 86400000).toISOString();
+        const title = `Deutsche Bank Securities [Wholesale Clearing #${i}]`;
+        const meta = JSON.stringify({ settlementChannel: 'SWIFT-ISO20022', currency: 'EUR' });
+        const vector = `${key} ${title} Wholesale Clearing Germany DACH ${status}`;
+        recordsToInsert.push(
+          `('${id}', 'ds-finance-03', '${key}', '${title}', 'Wholesale Clearing', '${status}', ${val}, 'Germany', 'DACH', '${recDate}', '${meta}', to_tsvector('english', '${vector}'))`
+        );
+      }
+
+      if (recordsToInsert.length > 0) {
+        await executeSql(client, `
+          INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, search_vector)
+          VALUES ${recordsToInsert.join(',\n')}
+          ON CONFLICT (id) DO NOTHING;
+        `);
+      }
     }
   } catch (err) {
     console.error('ensureBaselineData error:', err);

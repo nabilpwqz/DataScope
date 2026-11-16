@@ -214,8 +214,9 @@ async function seed() {
     { name: 'Singapore', region: 'APAC', weight: 0.03 },
   ];
 
-  const baseDate = new Date('2023-01-01T00:00:00Z').getTime();
-  const dateSpan = new Date('2024-11-14T00:00:00Z').getTime() - baseDate;
+  const now = Date.now();
+  const dateSpan = 730 * 86400000; // 2 years
+  const baseDate = now - dateSpan;
 
   // Insert sales records in batches of 2,500 to prevent payload limits
   const salesChunkSize = 2500;
@@ -306,7 +307,9 @@ async function seed() {
       const title = `Edge Cluster Node [${node}] Heartbeat #${globalIndex}`.replace(/'/g, "''");
       const status = (globalIndex % 25 === 0) ? 'Flagged' : (globalIndex % 15 === 0) ? 'Pending' : 'Active';
       const cpuUsage = Math.round((12 + ((globalIndex * 7) % 85)) * 10) / 10;
-      const recDate = new Date(baseDate + (globalIndex * 400000)).toISOString();
+      const telemSpan = 60 * 86400000;
+      const telemBase = now - telemSpan;
+      const recDate = new Date(telemBase + Math.floor((globalIndex / TELEMETRY_TARGET) * telemSpan) + ((globalIndex * 1337) % 60000)).toISOString();
       const metadata = JSON.stringify({
         cpuUsage,
         node,
@@ -373,7 +376,9 @@ async function seed() {
       const country = cObj.name;
       const region = cObj.region;
       const amount = Math.round(50000 + ((globalIndex * 17923) % 24950000));
-      const recDate = new Date(baseDate + (globalIndex * 450000)).toISOString();
+      const finSpan = 180 * 86400000;
+      const finBase = now - finSpan;
+      const recDate = new Date(finBase + Math.floor((globalIndex / FINANCE_TARGET) * finSpan) + ((globalIndex * 1337) % 60000)).toISOString();
       const title = `${inst} [${cat} #${globalIndex}]`.replace(/'/g, "''");
       const metadata = JSON.stringify({
         settlementChannel: 'SWIFT-ISO20022',

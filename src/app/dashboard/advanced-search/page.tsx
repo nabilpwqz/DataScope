@@ -237,6 +237,7 @@ const getDefaultConditionsForDataset = (datasetId: string): FilterCondition[] =>
     { id: 'c1', field: 'status', operator: 'equals', value: 'Active' },
     { id: 'c2', field: 'country', operator: 'equals', value: 'Germany' },
     { id: 'c3', field: 'numericValue', operator: 'greater_than', value: 10000 },
+    { id: 'c4', field: 'recordDate', operator: 'greater_than', value: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0] },
   ];
 };
 
@@ -333,6 +334,18 @@ const getPresetsForDataset = (datasetId: string) => {
 
   // Default ds-sales-01
   return [
+    {
+      name: 'Benchmark: Germany Active > $10k (Last 30 Days)',
+      description: 'Specification requirement: Status = Active, Country = Germany, Revenue > $10,000, Contract Date in last 30 days',
+      conditions: [
+        { id: 'p1', field: 'status', operator: 'equals' as FilterOperator, value: 'Active' },
+        { id: 'p2', field: 'country', operator: 'equals' as FilterOperator, value: 'Germany' },
+        { id: 'p3', field: 'numericValue', operator: 'greater_than' as FilterOperator, value: 10000 },
+        { id: 'p4', field: 'recordDate', operator: 'greater_than' as FilterOperator, value: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0] },
+      ],
+      logicalOp: 'AND' as const,
+      strategy: 'hybrid' as const,
+    },
     {
       name: 'High-Value Enterprise',
       description: 'Active accounts with revenue > $50,000 in Enterprise category',

@@ -6,6 +6,7 @@ import {
   addFilter,
   removeFilter,
   clearFilters,
+  setFilters,
   setFilterLogicalOperator,
 } from '@/store/slices/searchConfigSlice';
 import { FilterCondition } from '@/types';
@@ -29,13 +30,36 @@ export const DynamicFilterBar: React.FC<DynamicFilterBarProps> = ({
   const dispatch = useAppDispatch();
   const { filters, filterLogicalOperator } = useAppSelector((state) => state.searchConfig);
 
+  const thirtyDaysAgoStr = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+
   const quickPresets = [
     { label: 'Status = Active', field: 'status', operator: 'equals' as const, value: 'Active' },
     { label: 'Country = Germany', field: 'country', operator: 'equals' as const, value: 'Germany' },
     { label: 'Revenue > $10k', field: 'numericValue', operator: 'greater_than' as const, value: 10000 },
+    { label: 'Created > Last 30 Days', field: 'recordDate', operator: 'greater_than' as const, value: thirtyDaysAgoStr },
     { label: 'Americas Region', field: 'region', operator: 'equals' as const, value: 'Americas' },
     { label: 'Status = Flagged', field: 'status', operator: 'equals' as const, value: 'Flagged' },
   ];
+
+  const isSpecBenchmarkApplied =
+    filters.length === 4 &&
+    filterLogicalOperator === 'AND' &&
+    filters.some((f) => f.field === 'status' && f.value === 'Active') &&
+    filters.some((f) => f.field === 'country' && f.value === 'Germany') &&
+    filters.some((f) => f.field === 'numericValue' && f.value === 10000) &&
+    filters.some((f) => f.field === 'recordDate' && f.value === thirtyDaysAgoStr);
+
+  const handleApplySpecBenchmark = () => {
+    dispatch(setFilterLogicalOperator('AND'));
+    dispatch(
+      setFilters([
+        { id: 'spec-1', field: 'status', operator: 'equals', value: 'Active' },
+        { id: 'spec-2', field: 'country', operator: 'equals', value: 'Germany' },
+        { id: 'spec-3', field: 'numericValue', operator: 'greater_than', value: 10000 },
+        { id: 'spec-4', field: 'recordDate', operator: 'greater_than', value: thirtyDaysAgoStr },
+      ])
+    );
+  };
 
   const handleAddPreset = (preset: (typeof quickPresets)[0]) => {
     const exists = filters.some(
@@ -104,6 +128,23 @@ export const DynamicFilterBar: React.FC<DynamicFilterBarProps> = ({
               </button>
             );
           })}
+          <button
+            type="button"
+            onClick={handleApplySpecBenchmark}
+            className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+              isSpecBenchmarkApplied
+                ? 'bg-emerald-600 text-white border-emerald-500 font-bold'
+                : 'bg-emerald-950/40 text-emerald-300 border-emerald-800 hover:bg-emerald-900/60'
+            }`}
+            title="Applies Status=Active, Country=Germany, Revenue>10k, Date>Last 30 Days"
+          >
+            {isSpecBenchmarkApplied ? (
+              <CheckCircle2 className="h-3 w-3 text-white" />
+            ) : (
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            )}
+            Spec Benchmark (Active + Germany + &gt;$10k + 30 Days)
+          </button>
         </div>
 
         {/* Right: Advanced Query Builder trigger & clear */}
