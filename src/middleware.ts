@@ -9,6 +9,7 @@ export async function middleware(req: NextRequest) {
   // 1. Unprotected public routes
   if (
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/demo-login') ||
     pathname.startsWith('/api/health') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon.ico') ||

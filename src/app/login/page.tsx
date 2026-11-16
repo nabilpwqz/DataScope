@@ -179,7 +179,7 @@ function LoginForm() {
     setSuccessMsg('');
 
     try {
-      const res = await fetch('/api/auth/demo', {
+      const res = await fetch('/api/demo-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role }),

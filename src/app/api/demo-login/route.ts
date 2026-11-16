@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signToken } from '@/lib/auth/jwt';
 import { UserRole } from '@/types';
-import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
