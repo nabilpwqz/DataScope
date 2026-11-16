@@ -1,0 +1,48 @@
+# Query 2: FTS Combined with Dual Filter Predicates
+
+## Executed Query
+```sql
+EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
+            SELECT id, record_key, title, status, country
+            FROM dataset_records
+            WHERE dataset_id = 'ds-sales-01'
+              AND search_tsv @@ plainto_tsquery('english', 'Robotics')
+              AND status = 'Active'
+              AND country = 'Germany'
+            ORDER BY record_date DESC
+            LIMIT 25;
+```
+
+## Raw EXPLAIN (ANALYZE, BUFFERS) Execution Plan
+```text
+Limit  (cost=379.19..379.26 rows=25 width=89) (actual time=2.319..2.324 rows=25.00 loops=1)
+  Output: id, record_key, title, status, country, record_date
+  Buffers: shared hit=562 read=12
+  ->  Sort  (cost=379.19..379.29 rows=37 width=89) (actual time=2.317..2.319 rows=25.00 loops=1)
+        Output: id, record_key, title, status, country, record_date
+        Sort Key: dataset_records.record_date DESC
+        Sort Method: top-N heapsort  Memory: 31kB
+        Buffers: shared hit=562 read=12
+        ->  Bitmap Heap Scan on public.dataset_records  (cost=170.37..378.23 rows=37 width=89) (actual time=1.575..2.202 rows=390.00 loops=1)
+              Output: id, record_key, title, status, country, record_date
+              Recheck Cond: ((dataset_records.search_tsv @@ '''robot'''::tsquery) AND (dataset_records.dataset_id = 'ds-sales-01'::text) AND (dataset_records.country = 'Germany'::text))
+              Filter: (dataset_records.status = 'Active'::text)
+              Rows Removed by Filter: 165
+              Heap Blocks: exact=555
+              Buffers: shared hit=562 read=12
+              ->  BitmapAnd  (cost=170.37..170.37 rows=55 width=0) (actual time=1.499..1.500 rows=0.00 loops=1)
+                    Buffers: shared hit=7 read=12
+                    ->  Bitmap Index Scan on idx_records_search_tsv_gin  (cost=0.00..20.09 rows=600 width=0) (actual time=0.569..0.569 rows=5000.00 loops=1)
+                          Index Cond: (dataset_records.search_tsv @@ '''robot'''::tsquery)
+                          Index Searches: 1
+                          Buffers: shared hit=7
+                    ->  Bitmap Index Scan on idx_records_country  (cost=0.00..150.01 rows=10972 width=0) (actual time=0.786..0.786 rows=11111.00 loops=1)
+                          Index Cond: ((dataset_records.dataset_id = 'ds-sales-01'::text) AND (dataset_records.country = 'Germany'::text))
+                          Index Searches: 1
+                          Buffers: shared read=12
+Query Identifier: 2110839831252965420
+Planning:
+  Buffers: shared hit=6
+Planning Time: 0.213 ms
+Execution Time: 2.401 ms
+```
