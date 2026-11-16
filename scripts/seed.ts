@@ -1,10 +1,12 @@
 import { initDatabase, executeSql } from '../src/lib/db';
 import bcrypt from 'bcryptjs';
 
-// Parse command line arguments
+// Parse command line arguments and environment variables
 const args = process.argv.slice(2);
-const scaleArg = args.find((a) => a.startsWith('--scale='))?.split('=')[1]?.toLowerCase() || '100k';
-const is1M = scaleArg === '1m' || scaleArg === '1000k' || scaleArg === '1000000';
+const envSeedSize = process.env.SEED_SIZE?.toLowerCase();
+const cliScale = args.find((a) => a.startsWith('--scale='))?.split('=')[1]?.toLowerCase();
+const scaleArg = cliScale || envSeedSize || '100k';
+const is1M = scaleArg === '1m' || scaleArg === '1000k' || scaleArg === '1000000' || scaleArg === '1m_rows';
 const forceClean = args.includes('--force') || args.includes('--clean') || args.includes('--truncate');
 
 const SALES_TARGET = is1M ? 800000 : 100000;
