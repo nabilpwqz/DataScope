@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
-import { verifyToken } from '@/lib/auth/jwt';
+import { authorize } from '@/lib/auth/authorize';
 import { AuditLog } from '@/types';
 import crypto from 'crypto';
 
@@ -8,18 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const client = await getRawClient();
-
-    let userRole = 'admin';
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = await verifyToken(token);
-      if (payload) {
-        userRole = payload.role;
-      }
+    const auth = await authorize(req, { role: 'analyst' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
     }
 
+    const client = await getRawClient();
     const { searchParams } = new URL(req.url);
     const limitParam = searchParams.get('limit');
     const actionParam = searchParams.get('action');
@@ -78,7 +72,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       logs,
       totalCount: logs.length,
-      viewerRole: userRole,
+      viewerRole: auth.user.role,
     });
   } catch (err: any) {
     console.error('Fetch audit logs error:', err);
@@ -88,23 +82,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const client = await getRawClient();
-
-    let userId = 'usr-admin-01';
-    let userName = 'Elena Rostova';
-    let userRole = 'admin';
-
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = await verifyToken(token);
-      if (payload) {
-        userId = payload.userId;
-        userName = payload.name;
-        userRole = payload.role;
-      }
+    const auth = await authorize(req);
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
     }
 
+    const client = await getRawClient();
     const body = await req.json();
     const { action, resource, resourceId, details, status = 'SUCCESS' } = body;
 
@@ -122,9 +105,9 @@ export async function POST(req: NextRequest) {
       `,
       [
         logId,
-        userId,
-        userName,
-        userRole,
+        auth.user.id,
+        auth.user.name,
+        auth.user.role,
         action,
         resource,
         resourceId || null,
@@ -140,4 +123,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to record audit event' }, { status: 500 });
   }
 }
-

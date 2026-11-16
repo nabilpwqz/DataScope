@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
-import { verifyToken } from '@/lib/auth/jwt';
-import { canAccessDataset } from '@/lib/auth/rbac';
-import { Dataset, UserRole } from '@/types';
+import { authorize } from '@/lib/auth/authorize';
+import { Dataset } from '@/types';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -10,24 +9,17 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const datasetId = params.id;
-    const client = await getRawClient();
-
-    let userRole: UserRole = 'admin';
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
-      if (payload) userRole = payload.role;
+    const auth = await authorize(req, { datasetId, action: 'read' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
     }
 
+    const client = await getRawClient();
     const dsRes = await client.query('SELECT * FROM datasets WHERE id = $1 OR slug = $1', [datasetId]);
     const row = dsRes.rows[0];
 
     if (!row) {
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
-    }
-
-    if (!canAccessDataset(userRole, row.access_level)) {
-      return NextResponse.json({ error: 'Access denied to this dataset under your current role' }, { status: 403 });
     }
 
     const fieldsRes = await client.query('SELECT * FROM dataset_fields WHERE dataset_id = $1 ORDER BY created_at ASC', [row.id]);
@@ -69,25 +61,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const datasetId = params.id;
-    const client = await getRawClient();
-
-    let actorName = 'Elena Rostova';
-    let actorRole: UserRole = 'admin';
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
-      if (payload) {
-        actorName = payload.name;
-        actorRole = payload.role;
-      }
-    }
-
-    if (actorRole !== 'admin') {
-      return NextResponse.json({ error: 'Administrator clearance required to modify dataset metadata' }, { status: 403 });
+    const auth = await authorize(req, { role: 'admin', datasetId, action: 'manage' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Forbidden' }, { status: auth.status || 403 });
     }
 
     const body = await req.json();
     const { name, description, category, accessLevel, dataSource } = body;
+    const client = await getRawClient();
 
     const updateRes = await client.query(
       `
@@ -111,7 +92,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const updated = updateRes.rows[0];
 
-    // Log update in audit trail
+    // Log update in audit trail with real authenticated identity
     const auditId = `aud-${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `
@@ -120,9 +101,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       `,
       [
         auditId,
-        'usr-current',
-        actorName,
-        actorRole,
+        auth.user.id,
+        auth.user.name,
+        auth.user.role,
         'DATASET_METADATA_UPDATE',
         `Dataset:${updated.id}`,
         updated.id,
@@ -153,27 +134,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const datasetId = params.id;
+    const auth = await authorize(req, { role: 'admin', datasetId, action: 'manage' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Forbidden' }, { status: auth.status || 403 });
+    }
+
     const client = await getRawClient();
-
-    let actorName = 'Elena Rostova';
-    let actorRole: UserRole = 'admin';
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
-      if (payload) {
-        actorName = payload.name;
-        actorRole = payload.role;
-      }
-    }
-
-    if (actorRole !== 'admin') {
-      return NextResponse.json({ error: 'Administrator clearance required to delete datasets' }, { status: 403 });
-    }
 
     // Delete records and fields associated with this dataset
     await client.query('DELETE FROM dataset_records WHERE dataset_id = $1', [datasetId]);
     await client.query('DELETE FROM dataset_fields WHERE dataset_id = $1', [datasetId]);
     await client.query('DELETE FROM data_quality_issues WHERE dataset_id = $1', [datasetId]);
+    await client.query('DELETE FROM access_permissions WHERE dataset_id = $1', [datasetId]);
     const delRes = await client.query('DELETE FROM datasets WHERE id = $1 RETURNING id, name', [datasetId]);
 
     if (delRes.rows.length === 0) {
@@ -182,7 +154,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     const deleted = delRes.rows[0];
 
-    // Log deletion in audit trail
+    // Log deletion in audit trail with real authenticated user
     const auditId = `aud-${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `
@@ -191,9 +163,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       `,
       [
         auditId,
-        'usr-current',
-        actorName,
-        actorRole,
+        auth.user.id,
+        auth.user.name,
+        auth.user.role,
         'DATASET_DELETE',
         `Dataset:${deleted.id}`,
         deleted.id,

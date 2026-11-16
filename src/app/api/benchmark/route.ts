@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SearchEngine } from '@/lib/search/search-engine';
+import { authorize } from '@/lib/auth/authorize';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await authorize(req);
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
     const datasetId = 'ds-sales-01';
     const benchmarkResults: Record<string, any> = {};
 
     // 1. Full-Text Search benchmark
-    const ftsT0 = performance.now();
     const ftsRes = await SearchEngine.executeQuery({
       datasetId,
       search: 'Enterprise Logistics',
@@ -25,10 +30,9 @@ export async function GET(req: NextRequest) {
     };
 
     // 2. Trigram Search benchmark
-    const trgmT0 = performance.now();
     const trgmRes = await SearchEngine.executeQuery({
       datasetId,
-      search: 'Bavaria Robotik', // Slight typo for fuzzy matching
+      search: 'Bavaria Robotik',
       searchType: 'trgm',
       page: 1,
       pageSize: 25,
@@ -41,7 +45,6 @@ export async function GET(req: NextRequest) {
     };
 
     // 3. Combined Complex Multi-Filter benchmark
-    const multiFilterT0 = performance.now();
     const multiFilterRes = await SearchEngine.executeQuery({
       datasetId,
       filters: [
@@ -61,22 +64,21 @@ export async function GET(req: NextRequest) {
       cacheHit: multiFilterRes.cacheHit,
     };
 
-    // 4. Deep Pagination benchmark (Page 100)
-    const pageT0 = performance.now();
+    // 4. Deep Pagination benchmark
     const deepPageRes = await SearchEngine.executeQuery({
       datasetId,
-      page: 100,
-      pageSize: 50,
+      page: 50,
+      pageSize: 25,
       sort: [{ field: 'recordDate', direction: 'desc' }],
     });
     benchmarkResults.deepPagination = {
-      label: 'Deep Pagination (Page 100, Offset 5,000, 50 rows)',
+      label: 'Pagination (Page 50, 25 rows)',
       executionTimeMs: deepPageRes.executionTimeMs,
       totalMatched: deepPageRes.totalRecords,
       cacheHit: deepPageRes.cacheHit,
     };
 
-    // 5. Cache Hit benchmark (repeating query 1)
+    // 5. Cache Hit benchmark
     const cachedRes = await SearchEngine.executeQuery({
       datasetId,
       search: 'Enterprise Logistics',
@@ -85,14 +87,14 @@ export async function GET(req: NextRequest) {
       pageSize: 25,
     });
     benchmarkResults.cacheHitEvaluation = {
-      label: 'LRU In-Memory Cache Retrieval',
+      label: 'Query Cache Retrieval',
       executionTimeMs: cachedRes.executionTimeMs,
       totalMatched: cachedRes.totalRecords,
       cacheHit: cachedRes.cacheHit,
     };
 
     return NextResponse.json({
-      environment: 'PostgreSQL / PGlite 100,000+ Records Benchmark',
+      environment: 'PostgreSQL Database Engine Live Benchmark',
       timestamp: new Date().toISOString(),
       results: benchmarkResults,
     });
@@ -101,4 +103,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Benchmark failed', details: err.message }, { status: 500 });
   }
 }
-

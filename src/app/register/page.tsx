@@ -164,7 +164,7 @@ function RegisterForm() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Marcus Vance"
+            placeholder="Alex Morgan"
             icon={<IconUser className="h-4 w-4" />}
             className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           />

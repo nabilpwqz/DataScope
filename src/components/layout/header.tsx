@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSession, signOut } from 'next-auth/react';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { switchRole, logout } from '@/store/slices/authSlice';
+import { setUser, logout } from '@/store/slices/authSlice';
 import { setSelectedDatasetId } from '@/store/slices/datasetSlice';
 import { setAiModalOpen } from '@/store/slices/savedViewsSlice';
 import { useGetDatasetsQuery } from '@/store/services/dataScopeApi';
@@ -22,13 +23,31 @@ import {
 export const Header: React.FC = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { user, activeRole } = useAppSelector((state) => state.auth);
+  const { data: session } = useSession();
+  const { user } = useAppSelector((state) => state.auth);
   const { selectedDatasetId } = useAppSelector((state) => state.dataset);
   const { data: datasets = [] } = useGetDatasetsQuery();
 
-  const handleRoleChange = (role: UserRole) => {
-    dispatch(switchRole(role));
-  };
+  useEffect(() => {
+    if (session?.user && (!user || user.email !== session.user.email)) {
+      dispatch(
+        setUser({
+          user: {
+            id: (session.user as any).id || (session.user as any).userId || 'usr-session',
+            name: session.user.name || 'Authorized User',
+            email: session.user.email || '',
+            role: ((session.user as any).role as UserRole) || 'viewer',
+            department: (session.user as any).department || 'Operations',
+            createdAt: new Date().toISOString(),
+          },
+        })
+      );
+    }
+  }, [session, user, dispatch]);
+
+  const activeRole: UserRole = (session?.user as any)?.role || user?.role || 'viewer';
+  const userName = user?.name || session?.user?.name || 'Authorized User';
+  const userDept = user?.department || (session?.user as any)?.department || 'Enterprise Ops';
 
   const handleDatasetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     dispatch(setSelectedDatasetId(e.target.value));
@@ -37,11 +56,9 @@ export const Header: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-    } catch {
-      // Continue client-side session cleanup
-    }
+    } catch {}
     dispatch(logout());
-    router.push('/');
+    await signOut({ callbackUrl: '/login' });
   };
 
   return (
@@ -108,43 +125,22 @@ export const Header: React.FC = () => {
         </Link>
       </div>
 
-      {/* Right: Controls, Role Switcher, Theme & Sign Out */}
+      {/* Right: Controls, Role Badge, Theme & Sign Out */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Role Switcher */}
-        <div className="flex items-center gap-1 rounded-md border border-slate-800 bg-slate-900 p-1">
-          <span className="px-1.5 text-[11px] text-slate-400 hidden lg:inline">
-            Role:
+        {/* Real Authenticated Role Badge (Server-Enforced) */}
+        <div className="flex items-center gap-1.5 rounded-md border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs">
+          <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Role:</span>
+          <span
+            className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${
+              activeRole === 'admin'
+                ? 'bg-rose-950/70 border border-rose-800/60 text-rose-300'
+                : activeRole === 'analyst'
+                ? 'bg-emerald-950/70 border border-emerald-800/60 text-emerald-300'
+                : 'bg-slate-800 border border-slate-700 text-slate-300'
+            }`}
+          >
+            {activeRole}
           </span>
-          <button
-            onClick={() => handleRoleChange('admin')}
-            aria-label="Switch to administrator role"
-            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeRole === 'admin'
-                ? 'bg-slate-700 text-white font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-          >
-            Admin
-          </button>
-          <button
-            onClick={() => handleRoleChange('analyst')}
-            aria-label="Switch to analyst role"
-            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeRole === 'analyst'
-                ? 'bg-emerald-700 text-white font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-          >
-            Analyst
-          </button>
-          <button
-            onClick={() => handleRoleChange('viewer')}
-            aria-label="Switch to viewer role"
-            className={`px-2 py-0.5 text-xs font-medium rounded transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 ${activeRole === 'viewer'
-                ? 'bg-slate-800 text-emerald-400 border border-emerald-500/40 font-semibold'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-          >
-            Viewer
-          </button>
         </div>
 
         {/* Documentation Hub */}
@@ -161,14 +157,14 @@ export const Header: React.FC = () => {
         {/* User Profile Avatar */}
         <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-emerald-400 font-semibold text-xs border border-slate-700">
-            {user?.name ? user.name.charAt(0) : 'U'}
+            {userName ? userName.charAt(0) : 'U'}
           </div>
           <div className="hidden xl:flex flex-col text-left">
             <span className="text-xs font-medium text-slate-200 leading-tight">
-              {user?.name || 'Elena Rostova'}
+              {userName}
             </span>
             <span className="text-[11px] text-slate-400 capitalize">
-              {user?.department || 'Enterprise Ops'}
+              {userDept}
             </span>
           </div>
         </div>

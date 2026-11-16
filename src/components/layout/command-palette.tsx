@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/store';
 import { setAiModalOpen } from '@/store/slices/savedViewsSlice';
-import { switchRole } from '@/store/slices/authSlice';
 import { UserRole } from '@/types';
 import {
   IconSearch,
@@ -219,23 +218,7 @@ export const CommandPalette: React.FC = () => {
       },
       icon: IconSun,
     },
-    {
-      id: 'action-role-admin',
-      category: 'Actions',
-      title: 'Switch Role to Admin',
-      description: 'Activate full administrator access and permissions.',
-      action: () => dispatch(switchRole('admin' as UserRole)),
-      icon: IconUsers,
-    },
-    {
-      id: 'action-role-analyst',
-      category: 'Actions',
-      title: 'Switch Role to Analyst',
-      description: 'Activate data analyst views and export privileges.',
-      action: () => dispatch(switchRole('analyst' as UserRole)),
-      icon: IconUsers,
-    },
-  ], [dispatch]);
+  ], []);
 
   const filteredItems = useMemo(() => {
     if (!query.trim()) return items;

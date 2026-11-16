@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
-import { verifyToken } from '@/lib/auth/jwt';
+import { authorize } from '@/lib/auth/authorize';
+import { CommentCreateSchema } from '@/lib/validation/schemas';
 import { RecordComment } from '@/types';
 import crypto from 'crypto';
 
@@ -8,10 +9,16 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; recordId: string }> }
+  { params }: { params: { id: string; recordId: string } }
 ) {
   try {
-    const { id: datasetId, recordId } = await params;
+    const { id: datasetId, recordId } = params;
+
+    const auth = await authorize(req, { datasetId, action: 'read' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
     const client = await getRawClient();
 
     const res = await client.query(
@@ -43,34 +50,28 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string; recordId: string }> }
+  { params }: { params: { id: string; recordId: string } }
 ) {
   try {
-    const { id: datasetId, recordId } = await params;
+    const { id: datasetId, recordId } = params;
+
+    const auth = await authorize(req, { datasetId, action: 'read' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
+    const rawBody = await req.json();
+    const parsed = CommentCreateSchema.safeParse(rawBody);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Comment content cannot be empty (maximum 2000 characters)' },
+        { status: 400 }
+      );
+    }
+
+    const { content } = parsed.data;
     const client = await getRawClient();
-
-    let userId = 'usr-admin-01';
-    let userName = 'Elena Rostova';
-    let userRole = 'admin';
-
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = await verifyToken(token);
-      if (payload) {
-        userId = payload.userId;
-        userName = payload.name;
-        userRole = payload.role;
-      }
-    }
-
-    const body = await req.json();
-    const { content } = body;
-
-    if (!content || !content.trim()) {
-      return NextResponse.json({ error: 'Comment content cannot be empty' }, { status: 400 });
-    }
-
     const commentId = `cmt-${crypto.randomBytes(4).toString('hex')}`;
 
     await client.query(
@@ -78,7 +79,7 @@ export async function POST(
       INSERT INTO record_comments (id, record_id, user_id, user_name, user_role, content)
       VALUES ($1, $2, $3, $4, $5, $6);
       `,
-      [commentId, recordId, userId, userName, userRole, content.trim()]
+      [commentId, recordId, auth.user.id, auth.user.name, auth.user.role, content.trim()]
     );
 
     // Also record in record_history audit trail for this record
@@ -91,9 +92,9 @@ export async function POST(
       [
         historyId,
         recordId,
-        userId,
-        userName,
-        'TAG_ADDED',
+        auth.user.id,
+        auth.user.name,
+        'COMMENT_ADDED',
         JSON.stringify({ note: content.trim().slice(0, 80) }),
       ]
     );
@@ -103,9 +104,9 @@ export async function POST(
         comment: {
           id: commentId,
           recordId,
-          userId,
-          userName,
-          userRole,
+          userId: auth.user.id,
+          userName: auth.user.name,
+          userRole: auth.user.role,
           content: content.trim(),
           createdAt: new Date().toISOString(),
         },
@@ -117,4 +118,3 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to save comment' }, { status: 500 });
   }
 }
-

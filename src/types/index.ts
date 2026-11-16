@@ -301,3 +301,23 @@ export interface UserSummary {
   lastActive: string;
   permissionsCount: number;
 }
+
+export interface AccessPermission {
+  id: string;
+  userId?: string | null;
+  role?: UserRole | null;
+  datasetId: string;
+  canRead: boolean;
+  canWrite: boolean;
+  canExport: boolean;
+  canManage: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RoleDefinition {
+  id: UserRole;
+  name: string;
+  description: string;
+  permissions: string[];
+}

@@ -507,6 +507,50 @@ async function ensureBaselineData(client: any) {
         ON CONFLICT (id) DO NOTHING;
       `);
     }
+
+    // Baseline Roles
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id text PRIMARY KEY,
+        name text NOT NULL,
+        description text NOT NULL,
+        permissions jsonb NOT NULL DEFAULT '[]',
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS access_permissions (
+        id text PRIMARY KEY,
+        user_id text REFERENCES users(id) ON DELETE CASCADE,
+        role text,
+        dataset_id text NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+        can_read boolean NOT NULL DEFAULT true,
+        can_write boolean NOT NULL DEFAULT false,
+        can_export boolean NOT NULL DEFAULT false,
+        can_manage boolean NOT NULL DEFAULT false,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      INSERT INTO roles (id, name, description, permissions)
+      VALUES 
+        ('admin', 'Administrator', 'Full system and data governance access across all datasets and settings', '["manage_users", "manage_datasets", "manage_permissions", "export_data", "save_views", "view_analytics", "read_all", "write_all"]'),
+        ('analyst', 'Intelligence Analyst', 'Deep analytical query access, export capabilities, and saved views', '["read_restricted", "export_data", "save_views", "share_views", "view_analytics"]'),
+        ('viewer', 'Business Viewer', 'Read-only exploratory access to designated public datasets', '["read_public", "basic_filters", "view_shared_views"]')
+      ON CONFLICT (id) DO NOTHING;
+
+      INSERT INTO access_permissions (id, role, dataset_id, can_read, can_write, can_export, can_manage)
+      VALUES
+        ('perm-admin-sales', 'admin', 'ds-sales-01', true, true, true, true),
+        ('perm-analyst-sales', 'analyst', 'ds-sales-01', true, false, true, false),
+        ('perm-viewer-sales', 'viewer', 'ds-sales-01', true, false, false, false),
+
+        ('perm-admin-telem', 'admin', 'ds-telemetry-02', true, true, true, true),
+        ('perm-analyst-telem', 'analyst', 'ds-telemetry-02', true, false, true, false),
+
+        ('perm-admin-fin', 'admin', 'ds-finance-03', true, true, true, true)
+      ON CONFLICT (id) DO NOTHING;
+    `);
   } catch (err) {
     console.warn('Notice: Baseline data check completed with notice:', err);
   }

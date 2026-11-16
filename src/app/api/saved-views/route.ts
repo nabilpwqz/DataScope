@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
-import { verifyToken } from '@/lib/auth/jwt';
-import { SavedView, UserRole } from '@/types';
+import { authorize } from '@/lib/auth/authorize';
+import { SavedViewCreateSchema } from '@/lib/validation/schemas';
+import { SavedView } from '@/types';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -10,25 +11,19 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const datasetId = url.searchParams.get('datasetId');
-    const client = await getRawClient();
 
-    let userId = 'usr-admin-01';
-    let userRole: UserRole = 'admin';
-
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
-      if (payload) {
-        userId = payload.userId;
-        userRole = payload.role;
-      }
+    const auth = await authorize(req, datasetId ? { datasetId, action: 'read' } : {});
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
     }
+
+    const { id: userId } = auth.user;
+    const client = await getRawClient();
 
     let query: string;
     let params: any[];
 
     if (datasetId) {
-      // Views that are either created by this user OR shared with the team
       query = `
         SELECT * FROM saved_views
         WHERE dataset_id = $1 AND (user_id = $2 OR is_shared = true)
@@ -74,22 +69,29 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const client = await getRawClient();
+    const rawBody = await req.json();
+    const parsed = SavedViewCreateSchema.safeParse(rawBody);
 
-    let userId = 'usr-analyst-01';
-    let authorName = 'Marcus Vance';
-
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
-      if (payload) {
-        userId = payload.userId;
-        authorName = payload.name;
-      }
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid saved view payload', details: parsed.error.issues },
+        { status: 400 }
+      );
     }
 
-    const id = `view-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const body = parsed.data;
+
+    // Viewers cannot create saved views (requires Analyst or Admin)
+    const auth = await authorize(req, { role: 'analyst', datasetId: body.datasetId, action: 'read' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json(
+        { error: auth.error || 'Forbidden: Viewers are not permitted to author saved views' },
+        { status: auth.status || 403 }
+      );
+    }
+
+    const client = await getRawClient();
+    const id = `view-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
 
     await client.query(
       `INSERT INTO saved_views (
@@ -98,12 +100,12 @@ export async function POST(req: NextRequest) {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         id,
-        userId,
+        auth.user.id,
         body.datasetId,
         body.name,
         body.description || '',
         Boolean(body.isShared),
-        authorName,
+        auth.user.name,
         body.searchQuery || '',
         body.searchType || 'hybrid',
         JSON.stringify(body.filterConfig || []),
@@ -114,10 +116,25 @@ export async function POST(req: NextRequest) {
       ]
     );
 
+    // Audit trail
+    await client.query(
+      `INSERT INTO audit_logs (id, user_id, user_name, user_role, action, resource, resource_id, details, ip_address, status)
+       VALUES ($1, $2, $3, $4, 'SAVED_VIEW_CREATE', $5, $6, $7, $8, 'SUCCESS')`,
+      [
+        `aud-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`,
+        auth.user.id,
+        auth.user.name,
+        auth.user.role,
+        `SavedView:${body.datasetId}`,
+        id,
+        JSON.stringify({ name: body.name, isShared: body.isShared }),
+        req.headers.get('x-forwarded-for') || '127.0.0.1',
+      ]
+    ).catch(() => {});
+
     return NextResponse.json({ id, name: body.name, success: true }, { status: 201 });
   } catch (err: any) {
     console.error('Save view error:', err);
     return NextResponse.json({ error: 'Failed to create saved view' }, { status: 500 });
   }
 }
-

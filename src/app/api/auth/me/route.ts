@@ -1,28 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/auth/jwt';
+import { authorize } from '@/lib/auth/authorize';
 import { getRawClient } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    const auth = await authorize(req);
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
     }
 
     const client = await getRawClient();
-    const res = await client.query('SELECT id, name, email, role, department, avatar_url, created_at FROM users WHERE id = $1', [payload.userId]);
+    const res = await client.query(
+      'SELECT id, name, email, role, department, avatar_url, created_at FROM users WHERE id = $1',
+      [auth.user.id]
+    );
     const user = res.rows[0];
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ error: 'User not found in system' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -40,4 +37,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-

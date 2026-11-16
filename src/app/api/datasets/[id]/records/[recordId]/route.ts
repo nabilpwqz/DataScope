@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
 import { queryCache } from '@/lib/cache/lru-cache';
-import { verifyToken } from '@/lib/auth/jwt';
-import { getRolePermissions } from '@/lib/auth/rbac';
-import { DatasetRecord, RecordHistoryItem, RecordRelationship, UserRole } from '@/types';
+import { authorize } from '@/lib/auth/authorize';
+import { DatasetRecord, RecordHistoryItem, RecordRelationship } from '@/types';
 import crypto from 'crypto';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const RecordPatchSchema = z
+  .object({
+    status: z.enum(['Active', 'Pending', 'Archived', 'Suspended', 'Completed', 'Flagged']),
+    reason: z.string().max(256).optional(),
+  })
+  .strict();
 
 export async function GET(
   req: NextRequest,
@@ -14,6 +21,13 @@ export async function GET(
 ) {
   try {
     const { id: datasetId, recordId } = params;
+
+    // Verify dataset-level access
+    const auth = await authorize(req, { datasetId, action: 'read' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
     const client = await getRawClient();
 
     // 1. Fetch primary record
@@ -109,28 +123,23 @@ export async function PATCH(
 ) {
   try {
     const { id: datasetId, recordId } = params;
-    const body = await req.json();
-    const { status, reason } = body;
 
-    let userRole: UserRole = 'admin';
-    let userName = 'Elena Rostova';
-    let userId = 'usr-admin-01';
-
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const payload = await verifyToken(authHeader.split(' ')[1]);
-      if (payload) {
-        userRole = payload.role;
-        userName = payload.name;
-        userId = payload.userId;
-      }
+    // Verify modify permissions
+    const auth = await authorize(req, { role: 'admin', datasetId, action: 'write' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json(
+        { error: auth.error || 'Forbidden: administrator role required to modify records' },
+        { status: auth.status || 403 }
+      );
     }
 
-    const perms = getRolePermissions(userRole);
-    if (!perms.canModifyRecords) {
-      return NextResponse.json({ error: 'Role unauthorized to modify records' }, { status: 403 });
+    const rawBody = await req.json();
+    const parsed = RecordPatchSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid record update payload', details: parsed.error.issues }, { status: 400 });
     }
 
+    const { status, reason } = parsed.data;
     const client = await getRawClient();
 
     // Get current status
@@ -150,15 +159,15 @@ export async function PATCH(
       [status, recordId, datasetId]
     );
 
-    // Record audit trail
+    // Record audit trail with real user
     await client.query(
       `INSERT INTO record_history (id, record_id, changed_by_user_id, changed_by_name, change_type, diff_payload)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [
         crypto.randomUUID(),
         recordId,
-        userId,
-        userName,
+        auth.user.id,
+        auth.user.name,
         'STATUS_CHANGE',
         JSON.stringify({ field: 'status', oldValue: oldStatus, newValue: status, reason: reason || 'Manual update' }),
       ]
@@ -172,4 +181,3 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update record' }, { status: 500 });
   }
 }
-

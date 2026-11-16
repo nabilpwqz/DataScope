@@ -3,6 +3,16 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 
+-- Roles Table
+CREATE TABLE IF NOT EXISTS roles (
+  id text PRIMARY KEY,
+  name text NOT NULL,
+  description text NOT NULL,
+  permissions jsonb NOT NULL DEFAULT '[]',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
   id text PRIMARY KEY,
@@ -12,6 +22,20 @@ CREATE TABLE IF NOT EXISTS users (
   role text NOT NULL,
   department text NOT NULL,
   avatar_url text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Access Permissions Table
+CREATE TABLE IF NOT EXISTS access_permissions (
+  id text PRIMARY KEY,
+  user_id text REFERENCES users(id) ON DELETE CASCADE,
+  role text,
+  dataset_id text NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+  can_read boolean NOT NULL DEFAULT true,
+  can_write boolean NOT NULL DEFAULT false,
+  can_export boolean NOT NULL DEFAULT false,
+  can_manage boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );

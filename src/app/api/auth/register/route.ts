@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Set secure HTTP-only cookie
-    response.cookies.set('auth_token', token, {
+    response.cookies.set('datascope_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
+import { authorize } from '@/lib/auth/authorize';
 import { DataLineageGraph } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await authorize(req);
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
     const client = await getRawClient();
 
     // Fetch dynamic dataset record counts from db to reflect live database state
@@ -196,4 +202,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to retrieve data lineage graph' }, { status: 500 });
   }
 }
-

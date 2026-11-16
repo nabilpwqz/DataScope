@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store';
-import { switchRole } from '@/store/slices/authSlice';
 import {
   setTableDensity,
   setTheme,
@@ -445,45 +444,18 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Simulated Role Switcher */}
+              {/* Authenticated Role Status */}
               <div className="flex flex-col items-start md:items-end gap-1.5">
                 <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                  Simulate Role Evaluation:
+                  Enforced Active Role:
                 </span>
-                <div className="flex items-center gap-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-1">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(switchRole('admin'))}
-                    className={`px-3 py-1.5 text-xs rounded-md font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                      activeRole === 'admin'
-                        ? 'bg-emerald-600 text-white shadow-sm'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    Administrator
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => dispatch(switchRole('analyst'))}
-                    className={`px-3 py-1.5 text-xs rounded-md font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                      activeRole === 'analyst'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    Data Analyst
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => dispatch(switchRole('viewer'))}
-                    className={`px-3 py-1.5 text-xs rounded-md font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                      activeRole === 'viewer'
-                        ? 'bg-purple-600 text-white shadow-sm'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    Viewer
-                  </button>
+                <div className="flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    {activeRole}
+                  </span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    (Server-Verified Session)
+                  </span>
                 </div>
               </div>
             </div>

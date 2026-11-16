@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
+import { authorize } from '@/lib/auth/authorize';
 import { AnalyticsSummary } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -10,9 +11,19 @@ export async function GET(
 ) {
   try {
     const datasetId = params.id;
+
+    // Check authorization and dataset-level permission
+    const auth = await authorize(req, { datasetId, action: 'read' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json(
+        { error: auth.error || 'Forbidden: insufficient permissions to view dataset analytics' },
+        { status: auth.status || 403 }
+      );
+    }
+
     const client = await getRawClient();
 
-    // Execute all independent analytic aggregations concurrently
+    // Execute pure SQL analytic aggregations concurrently
     const [
       generalRes,
       categoryRes,
@@ -133,22 +144,15 @@ export async function GET(
       totalValue: Math.round(parseFloat(r.total_value)),
     }));
 
-    const filterCounts: Record<string, number> = {
-      status: 24,
-      country: 19,
-      numericValue: 16,
-      region: 11,
-      category: 8,
-      recordDate: 7,
-    };
-
+    const filterCounts: Record<string, number> = {};
     filterRes.rows.forEach((row: any) => {
       try {
         const filters = typeof row.filter_summary === 'string' ? JSON.parse(row.filter_summary) : row.filter_summary;
         if (Array.isArray(filters)) {
           filters.forEach((f: any) => {
-            if (f.field) {
-              filterCounts[f.field] = (filterCounts[f.field] || 0) + 1;
+            const field = typeof f === 'string' ? f.split(' ')[0] : f.field;
+            if (field) {
+              filterCounts[field] = (filterCounts[field] || 0) + 1;
             }
           });
         }
@@ -166,12 +170,12 @@ export async function GET(
     }));
 
     let valuePercentiles = {
-      min: Math.round(averageValue * 0.15),
-      p25: Math.round(averageValue * 0.45),
-      p50: Math.round(averageValue * 0.72),
-      p75: Math.round(averageValue * 1.35),
-      p90: Math.round(averageValue * 2.10),
-      max: Math.round(averageValue * 4.80),
+      min: 0,
+      p25: 0,
+      p50: 0,
+      p75: 0,
+      p90: 0,
+      max: 0,
     };
 
     if (percResResult.rows && percResResult.rows[0] && percResResult.rows[0].max_val > 0) {
@@ -205,4 +209,3 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to compute analytics' }, { status: 500 });
   }
 }
-

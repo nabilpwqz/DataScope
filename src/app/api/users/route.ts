@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
-import { verifyToken } from '@/lib/auth/jwt';
+import { authorize } from '@/lib/auth/authorize';
 import { UserSummary, UserRole } from '@/types';
 import crypto from 'crypto';
 
@@ -8,17 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const client = await getRawClient();
-
-    let viewerRole: UserRole = 'admin';
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = await verifyToken(token);
-      if (payload) {
-        viewerRole = payload.role;
-      }
+    const auth = await authorize(req, { role: 'analyst' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
     }
+
+    const client = await getRawClient();
 
     const res = await client.query(`
       SELECT id, name, email, role, department, created_at, updated_at
@@ -52,7 +47,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       users,
       totalCount: users.length,
-      viewerRole,
+      viewerRole: auth.user.role,
     });
   } catch (err: any) {
     console.error('Fetch users error:', err);
@@ -62,29 +57,12 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const auth = await authorize(req, { role: 'admin', action: 'manage' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Forbidden' }, { status: auth.status || 403 });
+    }
+
     const client = await getRawClient();
-
-    let actorName = 'Elena Rostova';
-    let actorRole: UserRole = 'admin';
-
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = await verifyToken(token);
-      if (payload) {
-        actorName = payload.name;
-        actorRole = payload.role;
-      }
-    }
-
-    // Server-side RBAC enforcement: only administrators may modify user roles
-    if (actorRole !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden: Administrator privileges required to modify user roles' },
-        { status: 403 }
-      );
-    }
-
     const body = await req.json();
     const { userId, role } = body;
 
@@ -108,7 +86,7 @@ export async function PATCH(req: NextRequest) {
 
     const updatedUser = updateRes.rows[0];
 
-    // Audit log the permission alteration
+    // Audit log the permission alteration with real user
     const auditId = `aud-${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `
@@ -117,13 +95,13 @@ export async function PATCH(req: NextRequest) {
       `,
       [
         auditId,
-        'usr-current',
-        actorName,
-        actorRole,
+        auth.user.id,
+        auth.user.name,
+        auth.user.role,
         'USER_ROLE_UPDATE',
         `User:${userId}`,
         userId,
-        JSON.stringify({ updatedUser: updatedUser.name, previousRole: 'changed', newRole: role }),
+        JSON.stringify({ updatedUser: updatedUser.name, newRole: role }),
         req.headers.get('x-forwarded-for') || '127.0.0.1',
         'SUCCESS',
       ]
@@ -135,4 +113,3 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update user role' }, { status: 500 });
   }
 }
-

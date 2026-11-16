@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
 import { queryCache } from '@/lib/cache/lru-cache';
+import { authorize } from '@/lib/auth/authorize';
 import { PerformanceMetric } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await authorize(req, { role: 'analyst' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
     const client = await getRawClient();
 
-    // 1. Fetch recent performance logs
+    // 1. Fetch recent performance logs from database
     const logsRes = await client.query(`
       SELECT id, endpoint, query_type, query_hash, execution_time_ms, total_records_scanned, cache_hit, created_at
       FROM query_performance_logs
@@ -17,10 +23,10 @@ export async function GET(req: NextRequest) {
       LIMIT 100;
     `);
 
-    // 2. Fetch cache stats from LRU cache
+    // 2. Fetch cache stats from cache
     const cacheStats = queryCache.getStats();
 
-    // 3. Compute expensive queries
+    // 3. Compute expensive queries from real measurements
     const expensiveRes = await client.query(`
       SELECT query_type, AVG(execution_time_ms)::real as avg_time, MAX(execution_time_ms)::real as max_time, COUNT(*)::int as count
       FROM query_performance_logs
@@ -51,10 +57,15 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
+    const auth = await authorize(req, { role: 'admin', action: 'manage' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Forbidden' }, { status: auth.status || 403 });
+    }
+
     queryCache.clear();
     return NextResponse.json({
       success: true,
-      message: 'Server in-memory query cache flushed successfully',
+      message: 'Server query cache flushed successfully by administrator',
       stats: queryCache.getStats(),
     });
   } catch (err: any) {
@@ -62,5 +73,3 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to flush server cache' }, { status: 500 });
   }
 }
-
-

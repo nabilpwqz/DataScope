@@ -22,6 +22,38 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const roles = pgTable('roles', {
+  id: text('id').primaryKey(), // 'admin' | 'analyst' | 'viewer'
+  name: text('name').notNull(),
+  description: text('description').notNull(),
+  permissions: jsonb('permissions').notNull().default('[]'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const accessPermissions = pgTable(
+  'access_permissions',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    role: text('role'),
+    datasetId: text('dataset_id')
+      .notNull()
+      .references(() => datasets.id, { onDelete: 'cascade' }),
+    canRead: boolean('can_read').notNull().default(true),
+    canWrite: boolean('can_write').notNull().default(false),
+    canExport: boolean('can_export').notNull().default(false),
+    canManage: boolean('can_manage').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    datasetIdx: index('access_perms_dataset_idx').on(table.datasetId),
+    userIdx: index('access_perms_user_idx').on(table.userId),
+    roleIdx: index('access_perms_role_idx').on(table.role),
+  })
+);
+
 export const datasets = pgTable('datasets', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

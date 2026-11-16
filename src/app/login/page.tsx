@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { useAppDispatch } from '@/store';
-import { setUser, switchRole } from '@/store/slices/authSlice';
+import { setUser } from '@/store/slices/authSlice';
 import { ReduxProvider } from '@/store/provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,17 +37,32 @@ function LoginForm() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const handleCredentialsLogin = async (e?: React.FormEvent) => {
+  const handleCredentialsLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
     if (e) e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
 
+    const targetEmail = customEmail || email;
+    const targetPass = customPass || password;
+
     try {
+      // 1. Authenticate with NextAuth
+      const authResult = await signIn('credentials', {
+        redirect: false,
+        email: targetEmail,
+        password: targetPass,
+      });
+
+      if (authResult?.error) {
+        throw new Error(authResult.error);
+      }
+
+      // 2. Fetch authenticated user profile & set session cookie
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: targetEmail, password: targetPass }),
       });
 
       const data = await res.json();
@@ -142,8 +158,19 @@ function LoginForm() {
   };
 
   const handleQuickLogin = (role: 'admin' | 'analyst' | 'viewer') => {
-    dispatch(switchRole(role));
-    router.push('/dashboard/explorer');
+    if (role === 'admin') {
+      setEmail('admin@datascope.io');
+      setPassword('admin123');
+      handleCredentialsLogin(undefined, 'admin@datascope.io', 'admin123');
+    } else if (role === 'analyst') {
+      setEmail('analyst@datascope.io');
+      setPassword('analyst123');
+      handleCredentialsLogin(undefined, 'analyst@datascope.io', 'analyst123');
+    } else {
+      setEmail('viewer@datascope.io');
+      setPassword('viewer123');
+      handleCredentialsLogin(undefined, 'viewer@datascope.io', 'viewer123');
+    }
   };
 
   return (

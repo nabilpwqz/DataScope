@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRawClient } from '@/lib/db';
-import { verifyToken } from '@/lib/auth/jwt';
+import { authorize } from '@/lib/auth/authorize';
 import { DataQualityIssue, DataQualityOverview } from '@/types';
 import crypto from 'crypto';
 
@@ -8,6 +8,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
+    const auth = await authorize(req, { role: 'analyst' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
     const client = await getRawClient();
 
     const { searchParams } = new URL(req.url);
@@ -71,7 +76,7 @@ export async function GET(req: NextRequest) {
       resolvedAt: row.resolved_at ? (row.resolved_at instanceof Date ? row.resolved_at.toISOString() : row.resolved_at) : undefined,
     }));
 
-    // Calculate quality metrics dynamically
+    // Calculate quality metrics dynamically from real database rows
     const countsRes = await client.query(`
       SELECT 
         COUNT(*)::int as total,
@@ -121,20 +126,12 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const client = await getRawClient();
-
-    let userName = 'Elena Rostova';
-    let userRole = 'admin';
-    const authHeader = req.headers.get('authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.split(' ')[1];
-      const payload = await verifyToken(token);
-      if (payload) {
-        userName = payload.name;
-        userRole = payload.role;
-      }
+    const auth = await authorize(req, { role: 'analyst', action: 'write' });
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Forbidden' }, { status: auth.status || 403 });
     }
 
+    const client = await getRawClient();
     const body = await req.json();
     const { issueId, status } = body;
 
@@ -160,7 +157,7 @@ export async function PATCH(req: NextRequest) {
 
     const updated = updateRes.rows[0];
 
-    // Log this resolution action into audit logs
+    // Log this resolution action into audit logs with real identity
     const auditId = `aud-${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `
@@ -169,9 +166,9 @@ export async function PATCH(req: NextRequest) {
       `,
       [
         auditId,
-        'usr-current',
-        userName,
-        userRole,
+        auth.user.id,
+        auth.user.name,
+        auth.user.role,
         'DATA_QUALITY_STATUS_UPDATE',
         `DataQualityIssue:${issueId}`,
         issueId,
@@ -187,4 +184,3 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update quality issue' }, { status: 500 });
   }
 }
-

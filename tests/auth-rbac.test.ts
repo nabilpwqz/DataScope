@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getRolePermissions, canAccessDataset } from '@/lib/auth/rbac';
 import { signToken, verifyToken } from '@/lib/auth/jwt';
+import { authorize } from '@/lib/auth/authorize';
 
 describe('Authentication & Role-Based Access Control (RBAC)', () => {
   it('should enforce proper permissions for Administrator', () => {
@@ -59,6 +60,94 @@ describe('Authentication & Role-Based Access Control (RBAC)', () => {
     expect(payload).not.toBeNull();
     expect(payload?.email).toBe('test@datascope.io');
     expect(payload?.role).toBe('analyst');
+  });
+
+  describe('Server-Side authorize() Helper & AccessPermissions Table Enforcement', () => {
+    const viewerSession = {
+      user: {
+        id: 'usr-viewer-01',
+        email: 'viewer@datascope.io',
+        name: 'Viewer User',
+        role: 'viewer' as const,
+        department: 'Product Operations',
+      },
+    };
+
+    const analystSession = {
+      user: {
+        id: 'usr-analyst-01',
+        email: 'analyst@datascope.io',
+        name: 'Analyst User',
+        role: 'analyst' as const,
+        department: 'Strategic Intelligence',
+      },
+    };
+
+    const adminSession = {
+      user: {
+        id: 'usr-admin-01',
+        email: 'admin@datascope.io',
+        name: 'Admin User',
+        role: 'admin' as const,
+        department: 'Enterprise Architecture',
+      },
+    };
+
+    it('rejects unauthenticated requests with 401', async () => {
+      const res = await authorize(null);
+      expect(res.authorized).toBe(false);
+      expect(res.status).toBe(401);
+    });
+
+    it('allows Viewer to access permitted public dataset (ds-sales-01)', async () => {
+      const res = await authorize(viewerSession, { datasetId: 'ds-sales-01', action: 'read' });
+      expect(res.authorized).toBe(true);
+      expect(res.status).toBe(200);
+    });
+
+    it('PROVES: Viewer gets 403 on restricted dataset (ds-telemetry-02) even when datasetId is changed in request', async () => {
+      // Simulating a Viewer attempting to access restricted telemetry dataset
+      const res = await authorize(viewerSession, { datasetId: 'ds-telemetry-02', action: 'read' });
+      expect(res.authorized).toBe(false);
+      expect(res.status).toBe(403);
+      expect(res.error).toContain('not been granted access');
+    });
+
+    it('PROVES: Viewer gets 403 on admin-only dataset (ds-finance-03) even when datasetId is changed in request', async () => {
+      // Simulating a Viewer attempting to access financial ledger dataset
+      const res = await authorize(viewerSession, { datasetId: 'ds-finance-03', action: 'read' });
+      expect(res.authorized).toBe(false);
+      expect(res.status).toBe(403);
+      expect(res.error).toContain('not been granted access');
+    });
+
+    it('PROVES: Viewer gets 403 on export action even for permitted dataset', async () => {
+      const res = await authorize(viewerSession, { datasetId: 'ds-sales-01', action: 'export' });
+      expect(res.authorized).toBe(false);
+      expect(res.status).toBe(403);
+    });
+
+    it('PROVES: Analyst gets 403 on admin-only dataset (ds-finance-03)', async () => {
+      const res = await authorize(analystSession, { datasetId: 'ds-finance-03', action: 'read' });
+      expect(res.authorized).toBe(false);
+      expect(res.status).toBe(403);
+    });
+
+    it('allows Analyst to read and export permitted datasets', async () => {
+      const readRes = await authorize(analystSession, { datasetId: 'ds-telemetry-02', action: 'read' });
+      expect(readRes.authorized).toBe(true);
+      expect(readRes.status).toBe(200);
+
+      const expRes = await authorize(analystSession, { datasetId: 'ds-sales-01', action: 'export' });
+      expect(expRes.authorized).toBe(true);
+      expect(expRes.status).toBe(200);
+    });
+
+    it('allows Admin full access across all datasets and actions', async () => {
+      const res = await authorize(adminSession, { datasetId: 'ds-finance-03', action: 'manage' });
+      expect(res.authorized).toBe(true);
+      expect(res.status).toBe(200);
+    });
   });
 });
 

@@ -28,12 +28,66 @@ async function seed() {
   await client.query(`
     INSERT INTO users (id, name, email, password_hash, role, department, avatar_url)
     VALUES 
-      ('usr-admin-01', 'Elena Rostova', 'admin@datascope.io', '${adminPass}', 'admin', 'Enterprise Architecture', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'),
-      ('usr-analyst-01', 'Marcus Vance', 'analyst@datascope.io', '${analystPass}', 'analyst', 'Strategic Intelligence', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
-      ('usr-viewer-01', 'Sarah Lin', 'viewer@datascope.io', '${viewerPass}', 'viewer', 'Product Operations', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150')
+      ('usr-admin-01', 'Admin User', 'admin@datascope.io', '${adminPass}', 'admin', 'Enterprise Architecture', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'),
+      ('usr-analyst-01', 'Analyst User', 'analyst@datascope.io', '${analystPass}', 'analyst', 'Strategic Intelligence', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150'),
+      ('usr-viewer-01', 'Viewer User', 'viewer@datascope.io', '${viewerPass}', 'viewer', 'Product Operations', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150')
     ON CONFLICT (id) DO UPDATE SET
       name = EXCLUDED.name,
       role = EXCLUDED.role;
+  `);
+
+  // Roles table seeding
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS roles (
+      id text PRIMARY KEY,
+      name text NOT NULL,
+      description text NOT NULL,
+      permissions jsonb NOT NULL DEFAULT '[]',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    INSERT INTO roles (id, name, description, permissions)
+    VALUES 
+      ('admin', 'Administrator', 'Full system and data governance access across all datasets and settings', '["manage_users", "manage_datasets", "manage_permissions", "export_data", "save_views", "view_analytics", "read_all", "write_all"]'),
+      ('analyst', 'Intelligence Analyst', 'Deep analytical query access, export capabilities, and saved views', '["read_restricted", "export_data", "save_views", "share_views", "view_analytics"]'),
+      ('viewer', 'Business Viewer', 'Read-only exploratory access to designated public datasets', '["read_public", "basic_filters", "view_shared_views"]')
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      description = EXCLUDED.description,
+      permissions = EXCLUDED.permissions;
+  `);
+
+  // Access permissions table seeding
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS access_permissions (
+      id text PRIMARY KEY,
+      user_id text REFERENCES users(id) ON DELETE CASCADE,
+      role text,
+      dataset_id text NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
+      can_read boolean NOT NULL DEFAULT true,
+      can_write boolean NOT NULL DEFAULT false,
+      can_export boolean NOT NULL DEFAULT false,
+      can_manage boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    INSERT INTO access_permissions (id, role, dataset_id, can_read, can_write, can_export, can_manage)
+    VALUES
+      ('perm-admin-sales', 'admin', 'ds-sales-01', true, true, true, true),
+      ('perm-analyst-sales', 'analyst', 'ds-sales-01', true, false, true, false),
+      ('perm-viewer-sales', 'viewer', 'ds-sales-01', true, false, false, false),
+
+      ('perm-admin-telem', 'admin', 'ds-telemetry-02', true, true, true, true),
+      ('perm-analyst-telem', 'analyst', 'ds-telemetry-02', true, false, true, false),
+
+      ('perm-admin-fin', 'admin', 'ds-finance-03', true, true, true, true)
+    ON CONFLICT (id) DO UPDATE SET
+      can_read = EXCLUDED.can_read,
+      can_write = EXCLUDED.can_write,
+      can_export = EXCLUDED.can_export,
+      can_manage = EXCLUDED.can_manage;
   `);
 
   // User preferences
