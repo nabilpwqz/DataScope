@@ -79,8 +79,11 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
         databaseUrl.includes('127.0.0.1') ||
         databaseUrl.includes('postgres:5432');
 
+      // Strip sslmode query parameter so Node pg honors ssl: { rejectUnauthorized: false } without self-signed cert rejection
+      const cleanDbUrl = databaseUrl.replace(/[?&]sslmode=[^&]+/g, '').replace(/\?$/, '');
+
       const pool = new Pool({
-        connectionString: databaseUrl,
+        connectionString: cleanDbUrl,
         ssl: isLocalhost ? false : { rejectUnauthorized: false },
         max: 10,
         idleTimeoutMillis: 30000,
