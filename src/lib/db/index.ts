@@ -1,6 +1,3 @@
-import { PGlite } from '@electric-sql/pglite';
-import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
-import { drizzle as drizzlePgLite } from 'drizzle-orm/pglite';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from './schema';
@@ -8,14 +5,14 @@ import path from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
 
-type DbInstance = ReturnType<typeof drizzlePgLite<typeof schema>>;
+type DbInstance = ReturnType<typeof drizzlePg<typeof schema>>;
 
 interface GlobalDbState {
   db: DbInstance | null;
   rawClient: any | null;
   initialized: boolean;
   initPromise: Promise<void> | null;
-  engineType: 'remote-postgres' | 'embedded-pglite';
+  engineType: 'postgresql' | 'embedded-pglite';
 }
 
 const globalForDb = globalThis as unknown as {
@@ -28,7 +25,7 @@ if (!globalForDb.__dataScopeDb) {
     rawClient: null,
     initialized: false,
     initPromise: null,
-    engineType: 'embedded-pglite',
+    engineType: 'postgresql',
   };
 }
 
@@ -45,14 +42,36 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
   }
 
   state.initPromise = (async () => {
+    // Attempt local .env fallback for CLI scripts and local development
+    if (!process.env.DATABASE_URL) {
+      try {
+        const envPath = path.resolve(process.cwd(), '.env');
+        if (fs.existsSync(envPath)) {
+          const envContent = fs.readFileSync(envPath, 'utf8');
+          for (const line of envContent.split('\n')) {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+              const [key, ...values] = trimmed.split('=');
+              const value = values.join('=').trim().replace(/^["']|["']$/g, '');
+              if (key && !process.env[key.trim()]) {
+                process.env[key.trim()] = value;
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     const rawEnvUrl = process.env.DATABASE_URL;
     const forceEmbedded = process.env.PG_FORCE_EMBEDDED === 'true';
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
     const databaseUrl = forceEmbedded
       ? ''
       : (rawEnvUrl && rawEnvUrl.trim() !== '' ? rawEnvUrl : '');
 
     if (databaseUrl && databaseUrl.trim() !== '') {
-      // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, Tembo, etc.)
+      // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, etc.)
       const isLocalhost =
         databaseUrl.includes('localhost') ||
         databaseUrl.includes('127.0.0.1') ||
@@ -69,27 +88,25 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
       const drizzleInstance = drizzlePg(pool, { schema }) as unknown as DbInstance;
       state.db = drizzleInstance;
       state.rawClient = pool;
-      state.engineType = 'remote-postgres';
+      state.engineType = 'postgresql';
     } else {
-      // Embedded WebAssembly PostgreSQL (PGlite)
-      const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-      const defaultDir = isServerless ? '/tmp/.pgdata' : path.join(process.cwd(), '.pgdata');
-      const dataDir = process.env.PG_DATA_DIR || defaultDir;
+      if (isProduction) {
+        throw new Error(
+          'DataScope Production Database Configuration Error: DATABASE_URL is not set. A real hosted PostgreSQL instance is required in production.'
+        );
+      }
 
-      // Handle Vercel / Serverless ephemeral /tmp storage
-      if (isServerless && !fs.existsSync(dataDir)) {
-        const bundledDir = path.join(process.cwd(), '.pgdata');
-        if (fs.existsSync(bundledDir)) {
-          try {
-            copyDirectoryRecursive(bundledDir, dataDir);
-          } catch (copyErr) {
-            console.warn('Could not copy bundled .pgdata to /tmp, starting fresh:', copyErr);
-            fs.mkdirSync(dataDir, { recursive: true });
-          }
-        } else {
-          fs.mkdirSync(dataDir, { recursive: true });
-        }
-      } else if (!fs.existsSync(dataDir)) {
+      if (!isTestEnv && !forceEmbedded) {
+        console.warn('Notice: DATABASE_URL is not set. Falling back to embedded PGlite for local non-production testing.');
+      }
+
+      // Dynamic import: PGlite is restricted to offline dev and unit tests
+      const { PGlite } = await import('@electric-sql/pglite');
+      const { pg_trgm } = await import('@electric-sql/pglite/contrib/pg_trgm');
+      const { drizzle: drizzlePgLite } = await import('drizzle-orm/pglite');
+
+      const dataDir = process.env.PG_DATA_DIR || path.join(process.cwd(), '.pgdata');
+      if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
       }
 
@@ -113,7 +130,7 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
         extensions: { pg_trgm },
       });
 
-      const drizzleInstance = drizzlePgLite(pglite, { schema });
+      const drizzleInstance = drizzlePgLite(pglite, { schema }) as unknown as DbInstance;
       state.db = drizzleInstance;
       state.rawClient = pglite;
       state.engineType = 'embedded-pglite';
@@ -127,25 +144,6 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
 
   await state.initPromise;
   return { db: state.db!, rawClient: state.rawClient, engineType: state.engineType };
-}
-
-function copyDirectoryRecursive(src: string, dest: string) {
-  if (!fs.existsSync(dest)) {
-    fs.mkdirSync(dest, { recursive: true });
-  }
-  const entries = fs.readdirSync(src, { withFileTypes: true });
-  for (const entry of entries) {
-    const srcPath = path.join(src, entry.name);
-    const destPath = path.join(dest, entry.name);
-    if (entry.name.includes('.lock') || entry.name.startsWith('.s.PGSQL') || entry.name === 'postmaster.pid') {
-      continue;
-    }
-    if (entry.isDirectory()) {
-      copyDirectoryRecursive(srcPath, destPath);
-    } else {
-      fs.copyFileSync(srcPath, destPath);
-    }
-  }
 }
 
 export async function executeSql(client: any, query: string, params: any[] = []) {
