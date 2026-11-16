@@ -8,7 +8,7 @@
 [![Redux Toolkit](https://img.shields.io/badge/Redux%20Toolkit-RTK%20Query-764ABC?style=flat-square&logo=redux&logoColor=white)](https://redux-toolkit.js.org/)
 [![TanStack Table](https://img.shields.io/badge/TanStack-Table%20v8%20%2B%20Virtual%20v3-FF4154?style=flat-square&logo=react-table&logoColor=white)](https://tanstack.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4%20Neutral-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-38%2F38%20Passed-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-43%2F43%20Passed-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Hallmark Craft](https://img.shields.io/badge/Hallmark%20Craft-0%20Failures-10B981?style=flat-square)](#13-hallmark-engineering-craft-and-accessibility)
 [![Security Hardened](https://img.shields.io/badge/Security-20%20Controls%20Passed-2563EB?style=flat-square)](#11-security-and-production-hardening-matrix)
 
@@ -686,15 +686,19 @@ npm test
 ```
  RUN  v2.1.9 C:/Users/Nabil/Desktop/DataScope
 
- ✓ tests/cache.test.ts (3 tests) 4ms
- ✓ tests/ai-assistant.test.ts (3 tests) 27ms
- ✓ tests/auth-rbac.test.ts (5 tests) 7ms
- ✓ tests/governance-quality.test.ts (3 tests) 5ms
- ✓ tests/search-engine.test.ts (2 tests) 4ms
+ ✓ tests/search-state.test.ts (5 tests) 7ms
+ ✓ tests/saved-views.test.ts (4 tests) 8ms
+ ✓ tests/export.test.ts (3 tests) 4ms
+ ✓ tests/search-engine.test.ts (4 tests) 5ms
+ ✓ tests/registration.test.ts (4 tests) 300ms
+ ✓ tests/cache.test.ts (4 tests) 6ms
+ ✓ tests/governance-quality.test.ts (3 tests) 4ms
+ ✓ tests/ai-assistant.test.ts (3 tests) 28ms
+ ✓ tests/auth-rbac.test.ts (13 tests) 1009ms
 
- Test Files  5 passed (5)
-      Tests  16 passed (16)
-   Duration  2.67s
+ Test Files  9 passed (9)
+      Tests  43 passed (43)
+   Duration  3.8s
 ```
 
 ### Live Benchmark Results across 110,000+ Records
@@ -814,24 +818,20 @@ DataScope includes an independent Docker CI runner (`docker-compose.ci.yml`) to 
 docker compose -f docker-compose.ci.yml up --abort-on-container-exit --exit-code-from datascope-ci
 ```
 
-### Vercel Serverless Deployment
+### Cloud PostgreSQL & Vercel Deployment
 
-Deploying to Vercel supports two configurations:
-
-#### Option A: Zero-Configuration Serverless Demo
-Deploying to Vercel without external environment variables uses embedded WebAssembly PostgreSQL (PGlite) with ephemeral `/tmp/.pgdata` storage, pre-seeding test records automatically.
-
-#### Option B: Cloud PostgreSQL Cluster (Production)
-For high-concurrency production deployments across multi-region serverless function instances:
-1. Provision a PostgreSQL instance (e.g. Neon serverless Postgres).
+For production deployment on Vercel:
+1. Provision a PostgreSQL 15 instance (e.g. Neon serverless Postgres).
 2. Configure environment variables in Vercel Project Settings:
    ```env
-   DATABASE_URL=postgresql://username:password@ep-unique-id.us-east-2.aws.neon.tech/neondb?sslmode=require
-   JWT_SECRET=your-32-character-production-jwt-secret-key-here
+   DATABASE_URL=postgresql://username:password@ep-unique-id.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+   NEXTAUTH_SECRET=your-32-character-production-jwt-secret-key-here
+   NEXTAUTH_URL=https://your-datascope-project.vercel.app
    NEXT_PUBLIC_APP_URL=https://your-datascope-project.vercel.app
    ```
-3. Seed the remote database:
+3. Run migrations and seed the remote database:
    ```bash
+   DATABASE_URL="your-postgresql-url" npm run db:migrate
    DATABASE_URL="your-postgresql-url" npm run seed
    ```
 
@@ -847,7 +847,7 @@ Example JSON response:
 ```json
 {
   "status": "healthy",
-  "timestamp": "2026-11-16T00:15:00.000Z",
+  "timestamp": "2026-11-16T08:30:00.000Z",
   "version": "1.0.1",
   "platform": "DataScope Enterprise Discovery",
   "environment": {
@@ -857,10 +857,10 @@ Example JSON response:
   },
   "database": {
     "healthy": true,
-    "engineType": "remote-postgres",
-    "latencyMs": 8.45,
+    "engineType": "postgresql",
+    "latencyMs": 80.70,
     "totalDatasets": 3,
-    "totalRecords": 110000
+    "totalRecords": 120000
   },
   "system": {
     "rssMb": "84.20",
