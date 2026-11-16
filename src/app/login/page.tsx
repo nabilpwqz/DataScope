@@ -30,11 +30,12 @@ function LoginForm() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const [authMethod, setAuthMethod] = useState<AuthMethod>('firebase');
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('credentials');
   const [email, setEmail] = useState('admin@datascope.io');
   const [password, setPassword] = useState('admin123');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isDomainError, setIsDomainError] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
   const handleCredentialsLogin = async (e?: React.FormEvent, customEmail?: string, customPass?: string) => {
@@ -115,6 +116,13 @@ function LoginForm() {
       if (err.code === 'auth/email-already-in-use') msg = 'This email is already registered in Firebase.';
       if (err.code === 'auth/weak-password') msg = 'Password must be at least 6 characters.';
       if (err.code === 'auth/popup-closed-by-user') msg = 'Authentication popup was closed.';
+      if (err.code === 'auth/unauthorized-domain') {
+        setIsDomainError(true);
+        const host = typeof window !== 'undefined' ? window.location.hostname : 'current domain';
+        msg = `Domain '${host}' is not authorized in Firebase. Add it to Firebase Console > Authentication > Settings > Authorized domains, or use Database Auth.`;
+      } else {
+        setIsDomainError(false);
+      }
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);
@@ -124,6 +132,7 @@ function LoginForm() {
   const handleFirebaseGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMsg('');
+    setIsDomainError(false);
     setSuccessMsg('');
 
     try {
@@ -151,6 +160,13 @@ function LoginForm() {
     } catch (err: any) {
       let msg = err.message || 'Google sign-in failed';
       if (err.code === 'auth/popup-closed-by-user') msg = 'Google sign-in popup was closed.';
+      if (err.code === 'auth/unauthorized-domain') {
+        setIsDomainError(true);
+        const host = typeof window !== 'undefined' ? window.location.hostname : 'current domain';
+        msg = `Domain '${host}' is not authorized in Firebase. Add it to Firebase Console > Authentication > Settings > Authorized domains, or use Database Auth.`;
+      } else {
+        setIsDomainError(false);
+      }
       setErrorMsg(msg);
     } finally {
       setIsLoading(false);
@@ -230,8 +246,22 @@ function LoginForm() {
       </div>
 
       {errorMsg && (
-        <div className="p-3 rounded-lg border border-rose-500/30 bg-rose-950/40 text-xs text-rose-300">
-          {errorMsg}
+        <div className="p-3 rounded-lg border border-rose-500/30 bg-rose-950/40 text-xs text-rose-300 space-y-2">
+          <div>{errorMsg}</div>
+          {isDomainError && (
+            <button
+              type="button"
+              onClick={() => {
+                setAuthMethod('credentials');
+                setErrorMsg('');
+                setIsDomainError(false);
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-rose-900/60 hover:bg-rose-800 text-rose-100 font-medium transition-colors"
+            >
+              <IconShield className="h-3 w-3" />
+              <span>Switch to Database Auth (Instant Demo Access)</span>
+            </button>
+          )}
         </div>
       )}
 
