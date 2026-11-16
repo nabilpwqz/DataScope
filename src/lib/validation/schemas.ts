@@ -42,7 +42,9 @@ export const SearchQuerySchema = z
     sort: z.array(SortConditionSchema).max(5).optional().default([]),
     page: z.coerce.number().int().min(1).optional().default(1),
     pageSize: z.coerce.number().int().min(1).max(100).optional().default(25),
-    cursor: z.string().max(256).optional(),
+    searchField: z.string().max(64).optional(),
+    paginationType: z.enum(['offset', 'cursor']).optional().default('offset'),
+    cursor: z.string().max(512).optional(),
   })
   .strict();
 

@@ -92,11 +92,11 @@ export class SearchEngine {
         // Global search across multiple search strategies
         switch (searchType) {
           case 'fts': {
-            // PostgreSQL Full-Text Search using to_tsvector & plainto_tsquery
+            // PostgreSQL Full-Text Search using generated search_tsv & plainto_tsquery
             whereClauses.push(
-              `to_tsvector('english', title || ' ' || category || ' ' || country || ' ' || record_key) @@ plainto_tsquery('english', $${paramIndex})`
+              `search_tsv @@ plainto_tsquery('english', $${paramIndex})`
             );
-            searchRankSelect = `ts_rank(to_tsvector('english', title || ' ' || category || ' ' || country || ' ' || record_key), plainto_tsquery('english', $${paramIndex})) AS search_relevance`;
+            searchRankSelect = `ts_rank(search_tsv, plainto_tsquery('english', $${paramIndex})) AS search_relevance`;
             searchOrderBy = 'search_relevance DESC, ';
             params.push(search);
             paramIndex++;
@@ -125,17 +125,17 @@ export class SearchEngine {
           }
           case 'hybrid':
           default: {
-            // Hybrid Strategy: Matches Full-Text OR ILIKE substring OR Trigram
+            // Hybrid Strategy: Matches Full-Text over search_tsv OR ILIKE substring OR Trigram
             whereClauses.push(
               `(
-                to_tsvector('english', title || ' ' || category || ' ' || country || ' ' || record_key) @@ plainto_tsquery('english', $${paramIndex})
+                search_tsv @@ plainto_tsquery('english', $${paramIndex})
                 OR title ILIKE $${paramIndex + 1}
                 OR record_key ILIKE $${paramIndex + 1}
                 OR country ILIKE $${paramIndex + 1}
               )`
             );
             searchRankSelect = `
-              (ts_rank(to_tsvector('english', title || ' ' || category || ' ' || country || ' ' || record_key), plainto_tsquery('english', $${paramIndex})) * 2.0
+              (ts_rank(search_tsv, plainto_tsquery('english', $${paramIndex})) * 2.0
               + CASE WHEN title ILIKE $${paramIndex + 1} THEN 1.0 ELSE 0.0 END) AS search_relevance
             `;
             searchOrderBy = 'search_relevance DESC, ';
@@ -178,27 +178,70 @@ export class SearchEngine {
     }
     const sortSql = sortClauses.length > 0 ? sortClauses.join(', ') : 'record_date DESC';
 
-    // 5. Data Fetch Query with Pagination
+    // 5. Data Fetch Query with Pagination (Keyset Cursor default or Offset fallback)
     let recordsSql: string;
     let queryParams: any[];
+    let isPrevSeeking = false;
 
-    if (request.paginationType === 'cursor' && request.cursor) {
-      // Cursor Pagination optimization for infinite scrolling / deep pages
-      const cursorObj = JSON.parse(Buffer.from(request.cursor, 'base64').toString('utf-8'));
-      const cursorParamIdx = paramIndex;
-      const cursorWhere = `${whereSql} AND (record_date, id) < ($${cursorParamIdx}, $${cursorParamIdx + 1})`;
-      queryParams = [...params, new Date(cursorObj.recordDate), cursorObj.id, pageSize];
-      recordsSql = `
-        SELECT 
-          id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, created_at, updated_at,
-          ${searchRankSelect}
-        FROM dataset_records
-        WHERE ${cursorWhere}
-        ORDER BY record_date DESC, id DESC
-        LIMIT $${cursorParamIdx + 2};
-      `;
+    if (request.paginationType === 'cursor') {
+      if (request.cursor) {
+        try {
+          const cursorObj = JSON.parse(Buffer.from(request.cursor, 'base64').toString('utf-8'));
+          const cursorParamIdx = paramIndex;
+          if (cursorObj.direction === 'prev') {
+            isPrevSeeking = true;
+            const cursorWhere = `${whereSql} AND (record_date, id) > ($${cursorParamIdx}, $${cursorParamIdx + 1})`;
+            queryParams = [...params, new Date(cursorObj.recordDate), cursorObj.id, pageSize];
+            recordsSql = `
+              SELECT 
+                id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, created_at, updated_at,
+                ${searchRankSelect}
+              FROM dataset_records
+              WHERE ${cursorWhere}
+              ORDER BY record_date ASC, id ASC
+              LIMIT $${cursorParamIdx + 2};
+            `;
+          } else {
+            const cursorWhere = `${whereSql} AND (record_date, id) < ($${cursorParamIdx}, $${cursorParamIdx + 1})`;
+            queryParams = [...params, new Date(cursorObj.recordDate), cursorObj.id, pageSize];
+            recordsSql = `
+              SELECT 
+                id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, created_at, updated_at,
+                ${searchRankSelect}
+              FROM dataset_records
+              WHERE ${cursorWhere}
+              ORDER BY record_date DESC, id DESC
+              LIMIT $${cursorParamIdx + 2};
+            `;
+          }
+        } catch (_) {
+          // If cursor parsing fails, fallback to first page cursor query
+          queryParams = [...params, pageSize];
+          recordsSql = `
+            SELECT 
+              id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, created_at, updated_at,
+              ${searchRankSelect}
+            FROM dataset_records
+            WHERE ${whereSql}
+            ORDER BY record_date DESC, id DESC
+            LIMIT $${paramIndex};
+          `;
+        }
+      } else {
+        // Initial Keyset Cursor seek: Deterministic index scan without offset
+        queryParams = [...params, pageSize];
+        recordsSql = `
+          SELECT 
+            id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, created_at, updated_at,
+            ${searchRankSelect}
+          FROM dataset_records
+          WHERE ${whereSql}
+          ORDER BY record_date DESC, id DESC
+          LIMIT $${paramIndex};
+        `;
+      }
     } else {
-      // Offset Pagination (standard jump to page)
+      // Offset Pagination (standard jump to arbitrary page)
       queryParams = [...params, pageSize, offset];
       recordsSql = `
         SELECT 
@@ -252,15 +295,25 @@ export class SearchEngine {
       updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
     }));
 
+    // If seeking backward via keyset cursor, restore chronological descending order
+    if (isPrevSeeking) {
+      records.reverse();
+    }
+
     const totalPages = Math.ceil(totalRecords / pageSize);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
 
     let nextCursor: string | undefined;
+    let prevCursor: string | undefined;
     if (records.length > 0) {
+      const firstRec = records[0];
       const lastRec = records[records.length - 1];
       nextCursor = Buffer.from(
-        JSON.stringify({ id: lastRec.id, recordDate: lastRec.recordDate })
+        JSON.stringify({ id: lastRec.id, recordDate: lastRec.recordDate, direction: 'next' })
+      ).toString('base64');
+      prevCursor = Buffer.from(
+        JSON.stringify({ id: firstRec.id, recordDate: firstRec.recordDate, direction: 'prev' })
       ).toString('base64');
     }
 
@@ -275,6 +328,7 @@ export class SearchEngine {
       hasNextPage,
       hasPrevPage,
       nextCursor,
+      prevCursor,
       executionTimeMs,
       cacheHit: false,
       searchStrategyUsed: search ? searchType : 'direct_indexed',

@@ -124,6 +124,7 @@ export interface SearchQueryResponse {
   hasNextPage: boolean;
   hasPrevPage: boolean;
   nextCursor?: string;
+  prevCursor?: string;
   executionTimeMs: number;
   cacheHit: boolean;
   searchStrategyUsed: string;

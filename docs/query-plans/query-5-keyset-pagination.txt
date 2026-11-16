@@ -1,0 +1,13 @@
+Limit  (cost=0.42..7.19 rows=25 width=72) (actual time=0.049..0.066 rows=25.00 loops=1)
+  Output: id, record_key, title, record_date
+  Buffers: shared hit=3 read=3
+  ->  Index Scan using idx_records_keyset on public.dataset_records  (cost=0.42..22720.17 rows=83874 width=72) (actual time=0.048..0.063 rows=25.00 loops=1)
+        Output: id, record_key, title, record_date
+        Index Cond: ((dataset_records.dataset_id = 'ds-sales-01'::text) AND (ROW(dataset_records.record_date, dataset_records.id) < ROW('2024-06-01 00:00:00+00'::timestamp with time zone, 'rec-sales-0050000'::text)))
+        Index Searches: 1
+        Buffers: shared hit=3 read=3
+Query Identifier: -733253921121351726
+Planning:
+  Buffers: shared hit=14
+Planning Time: 0.205 ms
+Execution Time: 0.102 ms

@@ -98,6 +98,9 @@ CREATE TABLE IF NOT EXISTS dataset_records (
   record_date timestamptz NOT NULL,
   metadata jsonb NOT NULL DEFAULT '{}',
   search_vector text,
+  search_tsv tsvector GENERATED ALWAYS AS (
+    to_tsvector('english', coalesce(title, '') || ' ' || coalesce(category, '') || ' ' || coalesce(country, '') || ' ' || coalesce(region, '') || ' ' || coalesce(status, '') || ' ' || coalesce(record_key, ''))
+  ) STORED,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -204,8 +207,12 @@ CREATE TABLE IF NOT EXISTS query_metrics (
 -- Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_records_dataset_date ON dataset_records (dataset_id, record_date DESC);
 CREATE INDEX IF NOT EXISTS idx_records_composite_filter ON dataset_records (dataset_id, status, country, numeric_value);
+CREATE INDEX IF NOT EXISTS idx_records_filter_composite ON dataset_records (dataset_id, status, country, record_date DESC);
+CREATE INDEX IF NOT EXISTS idx_records_dataset_numeric ON dataset_records (dataset_id, numeric_value);
+CREATE INDEX IF NOT EXISTS idx_records_keyset ON dataset_records (dataset_id, record_date DESC, id DESC);
 CREATE INDEX IF NOT EXISTS idx_records_trgm_title ON dataset_records USING gin (title gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_records_fts ON dataset_records USING gin (to_tsvector('english', title || ' ' || category || ' ' || country || ' ' || record_key));
+CREATE INDEX IF NOT EXISTS idx_records_search_tsv_gin ON dataset_records USING gin (search_tsv);
 CREATE INDEX IF NOT EXISTS idx_records_record_key ON dataset_records (record_key);
 CREATE INDEX IF NOT EXISTS idx_saved_views_dataset ON saved_views (dataset_id);
 CREATE INDEX IF NOT EXISTS idx_saved_views_user ON saved_views (user_id);

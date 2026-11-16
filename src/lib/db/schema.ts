@@ -107,6 +107,7 @@ export const datasetRecords = pgTable(
     recordDate: timestamp('record_date', { withTimezone: true }).notNull(),
     metadata: jsonb('metadata').notNull().default('{}'),
     searchVector: text('search_vector'),
+    searchTsv: text('search_tsv'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
@@ -118,6 +119,9 @@ export const datasetRecords = pgTable(
     numericValIdx: index('records_numeric_val_idx').on(table.datasetId, table.numericValue),
     recordDateIdx: index('records_record_date_idx').on(table.datasetId, table.recordDate),
     recordKeyIdx: index('records_record_key_idx').on(table.recordKey),
+    compositeFilterIdx: index('records_filter_composite_idx').on(table.datasetId, table.status, table.country, table.recordDate),
+    keysetIdx: index('records_keyset_idx').on(table.datasetId, table.recordDate, table.id),
+    searchTsvGinIdx: index('records_search_tsv_gin_idx').on(table.searchTsv),
   })
 );
 
