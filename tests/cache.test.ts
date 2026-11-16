@@ -48,5 +48,16 @@ describe('LRU Cache & Invalidation Engine', () => {
     expect(cache.get('dataset:ds-1:q2')).toBeNull();
     expect(cache.get('dataset:ds-2:q1')).toEqual({ count: 30 });
   });
+
+  it('should support dataset versioning for atomic cache key invalidation', () => {
+    const keyV1 = cache.generateCacheKey('ds-sales-01', 'query_hash_abc');
+    expect(cache.getDatasetVersion('ds-sales-01')).toBe(1);
+
+    const nextVer = cache.incrementDatasetVersion('ds-sales-01');
+    expect(nextVer).toBe(2);
+
+    const keyV2 = cache.generateCacheKey('ds-sales-01', 'query_hash_abc');
+    expect(keyV1).not.toBe(keyV2);
+  });
 });
 
