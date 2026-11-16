@@ -88,3 +88,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to log search history' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await authorize(req);
+    if (!auth.authorized || !auth.user) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: auth.status || 401 });
+    }
+
+    const client = await getRawClient();
+    const url = new URL(req.url);
+    const id = url.searchParams.get('id');
+
+    if (id) {
+      await client.query(
+        "DELETE FROM search_history WHERE id = $1 AND (user_id = $2 OR $3 = 'admin')",
+        [id, auth.user.id, auth.user.role]
+      );
+    } else {
+      await client.query(
+        "DELETE FROM search_history WHERE user_id = $1 OR $2 = 'admin'",
+        [auth.user.id, auth.user.role]
+      );
+    }
+
+    return NextResponse.json({ success: true, message: 'Search history cleared successfully' });
+  } catch (err: any) {
+    return NextResponse.json({ error: 'Failed to clear search history' }, { status: 500 });
+  }
+}

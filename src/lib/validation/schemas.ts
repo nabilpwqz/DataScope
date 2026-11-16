@@ -36,7 +36,7 @@ export const SearchQuerySchema = z
   .object({
     datasetId: z.string().max(64).optional(),
     search: z.string().max(100).optional().default(''),
-    searchType: z.enum(['hybrid', 'fts', 'trigram', 'exact']).optional().default('hybrid'),
+    searchType: z.enum(['hybrid', 'fts', 'trgm', 'exact']).optional().default('hybrid'),
     filters: z.array(FilterConditionSchema).max(10).optional().default([]),
     filterLogicalOperator: z.enum(['AND', 'OR']).optional().default('AND'),
     sort: z.array(SortConditionSchema).max(5).optional().default([]),
@@ -89,6 +89,7 @@ export const ExportRequestSchema = z
     filters: z.array(FilterConditionSchema).max(10).optional().default([]),
     filterLogicalOperator: z.enum(['AND', 'OR']).optional().default('AND'),
     sort: z.array(SortConditionSchema).max(5).optional().default([]),
+    limit: z.coerce.number().int().min(1).max(100000).optional().default(10000),
   })
   .strict();
 

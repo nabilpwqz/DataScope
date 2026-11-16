@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AISearchAssistant } from '@/lib/search/ai-assistant';
 import { authorize } from '@/lib/auth/authorize';
+import { SearchQuerySchema } from '@/lib/validation/schemas';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
@@ -33,6 +34,12 @@ export async function POST(req: NextRequest) {
     }
 
     const result = AISearchAssistant.parsePrompt(prompt, datasetId);
+    const validatedConfig = SearchQuerySchema.safeParse(result.queryConfig);
+    if (!validatedConfig.success) {
+      result.validationErrors.push('AI generated query configuration failed schema constraints.');
+    } else {
+      result.queryConfig = validatedConfig.data as any;
+    }
     return NextResponse.json(result);
   } catch (err: any) {
     console.error('AI Search Assistant error:', err);

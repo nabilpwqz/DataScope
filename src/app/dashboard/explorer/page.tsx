@@ -237,7 +237,7 @@ function DataExplorerContent() {
 
   const handleExportCsv = async () => {
     if (!permissions.canExportData) {
-      alert('Viewer role cannot export datasets. Switch to Analyst or Admin in header.');
+      alert('Export forbidden: Viewer role does not possess export authorization. Sign in as Analyst or Admin.');
       return;
     }
 

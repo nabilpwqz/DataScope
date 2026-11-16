@@ -44,6 +44,7 @@ import {
   Search,
   FileCode,
   CheckCircle2,
+  Braces,
 } from 'lucide-react';
 
 interface FieldOption {
@@ -408,7 +409,7 @@ export default function AdvancedSearchPage() {
   const [logicalOp, setLogicalOp] = useState<'AND' | 'OR'>('AND');
   const [keywordSearch, setKeywordSearch] = useState('');
   const [selectedStrategy, setSelectedStrategy] = useState<'hybrid' | 'fts' | 'trgm' | 'exact'>('hybrid');
-  const [activeSqlTab, setActiveSqlTab] = useState<'sql' | 'explain'>('sql');
+  const [activeSqlTab, setActiveSqlTab] = useState<'sql' | 'explain' | 'json'>('sql');
   const [copiedSql, setCopiedSql] = useState(false);
 
   // Synchronize filter rules and search when target dataset changes externally (e.g. from header)
@@ -618,8 +619,37 @@ Execution Time: ${execTime.toFixed(3)} ms
 Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
   }, [searchResponse, effectiveDatasetId, conditions, logicalOp, pageSize]);
 
+  const generatedJson = useMemo(() => {
+    return JSON.stringify(
+      {
+        datasetId: effectiveDatasetId,
+        strategy: selectedStrategy,
+        search: keywordSearch || null,
+        filterGroup: {
+          operator: logicalOp,
+          conditions: conditions.map((c) => ({
+            field: c.field,
+            operator: c.operator,
+            value: c.value,
+          })),
+        },
+        pagination: {
+          page,
+          pageSize,
+        },
+      },
+      null,
+      2
+    );
+  }, [effectiveDatasetId, selectedStrategy, keywordSearch, logicalOp, conditions, page, pageSize]);
+
   const handleCopySql = () => {
-    const textToCopy = activeSqlTab === 'sql' ? generatedSql : simulatedExplain;
+    const textToCopy =
+      activeSqlTab === 'sql'
+        ? generatedSql
+        : activeSqlTab === 'explain'
+        ? simulatedExplain
+        : generatedJson;
     navigator.clipboard.writeText(textToCopy);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2000);
@@ -1091,6 +1121,18 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
                 <FileCode className="h-3.5 w-3.5" />
                 <span>EXPLAIN Execution Plan</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveSqlTab('json')}
+                className={`flex items-center gap-1.5 px-3 py-1 text-xs rounded font-semibold transition-colors ${
+                  activeSqlTab === 'json'
+                    ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Braces className="h-3.5 w-3.5" />
+                <span>JSON AST Specification</span>
+              </button>
             </div>
           </div>
 
@@ -1120,7 +1162,11 @@ Index Technique: Composite B-tree + GIN Trigram similarity (sub-second scan)`;
         </div>
 
         <pre className="p-3.5 rounded-lg bg-slate-900 text-slate-200 text-[11px] font-mono overflow-x-auto border border-slate-800 leading-relaxed">
-          {activeSqlTab === 'sql' ? generatedSql : simulatedExplain}
+          {activeSqlTab === 'sql'
+            ? generatedSql
+            : activeSqlTab === 'explain'
+            ? simulatedExplain
+            : generatedJson}
         </pre>
       </div>
 

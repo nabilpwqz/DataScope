@@ -178,6 +178,14 @@ export const dataScopeApi = createApi({
       providesTags: [{ type: 'SearchHistory', id: 'LIST' }],
     }),
 
+    clearSearchHistory: builder.mutation<{ success: boolean; message: string }, void>({
+      query: () => ({
+        url: '/search-history',
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'SearchHistory', id: 'LIST' }],
+    }),
+
     // 6. Analytics Aggregations
     getDatasetAnalytics: builder.query<AnalyticsSummary, string>({
       query: (datasetId) => `/datasets/${datasetId}/analytics`,
@@ -370,6 +378,7 @@ export const {
   useCreateSavedViewMutation,
   useDeleteSavedViewMutation,
   useGetSearchHistoryQuery,
+  useClearSearchHistoryMutation,
   useGetDatasetAnalyticsQuery,
   useGetPerformanceMetricsQuery,
   useClearPerformanceCacheMutation,

@@ -4,17 +4,24 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/store';
 import { setSearch, setDebouncedSearch, setSearchType } from '@/store/slices/searchConfigSlice';
-import { useGetSearchHistoryQuery } from '@/store/services/dataScopeApi';
+import { useGetSearchHistoryQuery, useClearSearchHistoryMutation } from '@/store/services/dataScopeApi';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDateTime } from '@/lib/utils';
-import { History, Play, Search } from 'lucide-react';
+import { History, Play, Search, Trash2 } from 'lucide-react';
 
 export default function SearchHistoryPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { selectedDatasetId } = useAppSelector((state) => state.dataset);
   const { data: history = [] } = useGetSearchHistoryQuery(selectedDatasetId);
+  const [clearHistory, { isLoading: isClearing }] = useClearSearchHistoryMutation();
+
+  const handleClearHistory = async () => {
+    if (confirm('Are you sure you want to clear your search history?')) {
+      await clearHistory().unwrap();
+    }
+  };
 
   const handleRerun = (queryText: string, searchType: string) => {
     dispatch(setSearch(queryText));
@@ -36,6 +43,19 @@ export default function SearchHistoryPage() {
             Audit log of executed queries, search engines utilized, and response latencies.
           </p>
         </div>
+
+        {history.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearHistory}
+            isLoading={isClearing}
+            className="text-xs text-rose-400 border-rose-900/50 hover:bg-rose-950/40 hover:text-rose-300 gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Clear History</span>
+          </Button>
+        )}
       </div>
 
       {/* History Table */}
