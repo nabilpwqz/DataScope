@@ -4,15 +4,19 @@ test.describe('Export & Saved Views Operations', () => {
   test.beforeEach(async ({ page }) => {
     // Authenticate as Analyst before operations
     await page.goto('/login');
-    await page.fill('input#email', 'analyst@datascope.internal');
-    await page.fill('input#password', 'AnalystScope2024!');
+    const dbAuthTab = page.locator('button:has-text("Database Auth")');
+    if (await dbAuthTab.isVisible()) {
+      await dbAuthTab.click();
+    }
+    await page.fill('input[type="email"]', 'analyst@datascope.io');
+    await page.fill('input[type="password"]', 'analyst123');
     await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    await page.waitForURL('**/dashboard/**', { timeout: 15000 });
   });
 
   test('initiates CSV export stream from Data Explorer', async ({ page }) => {
     await page.goto('/dashboard/explorer');
-    const exportBtn = page.locator('button:has-text("Export CSV")');
+    const exportBtn = page.locator('button:has-text("Export CSV"), button:has-text("Export")').first();
     await expect(exportBtn).toBeVisible({ timeout: 10000 });
     await expect(exportBtn).toBeEnabled();
   });
@@ -44,4 +48,3 @@ test.describe('Export & Saved Views Operations', () => {
     await expect(codeBlock).toContainText(/filterGroup/);
   });
 });
-
