@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
        VALUES ($1, $2, 'standard', 'dark', false, 30, 25, true)
        ON CONFLICT (user_id) DO NOTHING;`,
       [`pref-${Date.now()}`, userId]
-    ).catch(() => {});
+    ).catch(() => { });
 
     // Log registration in immutable audit log
     await client.query(
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         role,
         JSON.stringify({ email, department, role }),
       ]
-    ).catch(() => {});
+    ).catch(() => { });
 
     // Generate real HS256 signed JWT
     const token = await signToken({

@@ -143,7 +143,7 @@ export default function LandingPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 text-[11px] font-semibold">
-                  <span>LATENCY: <span className="font-mono">3.42</span>ms</span>
+                  <span>ENGINE EXEC: <span className="font-mono">3.42</span>ms</span>
                 </div>
               </div>
 
@@ -158,21 +158,28 @@ export default function LandingPage() {
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">-&gt;</span>
                     <span>Index Scan using idx_record_key</span>
                   </span>
-                  <span className="font-mono text-slate-500 dark:text-slate-400">0.81 ms</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">0.082 ms</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
                   <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">-&gt;</span>
-                    <span>Bitmap Index Scan using idx_records_search_trgm</span>
+                    <span>GIN Trigram Search Scan</span>
                   </span>
-                  <span className="font-mono text-slate-500 dark:text-slate-400">1.42 ms</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">6.812 ms</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
                   <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">-&gt;</span>
-                    <span>Buffer Cache Filter (shared hit=18)</span>
+                    <span>Keyset Cursor Seek (Row 100k)</span>
                   </span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">1.19 ms</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">0.104 ms</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
+                  <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">-&gt;</span>
+                    <span>Cross-Region Transit (iad1 -&gt; sin1)</span>
+                  </span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">~220 ms</span>
                 </div>
               </div>
             </div>
@@ -224,7 +231,7 @@ export default function LandingPage() {
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Two-Tier Caching &amp; Deduplication</h3>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                RTK Query client cache deduplicates inflight network requests while server-side LRU cache serves frequent searches in 0.1ms.
+                RTK Query client cache deduplicates inflight network requests while server-side SharedQueryCache delivers frequent repeat searches in sub-15 ms.
               </p>
             </div>
           </div>

@@ -5,11 +5,10 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6%20Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/Neon%20Postgres-15%20Serverless-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://neon.tech/)
 [![Drizzle ORM](https://img.shields.io/badge/Drizzle%20ORM-0.36%20TypeSafe-C5F74F?style=flat-square&logo=drizzle&logoColor=black)](https://orm.drizzle.team/)
-[![Prisma ORM](https://img.shields.io/badge/Prisma-5.22%20Client-2D3748?style=flat-square&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![Redux Toolkit](https://img.shields.io/badge/Redux%20Toolkit-RTK%20Query-764ABC?style=flat-square&logo=redux&logoColor=white)](https://redux-toolkit.js.org/)
 [![TanStack Table](https://img.shields.io/badge/TanStack-Table%20v8%20%2B%20Virtual%20v3-FF4154?style=flat-square&logo=react-table&logoColor=white)](https://tanstack.com/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4%20Neutral-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-28%2F28%20Passed-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-38%2F38%20Passed-6E9F18?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Hallmark Craft](https://img.shields.io/badge/Hallmark%20Craft-0%20Failures-10B981?style=flat-square)](#13-hallmark-engineering-craft-and-accessibility)
 [![Security Hardened](https://img.shields.io/badge/Security-20%20Controls%20Passed-2563EB?style=flat-square)](#11-security-and-production-hardening-matrix)
 
@@ -55,7 +54,7 @@
 5. [Search Engine Architecture: Full-Text, Trigram and Hybrid Pushdown](#5-search-engine-architecture-full-text-trigram-and-hybrid-pushdown)
 6. [State Management Hierarchy (Redux Toolkit)](#6-state-management-hierarchy-redux-toolkit)
 7. [Advanced Data Table and DOM Virtualization Math](#7-advanced-data-table-and-dom-virtualization-math)
-8. [Dual ORM Architecture: Drizzle and Prisma 5.22](#8-dual-orm-architecture-drizzle-and-prisma-522)
+8. [Database Architecture: Drizzle ORM Pushdown Engine](#8-database-architecture-drizzle-orm-pushdown-engine)
 9. [Complete Enterprise REST API Reference](#9-complete-enterprise-rest-api-reference)
 10. [Database Schema, Composite Indexes and Execution Plans](#10-database-schema-composite-indexes-and-execution-plans)
 11. [Security and Production Hardening Matrix](#11-security-and-production-hardening-matrix)
@@ -85,8 +84,8 @@ Organizations handling high-density business records routinely encounter critica
 | **Multi-Condition Filters** | Composite B-Tree and GIN indexes for selective pruning before row fetching. | Multi-column filter queries execute in **< 45ms** across 110,000+ indexed records. |
 | **Request Storms and Jitter** | 300ms input debouncing coupled with RTK Query `AbortController` cancellation for superseded flights. | Zero race-condition overwrites; ~80% reduction in unnecessary API calls during active typing. |
 | **DOM Scrolling Stutter** | Row windowing via `@tanstack/react-virtual` with dynamic overscan buffers. | Constant DOM footprint (~120 nodes); steady **60fps** scroll performance. |
-| **Search Engine Redundancy** | Native PostgreSQL Full-Text Search (`tsvector @@ tsquery`) + Trigram similarity (`pg_trgm`) + Exact matching. | Strict ACID consistency, immediate index visibility, and sub-15ms in-database execution without external cluster overhead. |
-| **Data Staleness and Latency** | Two-tier caching: In-flight deduplication via RTK Query + in-memory server LRU cache. | Cache hit latency drops to **0.1ms** with tag-based invalidation on mutations. |
+| **Search Engine Redundancy** | Native PostgreSQL Full-Text Search (`tsvector @@ tsquery`) + Trigram similarity (`pg_trgm`) + Exact matching. | Strict ACID consistency, immediate index visibility, and 0.08 - 9.2ms in-database execution without external cluster overhead. |
+| **Data Staleness and Latency** | Two-tier caching: In-flight deduplication via RTK Query + in-memory server SharedQueryCache. | Cache hit latency drops to sub-15ms with tag-based invalidation on mutations. |
 
 ---
 
@@ -121,8 +120,8 @@ flowchart TD
 
     subgraph W4["Engine Tier"]
       P["PostgreSQL 15 Cluster"]
-      ORM["Dual ORM (Drizzle + Prisma)"]
-      C["In-Memory LRU Cache (0.1ms)"]
+      ORM["Drizzle ORM Engine"]
+      C["In-Memory SharedQueryCache (< 15ms)"]
       H["Live Telemetry Health API"]
     end
   end
@@ -257,14 +256,14 @@ sequenceDiagram
   RTK->>Gateway: HTTP Request with Bearer JWT
   Gateway->>Gateway: Check Sliding-Window Rate Limit &amp; Security Headers
   Gateway->>Gateway: Verify JWT &amp; Enforce RBAC Role Matrix
-  Gateway->>Cache: Query Hash Lookup (MD5)
-  alt Cache HIT (0.1ms)
+  Gateway->>Cache: Query Hash Lookup (SHA-256)
+  alt Cache HIT (< 15ms)
     Cache-->>RTK: Return Serialized JSON Page (~12KB)
   else Cache MISS
     Gateway->>Drizzle: Pushdown parameters (WHERE, ORDER BY, LIMIT)
     Drizzle->>Postgres: Parameterized SQL via Connection Pool
     Postgres->>Postgres: Bitmap Index Scan (GIN tsvector + Composite B-Tree)
-    Postgres-->>Drizzle: Return matching record tuples
+    Postgres-->>Drizzle: Return matching record tuples (0.08 - 9.2ms)
     Drizzle-->>Cache: Save page in Server LRU Cache (TTL: 60s)
     Drizzle-->>RTK: Return Serialized JSON Page (~12KB)
   end
@@ -291,7 +290,7 @@ sequenceDiagram
 #### 3. How do you prevent unnecessary API calls?
 1. **Debounced Search Dispatch (300ms):** Keystrokes update local input state instantaneously for smooth typing, but the Redux `debouncedSearch` trigger is deferred until input pauses.
 2. **RTK Query Client Cache (`keepUnusedDataFor: 60`):** Returning to previously visited pages or filter configurations loads instantly from client memory without hitting the network.
-3. **Server-Side LRU Memory Cache:** Queries with identical parameter hashes are fulfilled from server memory in **0.1ms**.
+3. **Server-Side LRU Memory Cache:** Queries with identical parameter hashes are fulfilled from server memory in **sub-15ms**.
 
 #### 4. How are simultaneous requests and race conditions prevented?
 When users rapidly change filters or type search terms, prior in-flight requests are automatically aborted via `AbortController` in RTK Query. This guarantees that an older, slower query response cannot arrive out of order and overwrite newer results.
@@ -425,11 +424,11 @@ In contrast, an unvirtualized table of 100,000 rows would inject $2,400,000$ DOM
 
 ---
 
-## 8. Dual ORM Architecture: Drizzle and Prisma 5.22
+## 8. Database Architecture: Drizzle ORM Pushdown Engine
 
-DataScope provides a dual ORM architecture:
-1. **Drizzle ORM (`drizzle-orm`):** High-speed, lightweight SQL pushdown query builder with strict TypeScript typing, zero overhead, and native PostgreSQL vector syntax.
-2. **Prisma ORM (`@prisma/client` v5.22):** Enterprise schema modeling, relation graphs, migrations, and declarative typing across relational entities.
+DataScope is standardized on a unified Drizzle ORM architecture:
+1. **Drizzle ORM (`drizzle-orm`):** High-speed, lightweight SQL pushdown query builder with strict TypeScript type safety, zero runtime overhead, and native PostgreSQL vector and full-text search operators (`@@`, `to_tsquery`, `<->`).
+2. **PostgreSQL Native Driver (`pg`):** Direct pooled connection management configured with SSL enforcement for remote serverless clusters.
 
 ### Schema Modeling Definition (`src/lib/db/schema.ts`)
 
@@ -624,11 +623,11 @@ DataScope implements an enterprise security matrix addressing core production re
 | **9** | **CORS Configuration** | Restricted origin policies and controlled HTTP methods. | `next.config.js` |
 | **10** | **Security Headers** | HSTS, X-Frame-Options (`SAMEORIGIN`), X-Content-Type-Options (`nosniff`). | `vercel.json`, `next.config.js` |
 | **11** | **Debug Mode Off** | `NODE_ENV === 'production'` checks; sanitized production error responses. | `src/app/api/` |
-| **12** | **Dependencies Updated** | Current stable dependencies (Next.js 14.2, Prisma 5.22, React 18). | `package.json` |
+| **12** | **Dependencies Updated** | Current stable dependencies (Next.js 14.2, Drizzle ORM 0.36, React 18). | `package.json` |
 | **13** | **Unused Code Removed** | Zero dead imports; Hallmark sloplint verified clean. | `scripts/run-sloplint.js` |
 | **14** | **Error Boundaries** | Centralized API error wrappers; zero internal stack leaks to clients. | `src/app/api/` |
 | **15** | **Structured Logging** | Execution time, query hash, and cache hit metrics without PII. | `src/lib/db/` |
-| **16** | **SQL Injection Defense** | Parameterized SQL queries via Drizzle ORM and Prisma Client. | `src/lib/db/` |
+| **16** | **SQL Injection Defense** | Parameterized SQL queries via Drizzle ORM and PostgreSQL driver. | `src/lib/db/` |
 | **17** | **Password Security** | Bcrypt hash with salt rounds $\ge 10$; complexity requirements. | `src/app/api/auth/login/` |
 | **18** | **Session Lifecycle** | Short-lived signed tokens; dedicated `/api/auth/logout` cookie purging. | `src/app/api/auth/logout/` |
 | **19** | **Zero Leaked Secrets** | Git status verified; secrets isolated from version control. | `.gitignore` |
@@ -710,13 +709,14 @@ npm run benchmark
   <img src="./public/images/latency-benchmark-chart.svg" alt="DataScope Latency Benchmarks across 110,000+ Records" width="100%" />
 </div>
 
-| Benchmark Operation | Dataset Scope | Cache State | Execution Latency | Status |
-| :--- | :---: | :---: | :---: | :---: |
-| **PostgreSQL Full-Text Search (`tsvector @@ tsquery`)** | 110,000 records | Cold (MISS) | **12.4 ms** | Passed |
-| **PostgreSQL Trigram Fuzzy Search (`pg_trgm`)** | 110,000 records | Cold (MISS) | **18.7 ms** | Passed |
-| **Multi-Condition Pushdown Filter**<br>`(Status=Active AND Country=Germany AND Revenue > $10,000)` | 110,000 records | Cold (MISS) | **36.6 ms** | Passed |
-| **Deep Keyset/Offset Pagination (Page 100)** | 110,000 records | Cold (MISS) | **26.9 ms** | Passed |
-| **Server-Side In-Memory LRU Cache Hit** | 110,000 records | Warm (HIT) | **0.1 ms** | Passed |
+| Benchmark Operation | Dataset Scope | Cache State | Engine Execution Latency | Total Transit (iad1 -> sin1) | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **PostgreSQL Exact Status Filter** | 120,000 records | Cold (MISS) | **0.082 ms** | 225 ms | Passed |
+| **Numeric Range Seek (Revenue)** | 120,000 records | Cold (MISS) | **0.145 ms** | 228 ms | Passed |
+| **Keyset Cursor Seek (Row 100k)** | 120,000 records | Cold (MISS) | **0.104 ms** | 222 ms | Passed |
+| **Full-Text Search (`search_tsv @@ tsquery`)** | 120,000 records | Cold (MISS) | **9.214 ms** | 234 ms | Passed |
+| **PostgreSQL Trigram Search (`pg_trgm`)** | 120,000 records | Cold (MISS) | **6.812 ms** | 231 ms | Passed |
+| **L1 Server In-Memory Cache Hit** | 120,000 records | Warm (HIT) | **< 0.15 ms** | < 15 ms | Passed |
 
 ---
 
@@ -731,16 +731,17 @@ flowchart LR
   end
 ```
 
-DataScope provides 8 documented Architectural Decision Records (accessible interactively under `/dashboard/architecture` and tracked in `/docs/ADRs/`):
+DataScope provides 9 documented Architectural Decision Records (accessible interactively under `/dashboard/architecture` and tracked in `/docs/adr/`):
 
-- **[ADR-001: RTK Query over Redux Async Thunks](docs/ADRs/ADR-001-rtk-query-vs-async-thunks.md)** - Adopted declarative API services with tag invalidation, eliminating manual action/reducer maintenance.
-- **[ADR-002: Server-Side Pushdown Filtering vs. Client-Side Slicing](docs/ADRs/ADR-002-server-side-vs-client-side-pagination.md)** - Enforced database-level filtering to maintain a constant ~12KB payload regardless of dataset volume.
-- **[ADR-003: PostgreSQL Relational Schema with Drizzle ORM vs. Document Store](docs/ADRs/ADR-003-postgresql-vs-mongodb.md)** - Selected PostgreSQL for strict ACID guarantees, strong relational joins, and native inverted indexes.
-- **[ADR-004: Keyset Cursor Pagination vs. Offset Pagination](docs/ADRs/ADR-004-offset-vs-keyset-pagination.md)** - Implemented keyset cursors for deep scrolling to eliminate the $O(N)$ penalty of large offsets.
-- **[ADR-005: Native PostgreSQL Full-Text and Trigram Search vs. Elasticsearch](docs/ADRs/ADR-005-postgresql-fts-vs-elasticsearch.md)** - Deployed PostgreSQL GIN indexes to achieve high-speed search without external cluster complexity.
-- **[ADR-006: 300ms Client-Side Search Debouncing](docs/ADRs/ADR-006-client-side-search-debouncing.md)** - Decoupled immediate local typing response from Redux store dispatches, mitigating request storms.
-- **[ADR-007: TanStack Virtual DOM Windowing for 60fps Scrolling](docs/ADRs/ADR-007-dom-virtualization-tanstack-virtual.md)** - Implemented virtualized windowing to constrain DOM elements to ~120 nodes.
-- **[ADR-008: Multi-Tier Caching Strategy](docs/ADRs/ADR-008-multi-tier-caching-strategy.md)** - Combined client RTK Query deduplication with server-side LRU query caching (0.1ms hits).
+- **[ADR-0001: RTK Query over Redux Async Thunks](docs/adr/0001-rtk-query-vs-redux-async-thunks-for-data-fetching.md)** - Adopted declarative API services with tag invalidation, eliminating manual action/reducer maintenance.
+- **[ADR-0002: Server-Side Pushdown Filtering vs. Client-Side Slicing](docs/adr/0002-server-side-vs-client-side-pagination-for-large-datasets.md)** - Enforced database-level filtering to maintain a constant ~12KB payload regardless of dataset volume.
+- **[ADR-0003: PostgreSQL Relational Schema with Drizzle ORM vs. Document Store](docs/adr/0003-postgresql-relational-db-with-drizzle-orm-vs-document-store.md)** - Selected PostgreSQL for strict ACID guarantees, strong relational joins, and native inverted indexes.
+- **[ADR-0004: Keyset Cursor Pagination vs. Offset Pagination](docs/adr/0004-offset-pagination-vs-keyset-cursor-pagination.md)** - Implemented keyset cursors for deep scrolling to eliminate the O(N) penalty of large offsets.
+- **[ADR-0005: Native PostgreSQL Full-Text and Trigram Search vs. Elasticsearch](docs/adr/0005-postgresql-full-text-search-vs-external-search-engines-elasticsearch-opensearch.md)** - Deployed PostgreSQL GIN indexes to achieve high-speed search without external cluster complexity.
+- **[ADR-0006: 300ms Client-Side Search Debouncing](docs/adr/0006-client-side-search-debouncing-300ms.md)** - Decoupled immediate local typing response from Redux store dispatches, mitigating request storms.
+- **[ADR-0007: TanStack Virtual DOM Windowing for 60fps Scrolling](docs/adr/0007-dom-virtualization-via-tanstack-virtual-for-table-rendering.md)** - Implemented virtualized windowing to constrain DOM elements to ~120 nodes.
+- **[ADR-0008: Multi-Tier Caching Strategy](docs/adr/0008-multi-tier-caching-strategy-lru-memory-rtk-query-cache.md)** - Combined client RTK Query deduplication with server-side SharedQueryCache (sub-15ms hits).
+- **[ADR-0009: Comparative Search Architecture & Scaling Thresholds (FTS vs. Trigram vs. Elasticsearch)](docs/adr/0009-comparative-search-fts-vs-trigram-vs-elasticsearch.md)** - Defined architectural obsolescence boundaries (5M rows for trigrams, 20M rows for PostgreSQL FTS, 50M+ rows for external OpenSearch/Elasticsearch cluster).
 
 ### Additional Documentation & Technical Audits
 - **[Performance & Latency Report](docs/performance-report.md)** - Comprehensive empirical latency benchmarks, EXPLAIN ANALYZE query plans, and memory profiling across 120,000+ records.
@@ -770,16 +771,19 @@ npm install
 # 3. Seed 120,000+ indexed enterprise business records
 npm run db:seed
 
-# 4. Run automated test suite
+# 4. Run automated unit & integration test suite (Vitest)
 npm test
 
-# 5. Execute live performance benchmarks
+# 5. Run end-to-end user journey tests (Playwright)
+npm run test:e2e
+
+# 6. Execute live query plan benchmarks (EXPLAIN ANALYZE)
 npm run benchmark
 
-# 6. Verify Hallmark craft compliance
+# 7. Verify Hallmark craft compliance (0 FAIL)
 npm run lint:hallmark
 
-# 7. Start Next.js development server
+# 8. Start Next.js development server
 npm run dev
 ```
 
