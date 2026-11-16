@@ -25,13 +25,15 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Read database connection string strictly from environment variable
-const databaseUrl = process.env.DATABASE_URL;
+const rawDatabaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl) {
+if (!rawDatabaseUrl) {
   console.error('Error: DATABASE_URL environment variable is not defined.');
   console.error('Please configure DATABASE_URL in your .env file or deployment environment.');
   process.exit(1);
 }
+
+const databaseUrl: string = rawDatabaseUrl;
 
 async function seedFields() {
   const pool = new Pool({
