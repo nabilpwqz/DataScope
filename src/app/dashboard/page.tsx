@@ -99,7 +99,7 @@ export default function DashboardOverviewPage() {
     }
     const sum = datasets.reduce((acc, d) => acc + (d.totalRecords || 0), 0);
     if (sum > 0) return sum;
-    return isDatasetsLoading ? 0 : 120000;
+    return isDatasetsLoading ? 0 : (datasets.length > 0 ? sum : 0);
   }, [systemHealth, datasets, isDatasetsLoading]);
 
   // 2. KPI 2: Total Datasets
@@ -108,7 +108,7 @@ export default function DashboardOverviewPage() {
       return systemHealth.database.totalDatasets;
     }
     if (datasets.length > 0) return datasets.length;
-    return isDatasetsLoading ? 0 : 3;
+    return isDatasetsLoading ? 0 : datasets.length;
   }, [systemHealth, datasets, isDatasetsLoading]);
 
   // 3. KPI 3: Active Users
@@ -271,7 +271,11 @@ export default function DashboardOverviewPage() {
             </div>
           </div>
           <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
-            {formatNumber(totalIndexedRecords)}
+            {isDatasetsLoading && totalIndexedRecords === 0 ? (
+              <span className="inline-block h-7 w-24 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+            ) : (
+              formatNumber(totalIndexedRecords)
+            )}
           </p>
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">
@@ -292,7 +296,11 @@ export default function DashboardOverviewPage() {
             </div>
           </div>
           <p className="text-2xl font-bold font-mono text-slate-900 dark:text-white">
-            {totalDatasetsCount}
+            {isDatasetsLoading && totalDatasetsCount === 0 ? (
+              <span className="inline-block h-7 w-12 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+            ) : (
+              totalDatasetsCount
+            )}
           </p>
           <div className="flex items-center justify-between text-[11px]">
             <span className="text-blue-600 dark:text-blue-400 font-medium">
