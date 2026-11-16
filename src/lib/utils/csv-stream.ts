@@ -7,8 +7,7 @@ export function escapeCsvCell(value: unknown): string {
     return '';
   }
   const str = typeof value === 'object' ? JSON.stringify(value) : String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('
-') || str.includes('')) {
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;

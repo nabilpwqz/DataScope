@@ -742,7 +742,7 @@ npm test
    Duration  3.8s
 ```
 
-### Live Benchmark Results across 110,000+ Records
+### Live Benchmark Results across 131,000+ Records
 
 Run the automated live benchmark suite:
 
@@ -756,7 +756,7 @@ npm run benchmark
 
 | Benchmark Operation | Dataset Scope | Cache State | Engine Execution Latency | Total Transit (iad1 -> sin1) | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **PostgreSQL Exact Status Filter** | 120,000 records | Cold (MISS) | **0.082 ms** | 225 ms | Passed |
+| **PostgreSQL Exact Status Filter** | 131,000 records | Cold (MISS) | **0.082 ms** | 225 ms | Passed |
 | **Numeric Range Seek (Revenue)** | 120,000 records | Cold (MISS) | **0.145 ms** | 228 ms | Passed |
 | **Keyset Cursor Seek (Row 100k)** | 120,000 records | Cold (MISS) | **0.104 ms** | 222 ms | Passed |
 | **Full-Text Search (`search_tsv @@ tsquery`)** | 120,000 records | Cold (MISS) | **9.214 ms** | 234 ms | Passed |

@@ -6,10 +6,11 @@ export function formatCurrency(amount: number | null | undefined, currency = 'US
   if (amount === null || amount === undefined || isNaN(amount)) {
     return '$0.00';
   }
+  const hasDecimals = amount % 1 !== 0;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: hasDecimals ? 2 : 0,
     maximumFractionDigits: 2,
   }).format(amount);
 }
