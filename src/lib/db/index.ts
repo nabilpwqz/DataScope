@@ -64,13 +64,15 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
 
     const rawEnvUrl = process.env.DATABASE_URL;
     const forceEmbedded = process.env.PG_FORCE_EMBEDDED === 'true';
-    const isTestEnv = process.env.NODE_ENV === 'test';
+    const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
     const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
     const databaseUrl = forceEmbedded
       ? ''
       : (rawEnvUrl && rawEnvUrl.trim() !== '' ? rawEnvUrl : '');
 
-    if (databaseUrl && databaseUrl.trim() !== '') {
+    const shouldUseRemote = Boolean(databaseUrl && databaseUrl.trim() !== '' && !isTestEnv);
+
+    if (shouldUseRemote) {
       // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, etc.)
       const isLocalhost =
         databaseUrl.includes('localhost') ||
@@ -85,19 +87,37 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
         connectionTimeoutMillis: 10000,
       });
 
-      const drizzleInstance = drizzlePg(pool, { schema }) as unknown as DbInstance;
-      state.db = drizzleInstance;
-      state.rawClient = pool;
-      state.engineType = 'postgresql';
-    } else {
+      try {
+        if (!isProduction) {
+          // Probe remote connection to verify network reachability
+          await pool.query('SELECT 1;');
+        }
+        const drizzleInstance = drizzlePg(pool, { schema }) as unknown as DbInstance;
+        state.db = drizzleInstance;
+        state.rawClient = pool;
+        state.engineType = 'postgresql';
+      } catch (connErr: any) {
+        if (isProduction) {
+          throw new Error(
+            `DataScope Production Database Connection Error: Failed to connect to remote PostgreSQL instance at ${databaseUrl.split('@')[1] || 'configured host'}: ${connErr.message}`
+          );
+        }
+        console.warn(`Notice: Remote PostgreSQL at ${databaseUrl.split('@')[1] || 'configured host'} is unreachable on this network (${connErr.message}). Falling back to embedded engine for local development.`);
+        await pool.end().catch(() => {});
+        state.db = null;
+        state.rawClient = null;
+      }
+    }
+
+    if (!state.rawClient) {
       if (isProduction) {
         throw new Error(
-          'DataScope Production Database Configuration Error: DATABASE_URL is not set. A real hosted PostgreSQL instance is required in production.'
+          'DataScope Production Database Configuration Error: DATABASE_URL is not set or remote PostgreSQL is unreachable. A real hosted PostgreSQL instance is required in production.'
         );
       }
 
       if (!isTestEnv && !forceEmbedded) {
-        console.warn('Notice: DATABASE_URL is not set. Falling back to embedded PGlite for local non-production testing.');
+        console.warn('Notice: Using embedded PGlite for local non-production testing/development.');
       }
 
       // Dynamic import: PGlite is restricted to offline dev and unit tests
@@ -105,7 +125,9 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
       const { pg_trgm } = await import('@electric-sql/pglite/contrib/pg_trgm');
       const { drizzle: drizzlePgLite } = await import('drizzle-orm/pglite');
 
-      const dataDir = process.env.PG_DATA_DIR || path.join(process.cwd(), '.pgdata');
+      const dataDir = isTestEnv
+        ? path.join(process.cwd(), '.test_pgdata')
+        : (process.env.PG_DATA_DIR || path.join(process.cwd(), '.pgdata'));
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
       }
