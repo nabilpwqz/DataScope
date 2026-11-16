@@ -314,7 +314,7 @@ async function ensureSchemaAndIndexes(client: any) {
         completed_at timestamptz
       );
 
-      CREATE TABLE IF NOT EXISTS query_performance_logs (
+      CREATE TABLE IF NOT EXISTS query_metrics (
         id text PRIMARY KEY,
         endpoint text NOT NULL,
         query_type text NOT NULL,
@@ -378,7 +378,7 @@ async function ensureSchemaAndIndexes(client: any) {
       'CREATE INDEX IF NOT EXISTS idx_saved_views_shared ON saved_views (dataset_id, is_shared);',
       'CREATE INDEX IF NOT EXISTS idx_search_hist_user ON search_history (user_id, dataset_id);',
       'CREATE INDEX IF NOT EXISTS idx_history_record_id ON record_history (record_id);',
-      'CREATE INDEX IF NOT EXISTS idx_perf_logs_created ON query_performance_logs (created_at);',
+      'CREATE INDEX IF NOT EXISTS idx_query_metrics_created ON query_metrics (created_at);',
       'CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs (created_at);',
       'CREATE INDEX IF NOT EXISTS idx_audit_logs_user ON audit_logs (user_id);',
       'CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs (action);',

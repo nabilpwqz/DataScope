@@ -398,7 +398,7 @@ export class SearchEngine {
     try {
       const client = await getRawClient();
       await client.query(
-        `INSERT INTO query_performance_logs (id, endpoint, query_type, query_hash, execution_time_ms, total_records_scanned, cache_hit)
+        `INSERT INTO query_metrics (id, endpoint, query_type, query_hash, execution_time_ms, total_records_scanned, cache_hit)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           crypto.randomUUID(),

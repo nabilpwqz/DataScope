@@ -190,7 +190,7 @@ CREATE TABLE IF NOT EXISTS record_comments (
 );
 
 -- Query Performance Logs Table
-CREATE TABLE IF NOT EXISTS query_performance_logs (
+CREATE TABLE IF NOT EXISTS query_metrics (
   id text PRIMARY KEY,
   endpoint text NOT NULL,
   query_type text NOT NULL,
@@ -210,7 +210,7 @@ CREATE INDEX IF NOT EXISTS idx_records_record_key ON dataset_records (record_key
 CREATE INDEX IF NOT EXISTS idx_saved_views_dataset ON saved_views (dataset_id);
 CREATE INDEX IF NOT EXISTS idx_saved_views_user ON saved_views (user_id);
 CREATE INDEX IF NOT EXISTS idx_search_hist_user ON search_history (user_id, dataset_id);
-CREATE INDEX IF NOT EXISTS idx_perf_logs_created ON query_performance_logs (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_query_metrics_created ON query_metrics (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_quality_issues_dataset ON data_quality_issues (dataset_id);
 

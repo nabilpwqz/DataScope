@@ -223,8 +223,8 @@ export const exportJobs = pgTable('export_jobs', {
   completedAt: timestamp('completed_at', { withTimezone: true }),
 });
 
-export const queryPerformanceLogs = pgTable(
-  'query_performance_logs',
+export const queryMetrics = pgTable(
+  'query_metrics',
   {
     id: text('id').primaryKey(),
     endpoint: text('endpoint').notNull(),
@@ -239,6 +239,9 @@ export const queryPerformanceLogs = pgTable(
     createdIdx: index('perf_created_idx').on(table.createdAt),
   })
 );
+
+// Backward-compatible alias matching query_metrics
+export const queryPerformanceLogs = queryMetrics;
 
 export const auditLogs = pgTable(
   'audit_logs',

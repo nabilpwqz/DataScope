@@ -1,25 +1,49 @@
-import { initDatabase, getRawClient, executeSql } from '../src/lib/db';
+import { initDatabase, executeSql } from '../src/lib/db';
 import bcrypt from 'bcryptjs';
 
-async function seed() {
-  console.log('--- Starting DataScope Enterprise Database Seeding ---');
-  const startTime = performance.now();
+// Parse command line arguments
+const args = process.argv.slice(2);
+const scaleArg = args.find((a) => a.startsWith('--scale='))?.split('=')[1]?.toLowerCase() || '100k';
+const is1M = scaleArg === '1m' || scaleArg === '1000k' || scaleArg === '1000000';
+const forceClean = args.includes('--force') || args.includes('--clean') || args.includes('--truncate');
 
+const SALES_TARGET = is1M ? 800000 : 100000;
+const TELEMETRY_TARGET = is1M ? 100000 : 10000;
+const FINANCE_TARGET = is1M ? 100000 : 10000;
+const TOTAL_TARGET = SALES_TARGET + TELEMETRY_TARGET + FINANCE_TARGET;
+const BATCH_SIZE = 5000;
+
+async function seed() {
+  console.log('=== DataScope Enterprise Database Seeder (Drizzle ORM Sole Data Layer) ===');
+  console.log(`Target Scale: ${scaleArg.toUpperCase()} (${TOTAL_TARGET.toLocaleString()} total records across 3 datasets)`);
+  console.log(`Force Clean: ${forceClean ? 'YES (truncating tables)' : 'NO (idempotent upsert)'}`);
+  console.log(`Batch Size: ${BATCH_SIZE.toLocaleString()}`);
+
+  const startTime = performance.now();
   const { rawClient: client } = await initDatabase();
 
-  // Check if already seeded with at least 100,000 records
-  try {
-    const existing = await client.query('SELECT COUNT(*)::int AS count FROM dataset_records;');
-    const currentCount = existing.rows[0]?.count || 0;
-    if (currentCount >= 100000) {
-      console.log(`Database already contains ${currentCount.toLocaleString()} records. Seeding skipped.`);
-      process.exit(0);
+  // Check existing count if not forced
+  if (!forceClean) {
+    try {
+      const countRes = await client.query('SELECT COUNT(*)::int AS count FROM dataset_records;');
+      const currentCount = countRes.rows[0]?.count || 0;
+      if (currentCount >= TOTAL_TARGET) {
+        console.log(`\nDatabase already contains ${currentCount.toLocaleString()} records (target was ${TOTAL_TARGET.toLocaleString()}).`);
+        console.log('To re-seed or change scale, pass --force (e.g. npm run seed -- --scale=1M --force).');
+        process.exit(0);
+      }
+    } catch (e) {
+      // Table may not exist yet, proceed
     }
-  } catch (err) {
-    // proceed to seed
+  } else {
+    console.log('\n[Clean] Truncating dataset_records, record_relationships, and record_history...');
+    await client.query(`
+      TRUNCATE TABLE record_history, record_relationships, dataset_records CASCADE;
+    `);
   }
 
-  console.log('1. Seeding Users & Authentication Credentials...');
+  // 1. Core Users & Credentials
+  console.log('\n1. Seeding Users & Authentication Credentials...');
   const salt = await bcrypt.genSalt(10);
   const adminPass = await bcrypt.hash('admin123', salt);
   const analystPass = await bcrypt.hash('analyst123', salt);
@@ -33,20 +57,13 @@ async function seed() {
       ('usr-viewer-01', 'Viewer User', 'viewer@datascope.io', '${viewerPass}', 'viewer', 'Product Operations', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150')
     ON CONFLICT (id) DO UPDATE SET
       name = EXCLUDED.name,
-      role = EXCLUDED.role;
+      role = EXCLUDED.role,
+      password_hash = EXCLUDED.password_hash;
   `);
 
-  // Roles table seeding
+  // 2. Roles & Granular Permissions
+  console.log('2. Seeding Enterprise Roles...');
   await client.query(`
-    CREATE TABLE IF NOT EXISTS roles (
-      id text PRIMARY KEY,
-      name text NOT NULL,
-      description text NOT NULL,
-      permissions jsonb NOT NULL DEFAULT '[]',
-      created_at timestamptz NOT NULL DEFAULT now(),
-      updated_at timestamptz NOT NULL DEFAULT now()
-    );
-
     INSERT INTO roles (id, name, description, permissions)
     VALUES 
       ('admin', 'Administrator', 'Full system and data governance access across all datasets and settings', '["manage_users", "manage_datasets", "manage_permissions", "export_data", "save_views", "view_analytics", "read_all", "write_all"]'),
@@ -58,21 +75,52 @@ async function seed() {
       permissions = EXCLUDED.permissions;
   `);
 
-  // Access permissions table seeding
+  // 3. Core Business Datasets
+  console.log('3. Seeding Core Business Datasets...');
   await client.query(`
-    CREATE TABLE IF NOT EXISTS access_permissions (
-      id text PRIMARY KEY,
-      user_id text REFERENCES users(id) ON DELETE CASCADE,
-      role text,
-      dataset_id text NOT NULL REFERENCES datasets(id) ON DELETE CASCADE,
-      can_read boolean NOT NULL DEFAULT true,
-      can_write boolean NOT NULL DEFAULT false,
-      can_export boolean NOT NULL DEFAULT false,
-      can_manage boolean NOT NULL DEFAULT false,
-      created_at timestamptz NOT NULL DEFAULT now(),
-      updated_at timestamptz NOT NULL DEFAULT now()
-    );
+    INSERT INTO datasets (id, name, slug, description, category, data_source, total_records, access_level, schema_definition)
+    VALUES 
+      (
+        'ds-sales-01',
+        'Global Enterprise Accounts & Revenue',
+        'global-sales',
+        'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.',
+        'Sales & Revenue',
+        'PostgreSQL Production Cluster [us-east-1]',
+        ${SALES_TARGET},
+        'public',
+        '[]'
+      ),
+      (
+        'ds-telemetry-02',
+        'Edge Infrastructure & Telemetry Logs',
+        'cloud-telemetry',
+        'Multi-region high-frequency latency, CPU utilization, and edge cluster operational metrics.',
+        'Infrastructure Telemetry',
+        'Kafka Streaming & S3 Parquet Lake',
+        ${TELEMETRY_TARGET},
+        'restricted',
+        '[]'
+      ),
+      (
+        'ds-finance-03',
+        'Institutional Financial Transactions',
+        'financial-audit',
+        'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.',
+        'Financial Intelligence',
+        'Core Banking Ledger DB',
+        ${FINANCE_TARGET},
+        'admin_only',
+        '[]'
+      )
+    ON CONFLICT (id) DO UPDATE SET
+      total_records = EXCLUDED.total_records,
+      access_level = EXCLUDED.access_level;
+  `);
 
+  // 4. Access Permissions Matrix
+  console.log('4. Seeding Dataset Access Permissions Matrix...');
+  await client.query(`
     INSERT INTO access_permissions (id, role, dataset_id, can_read, can_write, can_export, can_manage)
     VALUES
       ('perm-admin-sales', 'admin', 'ds-sales-01', true, true, true, true),
@@ -90,7 +138,7 @@ async function seed() {
       can_manage = EXCLUDED.can_manage;
   `);
 
-  // User preferences
+  // 5. User Preferences
   await client.query(`
     INSERT INTO user_preferences (id, user_id, table_density, theme, auto_refresh, refresh_interval_sec, default_page_size, notifications_enabled)
     VALUES 
@@ -100,49 +148,8 @@ async function seed() {
     ON CONFLICT (user_id) DO NOTHING;
   `);
 
-  console.log('2. Seeding Core Business Datasets...');
-  await client.query(`
-    INSERT INTO datasets (id, name, slug, description, category, data_source, total_records, access_level, schema_definition)
-    VALUES 
-      (
-        'ds-sales-01',
-        'Global Enterprise Accounts & Revenue',
-        'global-sales',
-        'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.',
-        'Sales & Revenue',
-        'PostgreSQL Production Cluster [us-east-1]',
-        100000,
-        'public',
-        '[]'
-      ),
-      (
-        'ds-telemetry-02',
-        'Edge Infrastructure & Telemetry Logs',
-        'cloud-telemetry',
-        'Multi-region high-frequency latency, CPU utilization, and edge cluster operational metrics.',
-        'Infrastructure Telemetry',
-        'Kafka Streaming & S3 Parquet Lake',
-        10000,
-        'restricted',
-        '[]'
-      ),
-      (
-        'ds-finance-03',
-        'Institutional Financial Transactions',
-        'financial-audit',
-        'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.',
-        'Financial Intelligence',
-        'Core Banking Ledger DB',
-        10000,
-        'admin_only',
-        '[]'
-      )
-    ON CONFLICT (id) DO UPDATE SET
-      total_records = EXCLUDED.total_records,
-      access_level = EXCLUDED.access_level;
-  `);
-
-  console.log('3. Seeding Dataset Field Metadata...');
+  // 6. Dataset Fields Metadata
+  console.log('5. Seeding Dataset Field Definitions...');
   await client.query(`
     INSERT INTO dataset_fields (id, dataset_id, field_name, display_name, data_type, is_filterable, is_searchable, is_sortable, is_primary, sample_values)
     VALUES 
@@ -154,6 +161,7 @@ async function seed() {
       ('f-06', 'ds-sales-01', 'country', 'Country', 'string', true, true, true, false, '["Germany", "United States", "United Kingdom", "France", "Japan", "Canada"]'),
       ('f-07', 'ds-sales-01', 'region', 'Region', 'string', true, true, true, false, '["EMEA", "Americas", "APAC", "DACH", "Nordics"]'),
       ('f-08', 'ds-sales-01', 'recordDate', 'Contract Date', 'date', true, false, true, false, '["2024-01-15", "2024-06-20", "2024-11-01"]'),
+      
       ('f-tel-01', 'ds-telemetry-02', 'recordKey', 'Log Key', 'string', true, true, true, true, '["LOG-000001", "LOG-000042"]'),
       ('f-tel-02', 'ds-telemetry-02', 'title', 'Heartbeat Event', 'string', true, true, true, false, '["Edge Cluster Node Heartbeat"]'),
       ('f-tel-03', 'ds-telemetry-02', 'category', 'Service Tier', 'string', true, true, true, false, '["Telemetry"]'),
@@ -162,6 +170,7 @@ async function seed() {
       ('f-tel-06', 'ds-telemetry-02', 'country', 'Deployment Scope', 'string', true, true, true, false, '["Global Cloud"]'),
       ('f-tel-07', 'ds-telemetry-02', 'region', 'Multi-Region Topology', 'string', true, true, true, false, '["Multi-Region"]'),
       ('f-tel-08', 'ds-telemetry-02', 'recordDate', 'Heartbeat Timestamp', 'date', true, false, true, false, '["2024-01-15T12:00:00Z"]'),
+
       ('f-fin-01', 'ds-finance-03', 'recordKey', 'Transaction ID', 'string', true, true, true, true, '["TXN-000001", "TXN-000042"]'),
       ('f-fin-02', 'ds-finance-03', 'title', 'Clearing Entity', 'string', true, true, true, false, '["JPMorgan Chase Clearing", "Deutsche Bank Securities"]'),
       ('f-fin-03', 'ds-finance-03', 'category', 'Settlement Instrument', 'string', true, true, true, false, '["Wholesale Clearing", "Cross-Border Wire", "Securities Settlement"]'),
@@ -173,8 +182,8 @@ async function seed() {
     ON CONFLICT (id) DO NOTHING;
   `);
 
-  console.log('4. Generating 100,000+ Enterprise Dataset Records in high-speed batches...');
-
+  // 7. Generate Dataset Records with realistic distributions and nulls
+  console.log(`\n6. Generating ${SALES_TARGET.toLocaleString()} Enterprise Sales Records...`);
   const companies = [
     'Acrobat Logistics', 'Apex Data Systems', 'Aura Healthtech', 'Bavaria Robotics',
     'BlueShift Cloud', 'Cognitive Dynamics', 'CyberPulse Shield', 'DataGrid Analytics',
@@ -187,9 +196,8 @@ async function seed() {
     'Stratus Telemetry', 'Summit Industrial', 'Synapse Neural Corp', 'Titanium Defense',
     'Vector Dynamics', 'Veritas Asset Management', 'Vortex Security', 'Zenith Logistics'
   ];
-
-  const prefixes = ['Global', 'Advanced', 'Integrated', 'NextGen', 'Strategic', 'Unified', 'Premier', 'Apex'];
-  const suffixes = ['Holdings', 'Solutions', 'Ventures', 'Technologies', 'Systems', 'International', 'Group', 'AG', 'GmbH', 'LLC'];
+  const prefixes = ['Global', 'Advanced', 'Integrated', 'NextGen', 'Strategic', 'Unified', 'Premier', 'Apex', 'Core', 'Vanguard'];
+  const suffixes = ['Holdings', 'Solutions', 'Ventures', 'Technologies', 'Systems', 'International', 'Group', 'AG', 'GmbH', 'LLC', 'Corp'];
   const categories = ['Enterprise', 'Mid-Market', 'Tier 1 Partner', 'SMB', 'Strategic Wholesale', 'Public Sector'];
   const statuses = ['Active', 'Pending', 'Archived', 'Suspended', 'Completed', 'Flagged'];
   const countries = [
@@ -204,18 +212,19 @@ async function seed() {
     { name: 'Singapore', region: 'APAC', weight: 0.03 },
   ];
 
-  const targetCount = 100000;
-  const batchSize = 2500;
-  const totalBatches = targetCount / batchSize;
-
   const baseDate = new Date('2023-01-01T00:00:00Z').getTime();
   const dateSpan = new Date('2024-11-14T00:00:00Z').getTime() - baseDate;
 
-  for (let b = 0; b < totalBatches; b++) {
+  // Insert sales records in batches of 2,500 to prevent payload limits
+  const salesChunkSize = 2500;
+  const totalSalesBatches = Math.ceil(SALES_TARGET / salesChunkSize);
+
+  for (let b = 0; b < totalSalesBatches; b++) {
+    const currentBatchCount = Math.min(salesChunkSize, SALES_TARGET - b * salesChunkSize);
     const valueStrings: string[] = [];
 
-    for (let i = 0; i < batchSize; i++) {
-      const globalIndex = b * batchSize + i + 1;
+    for (let i = 0; i < currentBatchCount; i++) {
+      const globalIndex = b * salesChunkSize + i + 1;
       const recordKey = `ACC-${String(globalIndex).padStart(7, '0')}`;
       
       const compBase = companies[globalIndex % companies.length];
@@ -237,12 +246,13 @@ async function seed() {
         ? Math.round(25000 + (globalIndex % 475000))
         : Math.round(1500 + (globalIndex % 23500));
 
-      // Country selection
       const countryObj = countries[globalIndex % countries.length];
       const country = countryObj.name;
-      const region = countryObj.region;
+      // Inject realistic nulls in 3% of region data for data quality engine testing
+      const hasNullRegion = globalIndex % 33 === 0;
+      const region = hasNullRegion ? 'Unspecified' : countryObj.region;
 
-      const randomTime = baseDate + Math.floor((globalIndex / targetCount) * dateSpan) + ((globalIndex * 31337) % 86400000);
+      const randomTime = baseDate + Math.floor((globalIndex / SALES_TARGET) * dateSpan) + ((globalIndex * 31337) % 86400000);
       const recordDate = new Date(randomTime).toISOString();
 
       const metadata = JSON.stringify({
@@ -252,51 +262,77 @@ async function seed() {
         riskScore: (globalIndex * 17) % 100,
         contractTermMonths: [12, 24, 36, 48][globalIndex % 4],
         primaryContact: `exec_${globalIndex % 500}@${compBase.toLowerCase().replace(/[^a-z]/g, '')}.com`,
+        notes: hasNullRegion ? null : `Verified compliance record for ${country}`,
       }).replace(/'/g, "''");
 
       const id = `rec-sales-${String(globalIndex).padStart(7, '0')}`;
+      const searchVectorContent = `${recordKey} ${title} ${category} ${country} ${region} ${status}`.replace(/'/g, "''");
 
       valueStrings.push(
-        `('${id}', 'ds-sales-01', '${recordKey}', '${title}', '${category}', '${status}', ${revenue}, '${country}', '${region}', '${recordDate}', '${metadata}')`
+        `('${id}', 'ds-sales-01', '${recordKey}', '${title}', '${category}', '${status}', ${revenue}, '${country}', '${region}', '${recordDate}', '${metadata}', to_tsvector('english', '${searchVectorContent}'))`
       );
     }
 
     await executeSql(client, `
-      INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata)
+      INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, search_vector)
       VALUES ${valueStrings.join(',\n')}
       ON CONFLICT (id) DO NOTHING;
     `);
 
-    if ((b + 1) % 10 === 0 || b === totalBatches - 1) {
-      const pct = Math.round(((b + 1) / totalBatches) * 100);
-      console.log(` -> Inserted ${((b + 1) * batchSize).toLocaleString()} / ${targetCount.toLocaleString()} sales records (${pct}%)...`);
+    if ((b + 1) % 10 === 0 || b === totalSalesBatches - 1) {
+      const inserted = Math.min((b + 1) * salesChunkSize, SALES_TARGET);
+      const pct = Math.round((inserted / SALES_TARGET) * 100);
+      console.log(` -> [Sales] ${inserted.toLocaleString()} / ${SALES_TARGET.toLocaleString()} records (${pct}%)...`);
     }
   }
 
-  // Generate 10,000 telemetry records
-  console.log('5. Generating 10,000 Cloud Telemetry Records...');
-  const telemetryValues: string[] = [];
-  const telemetryNodes = ['edge-us-east-1a', 'edge-eu-central-1', 'edge-ap-southeast-1', 'edge-sa-east-1'];
-  for (let i = 1; i <= 10000; i++) {
-    const id = `rec-tel-${String(i).padStart(6, '0')}`;
-    const key = `LOG-${String(i).padStart(6, '0')}`;
-    const node = telemetryNodes[i % telemetryNodes.length];
-    const title = `Edge Cluster Node [${node}] Cluster Heartbeat #${i}`;
-    const status = (i % 25 === 0) ? 'Flagged' : (i % 15 === 0) ? 'Pending' : 'Active';
-    const cpuUsage = Math.round((12 + ((i * 7) % 85)) * 10) / 10;
-    const recDate = new Date(baseDate + (i * 5000000)).toISOString();
-    telemetryValues.push(
-      `('${id}', 'ds-telemetry-02', '${key}', '${title}', 'Telemetry', '${status}', ${cpuUsage}, 'Global Cloud', 'Multi-Region', '${recDate}', '{"cpuUsage": ${cpuUsage}, "node": "${node}"}')`
-    );
-  }
-  await executeSql(client, `
-    INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata)
-    VALUES ${telemetryValues.join(',\n')}
-    ON CONFLICT (id) DO NOTHING;
-  `);
+  // 8. Generate Telemetry Records
+  console.log(`\n7. Generating ${TELEMETRY_TARGET.toLocaleString()} Cloud Telemetry Records...`);
+  const telemetryNodes = ['edge-us-east-1a', 'edge-eu-central-1', 'edge-ap-southeast-1', 'edge-sa-east-1', 'edge-af-south-1'];
+  const telemetryChunkSize = 2500;
+  const totalTelemetryBatches = Math.ceil(TELEMETRY_TARGET / telemetryChunkSize);
 
-  console.log('5b. Generating 10,000 Institutional Financial Transactions...');
-  const financeValues: string[] = [];
+  for (let b = 0; b < totalTelemetryBatches; b++) {
+    const currentCount = Math.min(telemetryChunkSize, TELEMETRY_TARGET - b * telemetryChunkSize);
+    const telemetryValues: string[] = [];
+
+    for (let i = 0; i < currentCount; i++) {
+      const globalIndex = b * telemetryChunkSize + i + 1;
+      const id = `rec-tel-${String(globalIndex).padStart(7, '0')}`;
+      const key = `LOG-${String(globalIndex).padStart(7, '0')}`;
+      const node = telemetryNodes[globalIndex % telemetryNodes.length];
+      const title = `Edge Cluster Node [${node}] Heartbeat #${globalIndex}`.replace(/'/g, "''");
+      const status = (globalIndex % 25 === 0) ? 'Flagged' : (globalIndex % 15 === 0) ? 'Pending' : 'Active';
+      const cpuUsage = Math.round((12 + ((globalIndex * 7) % 85)) * 10) / 10;
+      const recDate = new Date(baseDate + (globalIndex * 400000)).toISOString();
+      const metadata = JSON.stringify({
+        cpuUsage,
+        node,
+        cluster: 'Kubernetes-EKS-v1.30',
+        latencyP99Ms: (globalIndex * 3) % 45 + 5,
+      }).replace(/'/g, "''");
+      const searchVector = `${key} ${title} Telemetry Global Cloud Multi-Region ${status}`.replace(/'/g, "''");
+
+      telemetryValues.push(
+        `('${id}', 'ds-telemetry-02', '${key}', '${title}', 'Telemetry', '${status}', ${cpuUsage}, 'Global Cloud', 'Multi-Region', '${recDate}', '${metadata}', to_tsvector('english', '${searchVector}'))`
+      );
+    }
+
+    await executeSql(client, `
+      INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, search_vector)
+      VALUES ${telemetryValues.join(',\n')}
+      ON CONFLICT (id) DO NOTHING;
+    `);
+
+    if ((b + 1) % 4 === 0 || b === totalTelemetryBatches - 1) {
+      const inserted = Math.min((b + 1) * telemetryChunkSize, TELEMETRY_TARGET);
+      const pct = Math.round((inserted / TELEMETRY_TARGET) * 100);
+      console.log(` -> [Telemetry] ${inserted.toLocaleString()} / ${TELEMETRY_TARGET.toLocaleString()} records (${pct}%)...`);
+    }
+  }
+
+  // 9. Generate Institutional Financial Transactions
+  console.log(`\n8. Generating ${FINANCE_TARGET.toLocaleString()} Institutional Financial Transactions...`);
   const finInstitutions = [
     'JPMorgan Chase Clearing', 'Deutsche Bank Securities', 'BNP Paribas Arbitrage',
     'Barclays Capital EMEA', 'UBS Financial Services', 'Credit Agricole CIB',
@@ -316,37 +352,56 @@ async function seed() {
     { name: 'Canada', region: 'Americas' }
   ];
 
-  for (let i = 1; i <= 10000; i++) {
-    const id = `rec-fin-${String(i).padStart(6, '0')}`;
-    const key = `TXN-${String(i).padStart(6, '0')}`;
-    const inst = finInstitutions[i % finInstitutions.length];
-    const cat = finCategories[i % finCategories.length];
-    const statusIdx = (i % 100 < 60) ? 0 : (i % 100 < 80) ? 1 : (i % 100 < 90) ? 2 : (i % 100 < 95) ? 3 : (i % 100 < 98) ? 4 : 5;
-    const status = statuses[statusIdx];
-    const cObj = finCountries[i % finCountries.length];
-    const country = cObj.name;
-    const region = cObj.region;
-    const amount = Math.round(50000 + ((i * 17923) % 24950000));
-    const recDate = new Date(baseDate + (i * 5800000)).toISOString();
-    const title = `${inst} [${cat} #${i}]`.replace(/'/g, "''");
-    const metadata = JSON.stringify({
-      settlementChannel: 'SWIFT-ISO20022',
-      clearingHouse: 'Fedwire-DTCC',
-      currency: 'USD',
-      riskScore: (i * 13) % 100,
-      complianceTier: 'SOX-Compliant'
-    }).replace(/'/g, "''");
-    financeValues.push(
-      `('${id}', 'ds-finance-03', '${key}', '${title}', '${cat}', '${status}', ${amount}, '${country}', '${region}', '${recDate}', '${metadata}')`
-    );
-  }
-  await executeSql(client, `
-    INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata)
-    VALUES ${financeValues.join(',\n')}
-    ON CONFLICT (id) DO NOTHING;
-  `);
+  const finChunkSize = 2500;
+  const totalFinBatches = Math.ceil(FINANCE_TARGET / finChunkSize);
 
-  console.log('6. Seeding Record Relationships & Historical Audit Trails...');
+  for (let b = 0; b < totalFinBatches; b++) {
+    const currentCount = Math.min(finChunkSize, FINANCE_TARGET - b * finChunkSize);
+    const financeValues: string[] = [];
+
+    for (let i = 0; i < currentCount; i++) {
+      const globalIndex = b * finChunkSize + i + 1;
+      const id = `rec-fin-${String(globalIndex).padStart(7, '0')}`;
+      const key = `TXN-${String(globalIndex).padStart(7, '0')}`;
+      const inst = finInstitutions[globalIndex % finInstitutions.length];
+      const cat = finCategories[globalIndex % finCategories.length];
+      const statusIdx = (globalIndex % 100 < 60) ? 0 : (globalIndex % 100 < 80) ? 1 : (globalIndex % 100 < 90) ? 2 : (globalIndex % 100 < 95) ? 3 : (globalIndex % 100 < 98) ? 4 : 5;
+      const status = statuses[statusIdx];
+      const cObj = finCountries[globalIndex % finCountries.length];
+      const country = cObj.name;
+      const region = cObj.region;
+      const amount = Math.round(50000 + ((globalIndex * 17923) % 24950000));
+      const recDate = new Date(baseDate + (globalIndex * 450000)).toISOString();
+      const title = `${inst} [${cat} #${globalIndex}]`.replace(/'/g, "''");
+      const metadata = JSON.stringify({
+        settlementChannel: 'SWIFT-ISO20022',
+        clearingHouse: 'Fedwire-DTCC',
+        currency: 'USD',
+        riskScore: (globalIndex * 13) % 100,
+        complianceTier: 'SOX-Compliant'
+      }).replace(/'/g, "''");
+      const searchVector = `${key} ${title} ${cat} ${country} ${region} ${status}`.replace(/'/g, "''");
+
+      financeValues.push(
+        `('${id}', 'ds-finance-03', '${key}', '${title}', '${cat}', '${status}', ${amount}, '${country}', '${region}', '${recDate}', '${metadata}', to_tsvector('english', '${searchVector}'))`
+      );
+    }
+
+    await executeSql(client, `
+      INSERT INTO dataset_records (id, dataset_id, record_key, title, category, status, numeric_value, country, region, record_date, metadata, search_vector)
+      VALUES ${financeValues.join(',\n')}
+      ON CONFLICT (id) DO NOTHING;
+    `);
+
+    if ((b + 1) % 4 === 0 || b === totalFinBatches - 1) {
+      const inserted = Math.min((b + 1) * finChunkSize, FINANCE_TARGET);
+      const pct = Math.round((inserted / FINANCE_TARGET) * 100);
+      console.log(` -> [Finance] ${inserted.toLocaleString()} / ${FINANCE_TARGET.toLocaleString()} records (${pct}%)...`);
+    }
+  }
+
+  // 10. Record Relationships & Historical Audit Trails
+  console.log('\n9. Seeding Record Relationships & Historical Audit Trails...');
   await client.query(`
     INSERT INTO record_relationships (id, source_record_id, target_record_id, relationship_type, metadata)
     VALUES 
@@ -360,13 +415,14 @@ async function seed() {
   await client.query(`
     INSERT INTO record_history (id, record_id, changed_by_user_id, changed_by_name, change_type, diff_payload, created_at)
     VALUES 
-      ('hist-01', 'rec-sales-0000001', 'usr-admin-01', 'Elena Rostova', 'STATUS_CHANGE', '{"field": "status", "oldValue": "Pending", "newValue": "Active", "reason": "Compliance verification completed"}', NOW() - INTERVAL '15 days'),
-      ('hist-02', 'rec-sales-0000001', 'usr-analyst-01', 'Marcus Vance', 'VALUATION_UPDATE', '{"field": "numericValue", "oldValue": 250000, "newValue": 850000, "reason": "Enterprise Q3 expansion upsell"}', NOW() - INTERVAL '4 days'),
-      ('hist-03', 'rec-sales-0000002', 'usr-analyst-01', 'Marcus Vance', 'STATUS_CHANGE', '{"field": "status", "oldValue": "Flagged", "newValue": "Active", "reason": "KYC resolution passed"}', NOW() - INTERVAL '2 days')
+      ('hist-01', 'rec-sales-0000001', 'usr-admin-01', 'Admin User', 'STATUS_CHANGE', '{"field": "status", "oldValue": "Pending", "newValue": "Active", "reason": "Compliance verification completed"}', NOW() - INTERVAL '15 days'),
+      ('hist-02', 'rec-sales-0000001', 'usr-analyst-01', 'Analyst User', 'VALUATION_UPDATE', '{"field": "numericValue", "oldValue": 250000, "newValue": 850000, "reason": "Enterprise Q3 expansion upsell"}', NOW() - INTERVAL '4 days'),
+      ('hist-03', 'rec-sales-0000002', 'usr-analyst-01', 'Analyst User', 'STATUS_CHANGE', '{"field": "status", "oldValue": "Flagged", "newValue": "Active", "reason": "KYC resolution passed"}', NOW() - INTERVAL '2 days')
     ON CONFLICT (id) DO NOTHING;
   `);
 
-  console.log('7. Seeding Saved Views & Search History...');
+  // 11. Saved Views & Search History
+  console.log('10. Seeding Saved Views & Search History...');
   await client.query(`
     INSERT INTO saved_views (id, user_id, dataset_id, name, description, is_shared, author_name, search_query, search_type, filter_config, filter_logical_operator, sort_config, visible_columns, page_size)
     VALUES 
@@ -377,7 +433,7 @@ async function seed() {
         'High-Value German Enterprise',
         'Active accounts based in Germany with annual revenue exceeding $10,000.',
         true,
-        'Marcus Vance',
+        'Analyst User',
         '',
         'hybrid',
         '[{"id": "c1", "field": "status", "operator": "equals", "value": "Active"}, {"id": "c2", "field": "country", "operator": "equals", "value": "Germany"}, {"id": "c3", "field": "numericValue", "operator": "greater_than", "value": 10000}]',
@@ -393,7 +449,7 @@ async function seed() {
         'Flagged & Suspended Accounts',
         'All corporate records marked for compliance or risk audit inspection.',
         true,
-        'Elena Rostova',
+        'Admin User',
         '',
         'hybrid',
         '[{"id": "c4", "field": "status", "operator": "in", "value": ["Flagged", "Suspended"]}]',
@@ -409,7 +465,7 @@ async function seed() {
         'Americas Mega Accounts (> $500k)',
         'Tier 1 mega enterprise accounts in North and South America.',
         false,
-        'Marcus Vance',
+        'Analyst User',
         '',
         'hybrid',
         '[{"id": "c5", "field": "region", "operator": "equals", "value": "Americas"}, {"id": "c6", "field": "numericValue", "operator": "greater_than", "value": 500000}]',
@@ -432,7 +488,7 @@ async function seed() {
 
   const elapsed = Math.round(performance.now() - startTime);
   console.log(`\n=== DataScope Database Seed Complete in ${(elapsed / 1000).toFixed(2)}s ===`);
-  console.log(`Total Records: 110,000+ seeded and indexed successfully.`);
+  console.log(`Total Records: ${TOTAL_TARGET.toLocaleString()} verified and indexed across 3 datasets.`);
   process.exit(0);
 }
 
@@ -440,4 +496,3 @@ seed().catch((err) => {
   console.error('Fatal error during seed:', err);
   process.exit(1);
 });
-

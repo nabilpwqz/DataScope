@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     // 1. Fetch recent performance logs from database
     const logsRes = await client.query(`
       SELECT id, endpoint, query_type, query_hash, execution_time_ms, total_records_scanned, cache_hit, created_at
-      FROM query_performance_logs
+      FROM query_metrics
       ORDER BY created_at DESC
       LIMIT 100;
     `);
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     // 3. Compute expensive queries from real measurements
     const expensiveRes = await client.query(`
       SELECT query_type, AVG(execution_time_ms)::real as avg_time, MAX(execution_time_ms)::real as max_time, COUNT(*)::int as count
-      FROM query_performance_logs
+      FROM query_metrics
       GROUP BY query_type
       ORDER BY avg_time DESC;
     `);

@@ -525,7 +525,7 @@ export default function LandingPage() {
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              PostgreSQL &amp; Prisma
+              PostgreSQL &amp; Drizzle ORM
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">|</span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-medium">
