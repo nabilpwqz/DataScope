@@ -7,3 +7,4 @@ export async function queryAiSearchAssistant(prompt: string, datasetId: string) 
   if (!res.ok) throw new Error('AI Assistant request failed');
   return res.json();
 }
+

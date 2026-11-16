@@ -24,3 +24,4 @@ export function usePerformanceMetrics() {
     isClearing: clearStatus.isLoading,
   };
 }
+

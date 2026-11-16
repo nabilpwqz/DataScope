@@ -7,3 +7,4 @@ export function useDatasetsList() {
 export function useDatasetDetail(datasetId: string) {
   return useGetDatasetByIdQuery(datasetId, { skip: !datasetId });
 }
+

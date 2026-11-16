@@ -13,3 +13,4 @@ export async function updateUserRoleApi(userId: string, role: 'admin' | 'analyst
   if (!res.ok) throw new Error('Failed to update user role');
   return res.json();
 }
+

@@ -3,3 +3,4 @@ export async function fetchDatasetMetadata(id: string) {
   if (!res.ok) throw new Error(`Failed to load dataset ${id}`);
   return res.json();
 }
+

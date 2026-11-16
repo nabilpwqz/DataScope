@@ -23,3 +23,4 @@ export async function deleteSavedViewApi(id: string): Promise<{ success: boolean
   if (!res.ok) throw new Error('Failed to delete saved view');
   return res.json();
 }
+

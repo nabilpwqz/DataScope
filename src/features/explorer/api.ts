@@ -9,3 +9,4 @@ export async function searchRecordsApi(req: SearchQueryRequest): Promise<SearchQ
   if (!res.ok) throw new Error('Search request failed');
   return res.json();
 }
+
