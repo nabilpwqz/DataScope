@@ -15,10 +15,10 @@ interface NodePoint {
 }
 
 const NODES: NodePoint[] = [
-  { id: 'n1', label: 'pg_trgm Index', metric: '0.8ms', x: -140, y: -60, z: 40, color: '#34d399' },
+  { id: 'n1', label: 'pg_trgm Index', metric: 'In-Engine GIN', x: -140, y: -60, z: 40, color: '#34d399' },
   { id: 'n2', label: 'Pushdown Filter', metric: '100k rows', x: 130, y: -80, z: 20, color: '#10b981' },
-  { id: 'n3', label: 'Virtual Matrix', metric: '60 FPS', x: -120, y: 70, z: 60, color: '#6ee7b7' },
-  { id: 'n4', label: 'LRU L1 Cache', metric: 'HIT (0.2ms)', x: 120, y: 60, z: 50, color: '#059669' },
+  { id: 'n3', label: 'Virtual Matrix', metric: 'Virtual Table', x: -120, y: 70, z: 60, color: '#6ee7b7' },
+  { id: 'n4', label: 'LRU L1 Cache', metric: 'Memoized L1', x: 120, y: 60, z: 50, color: '#059669' },
   { id: 'n5', label: 'RBAC Enforcement', metric: 'Verified', x: 0, y: 0, z: 90, color: '#a7f3d0' },
 ];
 

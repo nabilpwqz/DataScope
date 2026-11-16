@@ -23,7 +23,6 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
               <span>All Systems Operational</span>
-              <span className="font-mono text-[11px] text-slate-400 dark:text-slate-500">(0.8ms SLA)</span>
             </div>
           </div>
 

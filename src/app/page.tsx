@@ -253,7 +253,7 @@ export default function LandingPage() {
               Engine Scan: &lt; 10.0 ms | Cloud HTTP: 80-250 ms
             </span>
             <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              Hardware: Isolated Dedicated Node
+              Database: Neon Serverless PostgreSQL 15
             </span>
             <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
               Engine: PostgreSQL 15 EXPLAIN ANALYZE
@@ -281,23 +281,19 @@ export default function LandingPage() {
                 </span>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
-                    0.8
+                    0.08
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">ms</span>
                 </div>
               </div>
 
-              {/* Micro-scale SLA Latency Gauge */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Relative latency</span>
-                  <span><span className="font-mono">8%</span> of SLA</span>
+              <div className="space-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Execution path</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">Index Scan</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500"
-                    style={{ width: '8%' }}
-                  />
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
@@ -330,23 +326,19 @@ export default function LandingPage() {
                 </span>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
-                    4.2
+                    6.8
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">ms</span>
                 </div>
               </div>
 
-              {/* Micro-scale SLA Latency Gauge */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Relative latency</span>
-                  <span><span className="font-mono">42%</span> of SLA</span>
+              <div className="space-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Execution path</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">Bitmap Index Scan</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500"
-                    style={{ width: '42%' }}
-                  />
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
@@ -361,7 +353,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Card 3: Composite Multi-Filter */}
+          {/* Card 3: Keyset Cursor Seek */}
           <div className="group relative p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 shadow-sm dark:shadow-none hover:border-emerald-500/50 transition-colors duration-200 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -369,43 +361,39 @@ export default function LandingPage() {
                   <IconSliders className="h-5 w-5" />
                 </div>
                 <span className="px-2 py-0.5 rounded text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">
-                  Pushdown
+                  O(1) Seek
                 </span>
               </div>
 
               <div>
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 tracking-wide">
-                  Composite Multi-Filter
+                  Keyset Cursor Seek
                 </span>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
-                    6.1
+                    0.10
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">ms</span>
                 </div>
               </div>
 
-              {/* Micro-scale SLA Latency Gauge */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Relative latency</span>
-                  <span><span className="font-mono">61%</span> of SLA</span>
+              <div className="space-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Execution path</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">B-Tree Seek (Row 100k)</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500"
-                    style={{ width: '61%' }}
-                  />
+                  <div className="h-full rounded-full bg-emerald-500" style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
 
             <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80 space-y-1">
               <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                Status, date range, numeric
+                (record_date, id) &lt; ($1, $2)
               </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-normal">
-                Multi-column parameterized boolean evaluation with zero heap overfetch.
+                Deterministic keyset cursor seek completely bypassing deep offset performance penalty.
               </p>
             </div>
           </div>
@@ -428,23 +416,19 @@ export default function LandingPage() {
                 </span>
                 <div className="flex items-baseline gap-1 mt-1">
                   <span className="text-3xl font-extrabold font-mono text-slate-900 dark:text-slate-100">
-                    0.2
+                    0.12
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">ms</span>
                 </div>
               </div>
 
-              {/* Micro-scale SLA Latency Gauge */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                  <span>Relative latency</span>
-                  <span><span className="font-mono">2%</span> of SLA</span>
+              <div className="space-y-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Execution path</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">In-Memory LRU Cache</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-400 dark:bg-emerald-300"
-                    style={{ width: '2%' }}
-                  />
+                  <div className="h-full rounded-full bg-emerald-400 dark:bg-emerald-300" style={{ width: '100%' }} />
                 </div>
               </div>
             </div>
@@ -460,7 +444,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Enterprise Telemetry SLA Matrix */}
+        {/* Enterprise Telemetry Latency Matrix */}
         <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 shadow-sm dark:shadow-none flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-600 dark:text-slate-400">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -468,25 +452,25 @@ export default function LandingPage() {
             </div>
             <div>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
-                P99 Latency SLA Envelope:
+                Transparent Latency Decomposition:
               </span>
               <span className="ml-1.5 text-slate-500 dark:text-slate-400">
-                All four execution pathways operate significantly below the strict 10ms threshold.
+                In-engine query execution is sub-10ms; total client response time includes cross-region WAN transit.
               </span>
             </div>
           </div>
           <div className="flex items-center gap-4 text-[11px]">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span>Cold: <span className="font-mono">6.1</span>ms</span>
+              <span>Engine Scan: <span className="font-mono">0.08-9.2</span>ms</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>Warm: <span className="font-mono">0.8</span>ms</span>
+              <span>L1 Cache: <span className="font-mono">&lt; 1.0</span>ms</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-slate-400" />
-              <span>Cached: <span className="font-mono">0.2</span>ms</span>
+              <span>WAN Transit: <span className="font-mono">~220</span>ms</span>
             </span>
           </div>
         </div>
