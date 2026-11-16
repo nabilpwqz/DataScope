@@ -61,12 +61,31 @@ export async function GET() {
       }
     );
   } catch (error: any) {
+    const rawEnvUrl =
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.SUPABASE_DATABASE_URL ||
+      process.env.SUPABASE_POSTGRES_URL;
+
+    let targetHost = 'none';
+    if (rawEnvUrl) {
+      const match = rawEnvUrl.match(/@([^:/]+)/);
+      targetHost = match ? match[1] : 'unparseable';
+    }
+
     return NextResponse.json(
       {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
         error: error.message || 'Database connection error',
         latencyMs: Number((performance.now() - startTime).toFixed(2)),
+        diagnostics: {
+          hasDatabaseUrl: Boolean(rawEnvUrl),
+          configuredHost: targetHost,
+          isVercel: Boolean(process.env.VERCEL),
+          nodeEnv: process.env.NODE_ENV || 'production',
+        },
       },
       { status: 503 }
     );

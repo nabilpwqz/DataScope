@@ -48,18 +48,7 @@ function LoginForm() {
     const targetPass = customPass || password;
 
     try {
-      // 1. Authenticate with NextAuth
-      const authResult = await signIn('credentials', {
-        redirect: false,
-        email: targetEmail,
-        password: targetPass,
-      });
-
-      if (authResult?.error) {
-        throw new Error(authResult.error);
-      }
-
-      // 2. Fetch authenticated user profile & set session cookie
+      // 1. Authenticate against database auth API and obtain JWT session token
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,10 +57,21 @@ function LoginForm() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
+        throw new Error(data.error || 'Authentication failed. Please verify credentials.');
       }
 
+      // Update Redux state with verified user profile & token
       dispatch(setUser({ user: data.user, token: data.token }));
+
+      // 2. Synchronize NextAuth session in background without blocking redirect
+      signIn('credentials', {
+        redirect: false,
+        email: targetEmail,
+        password: targetPass,
+      }).catch((nextAuthErr) => {
+        console.warn('NextAuth background sync notice:', nextAuthErr);
+      });
+
       router.push('/dashboard/explorer');
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed. Check credentials.');

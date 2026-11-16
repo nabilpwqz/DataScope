@@ -31,14 +31,77 @@ if (!globalForDb.__dataScopeDb) {
 
 const state = globalForDb.__dataScopeDb;
 
+export function normalizeDatabaseUrl(rawUrl: string): string {
+  if (!rawUrl || !rawUrl.trim()) return '';
+
+  let urlStr = rawUrl.trim();
+
+  // Strip wrapping quotes if present
+  if ((urlStr.startsWith('"') && urlStr.endsWith('"')) || (urlStr.startsWith("'") && urlStr.endsWith("'"))) {
+    urlStr = urlStr.slice(1, -1).trim();
+  }
+
+  // Detect unreplaced placeholder
+  if (urlStr.includes('[YOUR-PASSWORD]') || urlStr.includes('[PASSWORD]')) {
+    throw new Error('Database connection string contains unreplaced password placeholder [YOUR-PASSWORD]. Please update DATABASE_URL with your actual database password.');
+  }
+
+  // Handle postgresql://[user]:[password]@[host]:[port]/[database]
+  const regex = /^postgres(?:ql)?:\/\/([^:]+):(.*)@([^:/]+)(?::(\d+))?\/([^?]*)(?:\?(.*))?$/;
+  const match = urlStr.match(regex);
+
+  if (match) {
+    let [, user, rawPass, host, port, dbName, queryStr] = match;
+
+    // Handle percent-encoding for password
+    let password = rawPass;
+    try {
+      const decoded = decodeURIComponent(rawPass);
+      password = encodeURIComponent(decoded);
+    } catch (_) {
+      password = encodeURIComponent(rawPass);
+    }
+
+    // Supabase direct host rewrite to Supavisor IPv4 pooler
+    // Direct host db.<ref>.supabase.co is IPv6-only and fails on Vercel/IPv4 with getaddrinfo ENOTFOUND
+    const supabaseMatch = host.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
+    if (supabaseMatch) {
+      const projectRef = supabaseMatch[1];
+      const poolerHost = (projectRef === 'uculmttvcfvzebhhgesq' || projectRef === 'rfxwnputxnjxhxnpyyqs')
+        ? 'aws-1-ap-northeast-1.pooler.supabase.com'
+        : 'aws-0-ap-southeast-1.pooler.supabase.com';
+
+      host = poolerHost;
+      port = '5432';
+      if (!user.includes('.')) {
+        user = `postgres.${projectRef}`;
+      }
+    }
+
+    // Strip sslmode from query params since node pg requires ssl: { rejectUnauthorized: false }
+    const params = new URLSearchParams(queryStr || '');
+    params.delete('sslmode');
+    const newQuery = params.toString() ? `?${params.toString()}` : '';
+
+    return `postgresql://${user}:${password}@${host}:${port || '5432'}/${dbName || 'postgres'}${newQuery}`;
+  }
+
+  return urlStr.replace(/[?&]sslmode=[^&]+/g, '').replace(/\?$/, '');
+}
+
 export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; engineType: string }> {
   if (state.db && state.initialized) {
     return { db: state.db, rawClient: state.rawClient, engineType: state.engineType };
   }
 
   if (state.initPromise) {
-    await state.initPromise;
-    return { db: state.db!, rawClient: state.rawClient, engineType: state.engineType };
+    try {
+      await state.initPromise;
+      return { db: state.db!, rawClient: state.rawClient, engineType: state.engineType };
+    } catch (cachedErr) {
+      state.initPromise = null;
+      throw cachedErr;
+    }
   }
 
   state.initPromise = (async () => {
@@ -62,7 +125,13 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
       } catch (_) {}
     }
 
-    const rawEnvUrl = process.env.DATABASE_URL;
+    const rawEnvUrl =
+      process.env.DATABASE_URL ||
+      process.env.POSTGRES_URL ||
+      process.env.POSTGRES_PRISMA_URL ||
+      process.env.SUPABASE_DATABASE_URL ||
+      process.env.SUPABASE_POSTGRES_URL;
+
     const forceEmbedded = process.env.PG_FORCE_EMBEDDED === 'true';
     const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
     const isProduction = process.env.NODE_ENV === 'production' || Boolean(process.env.VERCEL);
@@ -73,42 +142,37 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
     const shouldUseRemote = Boolean(databaseUrl && databaseUrl.trim() !== '' && !isTestEnv);
 
     if (shouldUseRemote) {
-      // Connect to remote or cloud PostgreSQL instance (Neon, Supabase, AWS RDS, etc.)
+      const cleanDbUrl = normalizeDatabaseUrl(databaseUrl);
       const isLocalhost =
-        databaseUrl.includes('localhost') ||
-        databaseUrl.includes('127.0.0.1') ||
-        databaseUrl.includes('postgres:5432');
-
-      // Strip sslmode query parameter so Node pg honors ssl: { rejectUnauthorized: false } without self-signed cert rejection
-      const cleanDbUrl = databaseUrl.replace(/[?&]sslmode=[^&]+/g, '').replace(/\?$/, '');
-
-      const pool = new Pool({
-        connectionString: cleanDbUrl,
-        ssl: isLocalhost ? false : { rejectUnauthorized: false },
-        max: 10,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 10000,
-      });
+        cleanDbUrl.includes('localhost') ||
+        cleanDbUrl.includes('127.0.0.1') ||
+        cleanDbUrl.includes('postgres:5432');
 
       try {
-        if (!isProduction) {
-          // Probe remote connection to verify network reachability
-          await pool.query('SELECT 1;');
-        }
+        const pool = new Pool({
+          connectionString: cleanDbUrl,
+          ssl: isLocalhost ? false : { rejectUnauthorized: false },
+          max: 10,
+          idleTimeoutMillis: 30000,
+          connectionTimeoutMillis: 10000,
+        });
+
+        // Test remote connection to verify network reachability
+        await pool.query('SELECT 1;');
         const drizzleInstance = drizzlePg(pool, { schema }) as unknown as DbInstance;
         state.db = drizzleInstance;
         state.rawClient = pool;
         state.engineType = 'postgresql';
       } catch (connErr: any) {
-        if (isProduction) {
-          throw new Error(
-            `DataScope Production Database Connection Error: Failed to connect to remote PostgreSQL instance at ${databaseUrl.split('@')[1] || 'configured host'}: ${connErr.message}`
-          );
-        }
-        console.warn(`Notice: Remote PostgreSQL at ${databaseUrl.split('@')[1] || 'configured host'} is unreachable on this network (${connErr.message}). Falling back to embedded engine for local development.`);
-        await pool.end().catch(() => {});
         state.db = null;
         state.rawClient = null;
+        const hostInfo = cleanDbUrl.includes('@') ? cleanDbUrl.split('@')[1].split('/')[0] : 'remote host';
+        if (isProduction) {
+          throw new Error(
+            `DataScope Production Database Connection Error: Failed to connect to remote PostgreSQL instance at ${hostInfo}: ${connErr.message}`
+          );
+        }
+        console.warn(`Notice: Remote PostgreSQL at ${hostInfo} is unreachable on this network (${connErr.message}). Falling back to embedded engine for local development.`);
       }
     }
 
@@ -167,7 +231,12 @@ export async function initDatabase(): Promise<{ db: DbInstance; rawClient: any; 
     state.initialized = true;
   })();
 
-  await state.initPromise;
+  try {
+    await state.initPromise;
+  } catch (err) {
+    state.initPromise = null;
+    throw err;
+  }
   return { db: state.db!, rawClient: state.rawClient, engineType: state.engineType };
 }
 
