@@ -568,7 +568,7 @@ async function ensureBaselineData(client: any) {
       await client.query(`
         INSERT INTO datasets (id, name, slug, description, category, data_source, total_records, access_level, schema_definition)
         VALUES 
-          ('ds-sales-01', 'Global Enterprise Accounts & Revenue', 'global-sales', 'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.', 'Sales & Revenue', 'PostgreSQL Production Cluster [us-east-1]', 100000, 'public', '[]'),
+          ('ds-sales-01', 'Global Enterprise Accounts & Revenue', 'global-sales', 'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.', 'Sales & Revenue', 'PostgreSQL Production Cluster [us-east-1]', 111000, 'public', '[]'),
           ('ds-telemetry-02', 'Edge Infrastructure & Telemetry Logs', 'cloud-telemetry', 'Multi-region high-frequency latency, CPU utilization, and edge cluster operational metrics.', 'Infrastructure Telemetry', 'Kafka Streaming & S3 Parquet Lake', 10000, 'restricted', '[]'),
           ('ds-finance-03', 'Institutional Financial Transactions', 'financial-audit', 'High-value multi-currency ledger transactions, clearing houses, settlement status, and compliance flags.', 'Financial Intelligence', 'Core Banking Ledger DB', 10000, 'admin_only', '[]')
         ON CONFLICT (id) DO NOTHING;

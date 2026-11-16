@@ -9,7 +9,7 @@ const scaleArg = cliScale || envSeedSize || '100k';
 const is1M = scaleArg === '1m' || scaleArg === '1000k' || scaleArg === '1000000' || scaleArg === '1m_rows';
 const forceClean = args.includes('--force') || args.includes('--clean') || args.includes('--truncate');
 
-const SALES_TARGET = is1M ? 800000 : 100000;
+const SALES_TARGET = is1M ? 800000 : 111000;
 const TELEMETRY_TARGET = is1M ? 100000 : 10000;
 const FINANCE_TARGET = is1M ? 100000 : 10000;
 const TOTAL_TARGET = SALES_TARGET + TELEMETRY_TARGET + FINANCE_TARGET;

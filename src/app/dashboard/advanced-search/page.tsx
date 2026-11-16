@@ -72,7 +72,7 @@ const fallbackDatasets = [
     name: 'Global Enterprise Accounts & Revenue',
     slug: 'global-sales',
     category: 'Sales & Revenue',
-    totalRecords: 100000,
+    totalRecords: 111000,
     description: 'Comprehensive multi-region enterprise B2B sales data containing corporate entities, ARR, contract tiers, and health metrics.',
     dataSource: 'PostgreSQL Production Cluster [us-east-1]',
     accessLevel: 'public',

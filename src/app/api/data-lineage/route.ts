@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       };
       totalIndexedRecords += row.count || 0;
     }
-    if (totalIndexedRecords === 0) totalIndexedRecords = 120000;
+    if (totalIndexedRecords === 0) totalIndexedRecords = 131000;
 
     const graph: DataLineageGraph = {
       nodes: [
@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
           description: 'Core B2B revenue and sales opportunity ledger containing accounts and contract ARR.',
           metadata: {
             owner: 'Revenue Analytics',
-            records: datasetsMap['ds-sales-01']?.count || 100000,
+            records: datasetsMap['ds-sales-01']?.count || 111000,
             lastSync: 'Live',
           },
         },
